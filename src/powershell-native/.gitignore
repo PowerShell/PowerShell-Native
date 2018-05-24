@@ -1,0 +1,17 @@
+ALL_BUILD.vcxproj
+ALL_BUILD.vcxproj.filters
+CMakeCache.txt
+CMakeFiles/
+*.sln
+Win32/
+x64/
+cmake_install.cmake
+*.dir/
+*.vcxproj
+*.vcxproj.filters
+Release/
+
+# Resources
+MSG*.bin
+pwrshpluginerrorcodes.h
+pwrshpluginerrorcodes.rc
