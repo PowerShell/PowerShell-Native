@@ -283,6 +283,12 @@ cmd.exe /C cd /d "$currentLocation" "&" "$vcvarsallbatPath" "$Arch" "&" "$cmakeP
         # Copy the binaries from the local build directory to the packaging directory
         $FilesToCopy = @('pwrshplugin.dll', 'pwrshplugin.pdb')
         $dstPath = "$PSScriptRoot\src\powershell-win-core"
+
+        if(-not (Test-Path $dstPath))
+        {
+            New-Item -ItemType Directory -Path $dstPath -Force > $null
+        }
+
         $FilesToCopy | ForEach-Object {
             $srcPath = [IO.Path]::Combine((Get-Location), "bin", $Configuration, "CoreClr/$_")
 
@@ -303,12 +309,25 @@ cmd.exe /C cd /d "$location" "&" "$vcvarsallbatPath" "$Arch" "&" "$cmakePath" "$
 "@
         Write-Log "  Executing Build Command for PowerShell.Core.Instrumentation: $command"
         Start-NativeExecution { Invoke-Expression -Command:$command }
-
+<#
         # Copy the binary to the packaging directory
         # NOTE: No PDB file; it's a resource-only DLL.
         # VS2017 puts this in $HOME\source
         $srcPath = [IO.Path]::Combine($HOME, "source", $Configuration, 'PowerShell.Core.Instrumentation.dll')
-        Copy-Item -Path $srcPath -Destination $dstPath
+        Copy-Item -Path $srcPath -Destination $dstPat
+#>
+
+        $builtBinary = (Get-ChildItem -Path $location -Filter 'PowerShell.Core.Instrumentation.dll' -Recurse | Select-Object -First 1).FullName
+
+        if(-not (Test-Path $builtBinary))
+        {
+            throw "PowerShell.Core.Instrumentation was not found under $location"
+        }
+        else
+        {
+            Copy-Item $builtBinary -Destination $dstPath -Force
+        }
+
 
     } finally {
         Pop-Location
