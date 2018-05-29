@@ -13,7 +13,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-//! @brief returns if the path is a file or directory
+//! @brief returns if the path exists or not
 //!
 //! IsFile
 //!
