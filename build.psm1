@@ -398,6 +398,83 @@ function Start-BuildNativeUnixBinaries {
     }
 }
 
+function Start-BuildWindowsNativePackage
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $PackageRoot,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $PluginVersion
+    )
+
+    if(-not (Test-Path $PackageRoot))
+    {
+        Write-Verbose "Creating PackageRoot: $PackageRoot as it does not exist."
+    }
+
+    $plugingPackageRoot = Join-Path $PackageRoot -ChildPath 'psrp.windows'
+
+    $pluginX64Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-x64','native')
+    $pluginX86Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-x86','native')
+    $pluginArmPath = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-arm','native')
+    $pluginArm64Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-arm64','native')
+
+    BuildPwrshPlugingNugetLayout -Destination $pluginX64Path -Arch 'x64'
+    BuildPwrshPlugingNugetLayout -Destination $pluginX86Path -Arch 'x86'
+    BuildPwrshPlugingNugetLayout -Destination $pluginArmPath -Arch 'x64_arm'
+    BuildPwrshPlugingNugetLayout -Destination $pluginArm64Path -Arch 'x64_arm64'
+
+    $plugingNuspec = @'
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+    <metadata>
+    <id>psrp.windows</id>
+    <version>{0}</version>
+    <authors>Microsoftss</authors>
+    <owners>Microsoft,PowerShell</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>PowerShell WS-Man PSRP Client for Windows</description>
+    <copyright>Copyright 2017 Microsoft</copyright>
+    <contentFiles>
+        <files include="**/*" buildAction="None" copyToOutput="true" flatten="false" />
+    </contentFiles>
+    </metadata>
+</package>
+'@
+
+    $plugingNuspec -f $PluginVersion | Out-File -FilePath (Join-Path $plugingPackageRoot -ChildPath 'psrp.windows.nuspec') -Force
+
+    try {
+        Push-Location $plugingPackageRoot
+        nuget.exe pack .
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+function BuildPwrshPlugingNugetLayout
+{
+    param(
+        [string] $Destination,
+        [string] $Arch
+    )
+
+    try {
+        Start-BuildNativeWindowsBinaries -Configuration 'Release' -Arch $Arch -Clean -ErrorAction Stop
+    }
+    catch {
+        throw "Build failed: $_.Message"
+    }
+
+    Copy-Item -Path $PSScriptRoot/src/powershell-win-core/pwrshplugin.dll -Destination $Destination
+    Copy-Item -Path $PSScriptRoot/src/powershell-win-core/pwrshplugin.pdb -Destination $Destination
+}
+
 function Start-PSBuild {
     [CmdletBinding()]
     param(
