@@ -418,10 +418,10 @@ function Start-BuildWindowsNativePackage
 
     $plugingPackageRoot = Join-Path $PackageRoot -ChildPath 'psrp.windows'
 
-    $pluginX64Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-x64','native')
-    $pluginX86Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-x86','native')
-    $pluginArmPath = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-arm','native')
-    $pluginArm64Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-arm64','native')
+    $pluginX64Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes/win-x64/native')
+    $pluginX86Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes/win-x86/native')
+    $pluginArmPath = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes/win-arm/native')
+    $pluginArm64Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes/win-arm64/native')
 
     BuildPwrshPlugingNugetLayout -Destination $pluginX64Path -Arch 'x64'
     BuildPwrshPlugingNugetLayout -Destination $pluginX86Path -Arch 'x86'
