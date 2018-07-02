@@ -261,7 +261,7 @@ function Start-BuildNativeWindowsBinaries {
         $vcvarsallbatPath = $vcvarsallbatPathVS2017
     }
 
-    if ((Test-Path -Path $vcvarsallbatPath) -eq $false) {
+    if ([string]::IsNullOrEmpty($vcvarsallbatPath) -or (Test-Path -Path $vcvarsallbatPath) -eq $false) {
         throw "Could not find Visual Studio vcvarsall.bat at $vcvarsallbatPath. Please ensure the optional feature 'Common Tools for Visual C++' is installed."
     }
 
