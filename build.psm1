@@ -170,7 +170,7 @@ function Test-Win10SDK {
     #
     # A slightly more robust check is for the mc.exe binary within that directory.
     # It is only present if the SDK is installed.
-    return (Test-Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\mc.exe")
+    return (Test-Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\mc.exe")
 }
 
 function Start-BuildNativeWindowsBinaries {
@@ -210,9 +210,6 @@ function Start-BuildNativeWindowsBinaries {
     $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse | Select-Object -First 1).FullName
 
     $atlMfcIncludePath = Join-Path -Path $vcPath -ChildPath 'atlmfc/include'
-    if (!(Test-Path $atlMfcIncludePath)) { # for VS2017, need to search for it
-        $atlMfcIncludePath = (Get-ChildItem $vcPath,$alternateVCPath -Filter AtlBase.h -Recurse -File | Select-Object -First 1).DirectoryName
-    }
 
     # atlbase.h is included in the pwrshplugin project
     if ((Test-Path -Path $atlMfcIncludePath\atlbase.h) -eq $false) {
@@ -221,8 +218,12 @@ function Start-BuildNativeWindowsBinaries {
 
     # vcvarsall.bat is used to setup environment variables
     $vcvarsallbatPath = "$vcPath\vcvarsall.bat"
-    if (!(Test-Path -Path $vcvarsallbatPath)) { # for VS2017, need to search for it
-        $vcvarsallbatPath = (Get-ChildItem $vcPath,$alternateVCPath -Filter vcvarsall.bat -Recurse -File | Select-Object -First 1).FullName
+    $vcvarsallbatPathVS2017 = ( Get-ChildItem $alternateVCPath -Filter vcvarsall.bat -Recurse -File | Select-Object -First 1).FullName
+
+    if(Test-Path $vcvarsallbatPathVS2017)
+    {
+        # prefer VS2017 path
+        $vcvarsallbatPath = $vcvarsallbatPathVS2017
     }
 
     if ((Test-Path -Path $vcvarsallbatPath) -eq $false) {
@@ -1847,7 +1848,7 @@ function Start-PSBootstrap {
                 }
                 elseif(($cmakePresent -eq $false) -or ($sdkPresent -eq $false)) {
                     Write-Log "Chocolatey not present. Installing chocolatey."
-                    if ($Force -or $PSCmdlet.ShouldProcess("Install chocolatey via https://chocolatey.org/install.ps1")) {
+                    if ($Force -or "Install chocolatey via https://chocolatey.org/install.ps1") {
                         Invoke-Expression ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
                         if (-not ($machinePath.ToLower().Contains($chocolateyPath.ToLower()))) {
                             Write-Log "Adding $chocolateyPath to Path environment variable"
