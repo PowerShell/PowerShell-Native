@@ -6,7 +6,7 @@
 param (
 
     [Parameter(Mandatory, ParameterSetName = 'Build')]
-    [ValidateSet('x64', 'x86', 'x64_arm', 'x64_arm64', 'linux-x64', 'osx', 'linix-arm')]
+    [ValidateSet('x64', 'x86', 'x64_arm', 'x64_arm64', 'linux-x64', 'osx', 'linux-arm')]
     [string]
     $Arch,
 

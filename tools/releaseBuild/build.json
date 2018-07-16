@@ -104,7 +104,7 @@
         {
             "Name": "ubuntu.16.04",
             "RepoDestinationPath": "/PowerShellNative",
-            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-x64 -Configuration Release",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-arm -Configuration Release",
             "AdditionalContextFiles": [
                 "./tools/releaseBuild/PowerShellNative.ps1"
             ],
@@ -115,9 +115,9 @@
         {
             "Name": "centos.7",
             "RepoDestinationPath": "/PowerShellNative",
-            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-x64 -Configuration Release",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-x64 -Configuration Release",
             "AdditionalContextFiles": [
-                "./tools/releaseBuild/PowerShellNative.ps1"
+                "./tools/releaseBuild/PowershellNative.ps1"
             ],
             "DockerFile": "./tools/releaseBuild/images/CentOS/Dockerfile",
             "DockerImageName": "ps-centos-7",
