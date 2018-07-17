@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SignConfigXML>
+    <!-- ****Begin**** Authenticode - Authenticode SHA256 ******** -->
+    <job platform="" configuration="" dest="__OUTPATHROOT__\signed" jobname="PowerShell Core" approvers="vigarg;gstolt">
+        <file src="__INPATHROOT__\PowerShell.Core.Instrumentation.dll" signType="Authenticode" dest="__OUTPATHROOT__\PowerShell.Core.Instrumentation.dll" />
+        <file src="__INPATHROOT__\pwrshplugin.dll" signType="Authenticode" dest="__OUTPATHROOT__\pwrshplugin.dll" />
+    </job>
+</SignConfigXML>

@@ -1,39 +1,7 @@
 {
     "Windows": [
         {
-            "Name": "win7-x64",
-            "RepoDestinationPath": "C:\\PowerShellNative",
-            "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x64 -Configuration Release",
-            "BuildDockerOptions": [
-                "-m",
-                "3968m"
-            ],
-            "DockerFile": ".\\tools\\releaseBuild\\Images\\Windows\\DockerFile",
-            "AdditionalContextFiles": [
-                ".\\tools\\releaseBuild\\PowerShellNative.ps1"
-            ],
-            "DockerImageName": "ps-winsrvcore",
-            "BinaryBucket": "release",
-            "PublishAsFolder": true
-        },
-        {
-            "Name": "win7-x86",
-            "RepoDestinationPath": "C:\\PowerShellNative",
-            "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x86 -Configuration Release",
-            "BuildDockerOptions": [
-                "-m",
-                "3968m"
-            ],
-            "DockerFile": ".\\tools\\releaseBuild\\Images\\Windows\\DockerFile",
-            "AdditionalContextFiles": [
-                ".\\tools\\releaseBuild\\PowerShellNative.ps1"
-            ],
-            "DockerImageName": "ps-winsrvcore",
-            "BinaryBucket": "release",
-            "PublishAsFolder": true
-        },
-        {
-            "Name": "win7-x64-symbols",
+            "Name": "win-x64-symbols",
             "RepoDestinationPath": "C:\\PowerShellNative",
             "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x64 -Configuration Release -Symbols",
             "BuildDockerOptions": [
@@ -46,10 +14,11 @@
             ],
             "DockerImageName": "ps-winsrvcore",
             "BinaryBucket": "release",
+            "ArtifactsExpected": 1,
             "VariableForExtractedBinariesPath": "Symbols_x64"
         },
         {
-            "Name": "win7-x86-symbols",
+            "Name": "win-x86-symbols",
             "RepoDestinationPath": "C:\\PowerShellNative",
             "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x86 -Configuration Release -Symbols",
             "BuildDockerOptions": [
@@ -62,11 +31,11 @@
             ],
             "DockerImageName": "ps-winsrvcore",
             "BinaryBucket": "release",
-            "VariableForExtractedBinariesPath": "Symbols_x86",
-            "PublishAsFolder": true
+            "ArtifactsExpected": 1,
+            "VariableForExtractedBinariesPath": "Symbols_x86"
         },
         {
-            "Name": "win-arm-symbols",
+            "Name": "win-x64_arm-symbols",
             "RepoDestinationPath": "C:\\PowerShellNative",
             "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x64_arm -Configuration Release -Symbols",
             "BuildDockerOptions": [
@@ -79,11 +48,11 @@
             ],
             "DockerImageName": "ps-winsrvcore",
             "BinaryBucket": "release",
-            "VariableForExtractedBinariesPath": "Symbols_arm",
-            "PublishAsFolder": true
+            "ArtifactsExpected": 1,
+            "VariableForExtractedBinariesPath": "Symbols_x64_arm"
         },
         {
-            "Name": "win-arm64-symbols",
+            "Name": "win-x64_arm64-symbols",
             "RepoDestinationPath": "C:\\PowerShellNative",
             "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x64_arm64 -Configuration Release -Symbols",
             "BuildDockerOptions": [
@@ -96,8 +65,8 @@
             ],
             "DockerImageName": "ps-winsrvcore",
             "BinaryBucket": "release",
-            "VariableForExtractedBinariesPath": "Symbols_arm64",
-            "PublishAsFolder": true
+            "ArtifactsExpected": 1,
+            "VariableForExtractedBinariesPath": "Symbols_x64_arm64"
         }
     ],
     "Linux": [
@@ -106,7 +75,7 @@
             "RepoDestinationPath": "/PowerShellNative",
             "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-arm -Configuration Release",
             "AdditionalContextFiles": [
-                "./tools/releaseBuild/PowerShellNative.ps1"
+                "./tools/releaseBuild/PowershellNative.ps1"
             ],
             "DockerFile": "./tools/releaseBuild/images/Ubuntu16.04/Dockerfile",
             "DockerImageName": "ps-ubunutu-16-04",

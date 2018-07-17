@@ -3,24 +3,6 @@
 
 [cmdletbinding(DefaultParameterSetName = 'Build')]
 param(
-    [Parameter(Mandatory, ParameterSetName = 'Build')]
-    [ValidateSet('x64', 'x86', 'x64_arm', 'x64_arm64', 'linux-x64', 'linux-arm')]
-    [string]
-    $Arch,
-
-    [Parameter(Mandatory, ParameterSetName = 'Build')]
-    [ValidateSet('Release', 'Debug')]
-    [string]
-    $Configuration,
-
-    # full paths to files to add to container to run the build
-    [Parameter(Mandatory, ParameterSetName = 'packageSigned')]
-    [string]
-    $BuildPath,
-
-    [Parameter(Mandatory, ParameterSetName = 'packageSigned')]
-    [string]
-    $SignedFilesPath
 )
 
 DynamicParam {

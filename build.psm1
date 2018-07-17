@@ -170,7 +170,16 @@ function Test-Win10SDK {
     #
     # A slightly more robust check is for the mc.exe binary within that directory.
     # It is only present if the SDK is installed.
+
     return (Test-Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\mc.exe")
+}
+
+function Get-LatestWinSDK {
+    $latestSDKPath = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10*" | Sort-Object -Descending | Select-Object -First 1
+
+    ## Always use x64 as we expect to build on an x64 build machine.
+    $archSpecificPath = Join-Path $latestSDKPath -ChildPath "x64"
+    return $archSpecificPath
 }
 
 function Start-BuildNativeWindowsBinaries {
@@ -233,8 +242,18 @@ function Start-BuildNativeWindowsBinaries {
     Write-Log "Start building native Windows binaries"
 
     if ($Clean) {
-        git clean -fdx
-        Remove-Item $HOME\source\cmakecache.txt -ErrorAction SilentlyContinue
+        Write-Verbose "Pushing location: $(Get-Location)" -Verbose
+        Push-Location .
+        try {
+            Write-Verbose "Setting location: $(Get-Location)" -Verbose
+            Set-Location $PSScriptRoot
+            git clean -fdx
+            Remove-Item $HOME\source\cmakecache.txt -ErrorAction SilentlyContinue
+        }
+        finally {
+            Write-Verbose "Popped location" -Verbose
+            Pop-Location
+        }
     }
 
     try {
@@ -259,15 +278,34 @@ function Start-BuildNativeWindowsBinaries {
 
         # Compile native resources
         $currentLocation = Get-Location
-        @("nativemsh\pwrshplugin") | ForEach-Object {
-            $nativeResourcesFolder = $_
-            Get-ChildItem $nativeResourcesFolder -Filter "*.mc" | ForEach-Object {
-                $command = @"
+
+        $savedPath = $env:PATH
+        Write-Verbose "Saved PATH = $env:PATH" -Verbose
+
+        $sdkPath = Get-LatestWinSDK
+
+        try {
+            Write-Verbose "Got SDK Path as $sdkPath" -Verbose
+
+            $env:PATH = "$sdkPath;$env:PATH"
+            Write-Verbose "New PATH = $env:PATH" -Verbose
+
+            $mcFound = Get-Command mc.exe
+            Write-Verbose -Verbose "MC Found = $($mcFound.Source)"
+
+            @("nativemsh\pwrshplugin") | ForEach-Object {
+                $nativeResourcesFolder = $_
+                Get-ChildItem $nativeResourcesFolder -Filter "*.mc" | ForEach-Object {
+                    $command = @"
 cmd.exe /C cd /d "$currentLocation" "&" "$vcvarsallbatPath" "$Arch" "&" mc.exe -o -d -c -U "$($_.FullName)" -h "$currentLocation\$nativeResourcesFolder" -r "$currentLocation\$nativeResourcesFolder"
 "@
-                Write-Log "  Executing mc.exe Command: $command"
-                Start-NativeExecution { Invoke-Expression -Command:$command }
+                    Write-Log "  Executing mc.exe Command: $command"
+                    Start-NativeExecution { Invoke-Expression -Command:$command } -VerboseOutputOnError
+                }
             }
+        }
+        finally {
+            $env:PATH = $savedPath
         }
 
         # make sure we use version we installed and not from VS
@@ -2195,7 +2233,7 @@ function script:Start-NativeExecution
     try {
         if($VerboseOutputOnError.IsPresent)
         {
-            $output = & $sb
+            $output = & $sb 2>&1
         }
         else
         {
