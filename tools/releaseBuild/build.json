@@ -15,7 +15,8 @@
             "DockerImageName": "ps-winsrvcore",
             "BinaryBucket": "release",
             "ArtifactsExpected": 1,
-            "VariableForExtractedBinariesPath": "Symbols_x64"
+            "VariableForExtractedBinariesPath": "Symbols_x64",
+            "EnableFeature": [ "ArtifactAsFolder" ]
         },
         {
             "Name": "win-x86-symbols",
@@ -32,7 +33,8 @@
             "DockerImageName": "ps-winsrvcore",
             "BinaryBucket": "release",
             "ArtifactsExpected": 1,
-            "VariableForExtractedBinariesPath": "Symbols_x86"
+            "VariableForExtractedBinariesPath": "Symbols_x86",
+            "EnableFeature": [ "ArtifactAsFolder" ]
         },
         {
             "Name": "win-x64_arm-symbols",
@@ -49,7 +51,8 @@
             "DockerImageName": "ps-winsrvcore",
             "BinaryBucket": "release",
             "ArtifactsExpected": 1,
-            "VariableForExtractedBinariesPath": "Symbols_x64_arm"
+            "VariableForExtractedBinariesPath": "Symbols_x64_arm",
+            "EnableFeature": [ "ArtifactAsFolder" ]
         },
         {
             "Name": "win-x64_arm64-symbols",
@@ -66,7 +69,8 @@
             "DockerImageName": "ps-winsrvcore",
             "BinaryBucket": "release",
             "ArtifactsExpected": 1,
-            "VariableForExtractedBinariesPath": "Symbols_x64_arm64"
+            "VariableForExtractedBinariesPath": "Symbols_x64_arm64",
+            "EnableFeature": [ "ArtifactAsFolder" ]
         }
     ],
     "Linux": [
@@ -79,7 +83,8 @@
             ],
             "DockerFile": "./tools/releaseBuild/images/Ubuntu16.04/Dockerfile",
             "DockerImageName": "ps-ubunutu-16-04",
-            "BinaryBucket": "release"
+            "BinaryBucket": "release",
+            "EnableFeature": [ "ArtifactAsFolder" ]
         },
         {
             "Name": "centos.7",
@@ -90,7 +95,8 @@
             ],
             "DockerFile": "./tools/releaseBuild/images/CentOS/Dockerfile",
             "DockerImageName": "ps-centos-7",
-            "BinaryBucket": "release"
+            "BinaryBucket": "release",
+            "EnableFeature": [ "ArtifactAsFolder" ]
         }
     ]
 }
