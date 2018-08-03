@@ -242,16 +242,13 @@ function Start-BuildNativeWindowsBinaries {
     Write-Log "Start building native Windows binaries"
 
     if ($Clean) {
-        Write-Verbose "Pushing location: $(Get-Location)" -Verbose
         Push-Location .
         try {
-            Write-Verbose "Setting location: $(Get-Location)" -Verbose
             Set-Location $PSScriptRoot
             git clean -fdx
             Remove-Item $HOME\source\cmakecache.txt -ErrorAction SilentlyContinue
         }
         finally {
-            Write-Verbose "Popped location" -Verbose
             Pop-Location
         }
     }
@@ -278,20 +275,13 @@ function Start-BuildNativeWindowsBinaries {
 
         # Compile native resources
         $currentLocation = Get-Location
-
         $savedPath = $env:PATH
-        Write-Verbose "Saved PATH = $env:PATH" -Verbose
-
         $sdkPath = Get-LatestWinSDK
 
         try {
-            Write-Verbose "Got SDK Path as $sdkPath" -Verbose
-
             $env:PATH = "$sdkPath;$env:PATH"
-            Write-Verbose "New PATH = $env:PATH" -Verbose
-
             $mcFound = Get-Command mc.exe
-            Write-Verbose -Verbose "MC Found = $($mcFound.Source)"
+            Write-Log "MC Found = $($mcFound.Source)"
 
             @("nativemsh\pwrshplugin") | ForEach-Object {
                 $nativeResourcesFolder = $_
@@ -437,6 +427,10 @@ function Start-BuildNativeUnixBinaries {
     }
 }
 
+<#
+.SYNOPSIS
+ Expand the zip files, create NuGet package layout and then pack the nuget package.
+#>
 function Start-BuildPowerShellNativePackage
 {
     [CmdletBinding()]
@@ -483,12 +477,12 @@ function Start-BuildPowerShellNativePackage
 
     if(-not (Test-Path $PackageRoot))
     {
-        Write-Verbose "Creating PackageRoot: $PackageRoot as it does not exist."
+        Write-Log "Creating PackageRoot: $PackageRoot as it does not exist."
     }
 
     $tempExtractionPath = New-Item -ItemType Directory -Path "$env:TEMP\$(New-Guid)" -Force
 
-    Write-Verbose "Created tempExtractionPath: $tempExtractionPath" -Verbose
+    Write-Log "Created tempExtractionPath: $tempExtractionPath"
 
     $BinFolderX64 = Join-Path $tempExtractionPath "x64"
     $BinFolderX86 = Join-Path $tempExtractionPath "x86"
@@ -525,7 +519,7 @@ function Start-BuildPowerShellNativePackage
             <licenseUrl>https://github.com/PowerShell/PowerShell/blob/master/LICENSE.txt</licenseUrl>
             <tags>PowerShell</tags>
             <language>en-US</language>
-            <copyright>Copyright (c) Microsoft Corporation. All rights reserved.</copyright>
+            <copyright>© Microsoft Corporation. All rights reserved.</copyright>
             <contentFiles>
                 <files include="**/*" buildAction="None" copyToOutput="true" flatten="false" />
             </contentFiles>
@@ -534,9 +528,6 @@ function Start-BuildPowerShellNativePackage
 '@
 
     $Nuspec -f $Version | Out-File -FilePath (Join-Path $PackageRoot -ChildPath 'Microsoft.PowerShell.Native.nuspec') -Force
-
-    Write-Verbose "Listing all the files under PackageRoot" -Verbose
-    Get-ChildItem $PackageRoot -Recurse | ForEach-Object { Write-Verbose $_.FullName -Verbose}
 
     if(-not (Test-Path $NuGetOutputPath))
     {
@@ -557,6 +548,10 @@ function Start-BuildPowerShellNativePackage
     }
 }
 
+<#
+.SYNOPSIS
+ Copy the binaries for the PowerShell Native nuget package to appropriate runtime folders.
+#>
 function PlaceUnixBinaries
 {
     [CmdletBinding()]
@@ -586,6 +581,10 @@ function PlaceUnixBinaries
     Copy-Item "$BinFolderOSX\*" -Destination $RuntimePathOSX -Verbose
 }
 
+<#
+.SYNOPSIS
+ Copy the binaries for the PowerShell Native nuget package to appropriate runtime folders.
+#>
 function PlaceWindowsNativeBinaries
 {
     [CmdletBinding()]
