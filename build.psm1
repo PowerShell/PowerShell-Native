@@ -170,7 +170,16 @@ function Test-Win10SDK {
     #
     # A slightly more robust check is for the mc.exe binary within that directory.
     # It is only present if the SDK is installed.
-    return (Test-Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\mc.exe")
+
+    return (Test-Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\mc.exe")
+}
+
+function Get-LatestWinSDK {
+    $latestSDKPath = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10*" | Sort-Object -Descending | Select-Object -First 1
+
+    ## Always use x64 as we expect to build on an x64 build machine.
+    $archSpecificPath = Join-Path $latestSDKPath -ChildPath "x64"
+    return $archSpecificPath
 }
 
 function Start-BuildNativeWindowsBinaries {
@@ -210,9 +219,6 @@ function Start-BuildNativeWindowsBinaries {
     $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse | Select-Object -First 1).FullName
 
     $atlMfcIncludePath = Join-Path -Path $vcPath -ChildPath 'atlmfc/include'
-    if (!(Test-Path $atlMfcIncludePath)) { # for VS2017, need to search for it
-        $atlMfcIncludePath = (Get-ChildItem $vcPath,$alternateVCPath -Filter AtlBase.h -Recurse -File | Select-Object -First 1).DirectoryName
-    }
 
     # atlbase.h is included in the pwrshplugin project
     if ((Test-Path -Path $atlMfcIncludePath\atlbase.h) -eq $false) {
@@ -221,8 +227,12 @@ function Start-BuildNativeWindowsBinaries {
 
     # vcvarsall.bat is used to setup environment variables
     $vcvarsallbatPath = "$vcPath\vcvarsall.bat"
-    if (!(Test-Path -Path $vcvarsallbatPath)) { # for VS2017, need to search for it
-        $vcvarsallbatPath = (Get-ChildItem $vcPath,$alternateVCPath -Filter vcvarsall.bat -Recurse -File | Select-Object -First 1).FullName
+    $vcvarsallbatPathVS2017 = ( Get-ChildItem $alternateVCPath -Filter vcvarsall.bat -Recurse -File | Select-Object -First 1).FullName
+
+    if(Test-Path $vcvarsallbatPathVS2017)
+    {
+        # prefer VS2017 path
+        $vcvarsallbatPath = $vcvarsallbatPathVS2017
     }
 
     if ((Test-Path -Path $vcvarsallbatPath) -eq $false) {
@@ -232,8 +242,15 @@ function Start-BuildNativeWindowsBinaries {
     Write-Log "Start building native Windows binaries"
 
     if ($Clean) {
-        git clean -fdx
-        Remove-Item $HOME\source\cmakecache.txt -ErrorAction SilentlyContinue
+        Push-Location .
+        try {
+            Set-Location $PSScriptRoot
+            git clean -fdx
+            Remove-Item $HOME\source\cmakecache.txt -ErrorAction SilentlyContinue
+        }
+        finally {
+            Pop-Location
+        }
     }
 
     try {
@@ -258,15 +275,27 @@ function Start-BuildNativeWindowsBinaries {
 
         # Compile native resources
         $currentLocation = Get-Location
-        @("nativemsh\pwrshplugin") | ForEach-Object {
-            $nativeResourcesFolder = $_
-            Get-ChildItem $nativeResourcesFolder -Filter "*.mc" | ForEach-Object {
-                $command = @"
+        $savedPath = $env:PATH
+        $sdkPath = Get-LatestWinSDK
+
+        try {
+            $env:PATH = "$sdkPath;$env:PATH"
+            $mcFound = Get-Command mc.exe
+            Write-Log "MC Found = $($mcFound.Source)"
+
+            @("nativemsh\pwrshplugin") | ForEach-Object {
+                $nativeResourcesFolder = $_
+                Get-ChildItem $nativeResourcesFolder -Filter "*.mc" | ForEach-Object {
+                    $command = @"
 cmd.exe /C cd /d "$currentLocation" "&" "$vcvarsallbatPath" "$Arch" "&" mc.exe -o -d -c -U "$($_.FullName)" -h "$currentLocation\$nativeResourcesFolder" -r "$currentLocation\$nativeResourcesFolder"
 "@
-                Write-Log "  Executing mc.exe Command: $command"
-                Start-NativeExecution { Invoke-Expression -Command:$command }
+                    Write-Log "  Executing mc.exe Command: $command"
+                    Start-NativeExecution { Invoke-Expression -Command:$command } -VerboseOutputOnError
+                }
             }
+        }
+        finally {
+            $env:PATH = $savedPath
         }
 
         # make sure we use version we installed and not from VS
@@ -398,81 +427,233 @@ function Start-BuildNativeUnixBinaries {
     }
 }
 
-function Start-BuildWindowsNativePackage
+<#
+.SYNOPSIS
+ Expand the zip files, create NuGet package layout and then pack the nuget package.
+#>
+function Start-BuildPowerShellNativePackage
 {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
         [string] $PackageRoot,
 
         [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string] $PluginVersion
+        [string] $Version,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $WindowsX64ZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $WindowsX86ZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $WindowsARMZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $WindowsARM64ZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $LinuxZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $LinuxARMZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $macOSZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [string] $NuGetOutputPath,
+
+        [switch] $SkipCleanup = $false
     )
 
     if(-not (Test-Path $PackageRoot))
     {
-        Write-Verbose "Creating PackageRoot: $PackageRoot as it does not exist."
+        Write-Log "Creating PackageRoot: $PackageRoot as it does not exist."
     }
 
-    $plugingPackageRoot = Join-Path $PackageRoot -ChildPath 'psrp.windows'
+    $tempExtractionPath = New-Item -ItemType Directory -Path "$env:TEMP\$(New-Guid)" -Force
 
-    $pluginX64Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-x64','native')
-    $pluginX86Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-x86','native')
-    $pluginArmPath = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-arm','native')
-    $pluginArm64Path = New-Item -ItemType Directory -Path (Join-Path $plugingPackageRoot -ChildPath 'runtimes' -AdditionalChildPath 'win-arm64','native')
+    Write-Log "Created tempExtractionPath: $tempExtractionPath"
 
-    BuildPwrshPlugingNugetLayout -Destination $pluginX64Path -Arch 'x64'
-    BuildPwrshPlugingNugetLayout -Destination $pluginX86Path -Arch 'x86'
-    BuildPwrshPlugingNugetLayout -Destination $pluginArmPath -Arch 'x64_arm'
-    BuildPwrshPlugingNugetLayout -Destination $pluginArm64Path -Arch 'x64_arm64'
+    $BinFolderX64 = Join-Path $tempExtractionPath "x64"
+    $BinFolderX86 = Join-Path $tempExtractionPath "x86"
+    $BinFolderARM = Join-Path $tempExtractionPath "ARM"
+    $BinFolderARM64 = Join-Path $tempExtractionPath "ARM64"
+    $BinFolderLinux = Join-Path $tempExtractionPath "Linux"
+    $BinFolderLinuxARM = Join-Path $tempExtractionPath "LinuxARM"
+    $BinFolderMacOS = Join-Path $tempExtractionPath "MacOS"
 
-    $plugingNuspec = @'
+    Expand-Archive -Path $WindowsX64ZipPath -DestinationPath $BinFolderX64 -Force
+    Expand-Archive -Path $WindowsX86ZipPath -DestinationPath $BinFolderX86 -Force
+    Expand-Archive -Path $WindowsARMZipPath -DestinationPath $BinFolderARM -Force
+    Expand-Archive -Path $WindowsARM64ZipPath -DestinationPath $BinFolderARM64 -Force
+    Expand-Archive -Path $LinuxZipPath -DestinationPath $BinFolderLinux -Force
+    Expand-Archive -Path $LinuxARMZipPath -DestinationPath $BinFolderLinuxARM -Force
+    Expand-Archive -Path $macOSZipPath -DestinationPath $BinFolderMacOS -Force
+
+    PlaceWindowsNativeBinaries -PackageRoot $PackageRoot -BinFolderX64 $BinFolderX64 -BinFolderX86 $BinFolderX86 -BinFolderARM $BinFolderARM -BinFolderARM64 $BinFolderARM64
+
+    PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderOSX $BinFolderMacOS
+
+    $Nuspec = @'
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
     <metadata>
-    <id>psrp.windows</id>
-    <version>{0}</version>
-    <authors>Microsoftss</authors>
-    <owners>Microsoft,PowerShell</owners>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>PowerShell WS-Man PSRP Client for Windows</description>
-    <copyright>Copyright 2017 Microsoft</copyright>
-    <contentFiles>
-        <files include="**/*" buildAction="None" copyToOutput="true" flatten="false" />
-    </contentFiles>
-    </metadata>
+        <id>Microsoft.PowerShell.Native</id>
+        <version>{0}</version>
+        <authors>Microsoft</authors>
+        <owners>Microsoft,PowerShell</owners>
+        <requireLicenseAcceptance>true</requireLicenseAcceptance>
+        <description>Native binaries for PowerShell Core</description>
+            <projectUrl>https://github.com/PowerShell/PowerShell</projectUrl>
+            <iconUrl>https://github.com/PowerShell/PowerShell/blob/master/assets/Powershell_black_64.png</iconUrl>
+            <licenseUrl>https://github.com/PowerShell/PowerShell/blob/master/LICENSE.txt</licenseUrl>
+            <tags>PowerShell</tags>
+            <language>en-US</language>
+            <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+            <contentFiles>
+                <files include="**/*" buildAction="None" copyToOutput="true" flatten="false" />
+            </contentFiles>
+        </metadata>
 </package>
 '@
 
-    $plugingNuspec -f $PluginVersion | Out-File -FilePath (Join-Path $plugingPackageRoot -ChildPath 'psrp.windows.nuspec') -Force
+    $Nuspec -f $Version | Out-File -FilePath (Join-Path $PackageRoot -ChildPath 'Microsoft.PowerShell.Native.nuspec') -Force
+
+    if(-not (Test-Path $NuGetOutputPath))
+    {
+        $null = New-Item $NuGetOutputPath -Force -Verbose -ItemType Directory
+    }
 
     try {
-        Push-Location $plugingPackageRoot
-        nuget.exe pack .
+        Push-Location $PackageRoot
+        nuget.exe pack . -OutputDirectory $NuGetOutputPath
     }
     finally {
         Pop-Location
     }
+
+    if(-not $SkipCleanup -and (Test-Path $tempExtractionPath))
+    {
+        Remove-Item $tempExtractionPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }
 
-function BuildPwrshPlugingNugetLayout
+<#
+.SYNOPSIS
+ Copy the binaries for the PowerShell Native nuget package to appropriate runtime folders.
+#>
+function PlaceUnixBinaries
 {
+    [CmdletBinding()]
     param(
-        [string] $Destination,
-        [string] $Arch
+        [Parameter(Mandatory = $true)]
+        $PackageRoot,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderLinux,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderLinuxARM,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderOSX
     )
 
-    try {
-        Start-BuildNativeWindowsBinaries -Configuration 'Release' -Arch $Arch -Clean -ErrorAction Stop
-    }
-    catch {
-        throw "Build failed: $_.Message"
+    $RuntimePathLinux = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-x64/native') -Force
+    $RuntimePathLinuxARM = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-arm/native') -Force
+    $RuntimePathOSX = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/osx/native') -Force
+
+    Copy-Item "$BinFolderLinux\*" -Destination $RuntimePathLinux -Verbose
+    Copy-Item "$BinFolderLinuxARM\*" -Destination $RuntimePathLinuxARM -Verbose
+    Copy-Item "$BinFolderOSX\*" -Destination $RuntimePathOSX -Verbose
+}
+
+<#
+.SYNOPSIS
+ Copy the binaries for the PowerShell Native nuget package to appropriate runtime folders.
+#>
+function PlaceWindowsNativeBinaries
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        $PackageRoot,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderX64,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderX86,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderARM,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderARM64
+    )
+
+    $RuntimePathX64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-x64/native') -Force
+    $RuntimePathX86 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-x86/native') -Force
+    $RuntimePathARM = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-arm/native') -Force
+    $RuntimePathARM64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-arm64/native') -Force
+
+    Copy-Item "$BinFolderX64\*" -Destination $RuntimePathX64 -Verbose
+    Copy-Item "$BinFolderX86\*" -Destination $RuntimePathX86 -Verbose
+    Copy-Item "$BinFolderARM\*" -Destination $RuntimePathARM -Verbose
+    Copy-Item "$BinFolderARM64\*" -Destination $RuntimePathARM64 -Verbose
+}
+
+<#
+.SYNOPSIS
+Publish the specified Nuget Package to MyGet feed.
+
+.DESCRIPTION
+The specified nuget package is published to the powershell.myget.org/powershell-core feed.
+
+.PARAMETER PackagePath
+Path to the NuGet Package.
+
+.PARAMETER ApiKey
+API key for powershell.myget.org
+#>
+function Publish-NugetToMyGet
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $PackagePath,
+
+        [Parameter(Mandatory = $true)]
+        [string] $ApiKey
+    )
+
+    $nuget = Get-Command -Type Application nuget -ErrorAction SilentlyContinue
+
+    if($nuget -eq $null)
+    {
+        throw 'nuget application is not available in PATH'
     }
 
-    Copy-Item -Path $PSScriptRoot/src/powershell-win-core/pwrshplugin.dll -Destination $Destination
-    Copy-Item -Path $PSScriptRoot/src/powershell-win-core/pwrshplugin.pdb -Destination $Destination
+    Get-ChildItem $PackagePath | ForEach-Object {
+        Write-Log "Pushing $_ to PowerShell Myget"
+        Start-NativeExecution { nuget push $_.FullName -Source 'https://powershell.myget.org/F/powershell-core/api/v2/package' -ApiKey $ApiKey } > $null
+    }
 }
 
 function Start-PSBuild {
@@ -1847,7 +2028,7 @@ function Start-PSBootstrap {
                 }
                 elseif(($cmakePresent -eq $false) -or ($sdkPresent -eq $false)) {
                     Write-Log "Chocolatey not present. Installing chocolatey."
-                    if ($Force -or $PSCmdlet.ShouldProcess("Install chocolatey via https://chocolatey.org/install.ps1")) {
+                    if ($Force -or "Install chocolatey via https://chocolatey.org/install.ps1") {
                         Invoke-Expression ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
                         if (-not ($machinePath.ToLower().Contains($chocolateyPath.ToLower()))) {
                             Write-Log "Adding $chocolateyPath to Path environment variable"
@@ -2194,7 +2375,7 @@ function script:Start-NativeExecution
     try {
         if($VerboseOutputOnError.IsPresent)
         {
-            $output = & $sb
+            $output = & $sb 2>&1
         }
         else
         {
