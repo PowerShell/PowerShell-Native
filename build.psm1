@@ -470,6 +470,10 @@ function Start-BuildPowerShellNativePackage
         [string] $macOSZipPath,
 
         [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $psrpZipPath,
+
+        [Parameter(Mandatory = $true)]
         [string] $NuGetOutputPath,
 
         [switch] $SkipCleanup = $false
@@ -491,6 +495,7 @@ function Start-BuildPowerShellNativePackage
     $BinFolderLinux = Join-Path $tempExtractionPath "Linux"
     $BinFolderLinuxARM = Join-Path $tempExtractionPath "LinuxARM"
     $BinFolderMacOS = Join-Path $tempExtractionPath "MacOS"
+    $BinFolderPSRP = Join-Path $tempExtractionPath "PSRP"
 
     Expand-Archive -Path $WindowsX64ZipPath -DestinationPath $BinFolderX64 -Force
     Expand-Archive -Path $WindowsX86ZipPath -DestinationPath $BinFolderX86 -Force
@@ -499,10 +504,11 @@ function Start-BuildPowerShellNativePackage
     Expand-Archive -Path $LinuxZipPath -DestinationPath $BinFolderLinux -Force
     Expand-Archive -Path $LinuxARMZipPath -DestinationPath $BinFolderLinuxARM -Force
     Expand-Archive -Path $macOSZipPath -DestinationPath $BinFolderMacOS -Force
+    Expand-Archive -Path $psrpZipPath -DestinationPath $BinFolderPSRP -Force
 
     PlaceWindowsNativeBinaries -PackageRoot $PackageRoot -BinFolderX64 $BinFolderX64 -BinFolderX86 $BinFolderX86 -BinFolderARM $BinFolderARM -BinFolderARM64 $BinFolderARM64
 
-    PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderOSX $BinFolderMacOS
+    PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderOSX $BinFolderMacOS -BinFolderPSRP $BinFolderPSRP
 
     $Nuspec = @'
 <?xml version="1.0" encoding="utf-8"?>
@@ -569,7 +575,11 @@ function PlaceUnixBinaries
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Container})]
-        $BinFolderOSX
+        $BinFolderOSX,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderPSRP
     )
 
     $RuntimePathLinux = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-x64/native') -Force
@@ -579,6 +589,12 @@ function PlaceUnixBinaries
     Copy-Item "$BinFolderLinux\*" -Destination $RuntimePathLinux -Verbose
     Copy-Item "$BinFolderLinuxARM\*" -Destination $RuntimePathLinuxARM -Verbose
     Copy-Item "$BinFolderOSX\*" -Destination $RuntimePathOSX -Verbose
+
+    ## LinuxARM is not supported by PSRP
+    Get-ChildItem -Recurse $BinFolderPSRP/*.dylib | ForEach-Object { Copy-Item $_.FullName -Destination $RuntimePathOSX -Verbose }
+    Get-ChildItem -Recurse $BinFolderPSRP/*.so | ForEach-Object { Copy-Item $_.FullName -Destination $RuntimePathLinux -Verbose }
+
+    Copy-Item $BinFolderPSRP/version.txt -Destination "$PackageRoot/PSRP_version.txt" -Verbose
 }
 
 <#
