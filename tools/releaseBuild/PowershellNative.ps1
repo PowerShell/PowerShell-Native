@@ -32,11 +32,20 @@ end {
     Write-Verbose "Created output directory: $binOut" -Verbose
 
     if ($Arch -eq 'linux-x64' -or $Arch -eq 'osx') {
+
+        Write-Verbose "Starting Build for: $Arch" -Verbose
+
         Start-PSBootstrap
         Start-BuildNativeUnixBinaries
 
         $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
         Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+
+        $testResultPath = Join-Path $RepoRoot -ChildPath 'src/libpsl-native/test/native-tests.xml'
+
+        if (Test-Path $testResultPath) {
+            Copy-Item $testResultPath -Destination "$TargetLocation/linux-x64-native-tests.xml" -Verbose
+        }
     }
     elseif ($Arch -eq 'linux-arm') {
         Start-PSBootstrap -BuildLinuxArm

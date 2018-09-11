@@ -1,0 +1,30 @@
+name: PR-$(System.PullRequest.PullRequestNumber)-$(Date:yyyyMMdd)$(Rev:.rr)
+
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  # Avoid expensive initialization of dotnet cli, see: http://donovanbrown.com/post/Stop-wasting-time-during-NET-Core-builds
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  # Enable VSTS debug mode until stabilitized
+  system.debug: 'true'
+
+resources:
+  - repo: self
+    clean: true
+phases:
+- phase: Build
+
+  queue:
+    name: Hosted Ubuntu 1604
+    parallel: 2
+    matrix:
+      Linux ARM Native:
+        buildName: ubuntu.16.04
+      Linux Native:
+        buildName: centos.7
+
+  steps:
+  - powershell: |
+      tools/releaseBuild/vstsBuild.ps1 -Name $(buildName) -Verbose
+    displayName: Start build - $(buildName)
+    condition: succeededOrFailed()
