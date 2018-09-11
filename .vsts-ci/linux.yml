@@ -12,23 +12,24 @@ resources:
   - repo: self
     clean: true
 phases:
-- phase: Linux_Native_ARM
+- phase: Build
 
   queue:
     name: Hosted Ubuntu 1604
     parallel: 2
     matrix:
-      linux_native:
+      Linux ARM Native:
         buildName: ubuntu.16.04
-      linux_arm_native:
+      Linux Native:
         buildName: centos.7
 
   steps:
   - powershell: |
       tools/releaseBuild/vstsBuild.ps1 -Name $(buildName) -Verbose
-    displayName: Start Ubuntu build -
+    displayName: Start build - $(buildName)
     condition: succeededOrFailed()
 
-
-
-
+  - task: PublishTestResults@2
+    inputs:
+      testRunner: 'JUnit'
+      testResultFiles: '**/*native-tests.xml'
