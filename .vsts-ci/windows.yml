@@ -1,0 +1,51 @@
+name: PR-$(System.PullRequest.PullRequestNumber)-$(Date:yyyyMMdd)$(Rev:.rr)
+
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  # Avoid expensive initialization of dotnet cli, see: http://donovanbrown.com/post/Stop-wasting-time-during-NET-Core-builds
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+resources:
+  - repo: self
+    clean: true
+phases:
+- phase: Build
+
+  queue:
+    name: Hosted Windows Container
+    parallel: 4
+    matrix:
+      Windows x86:
+        buildName: x86
+      Windows x64:
+        buildName: x64
+      Windows x64_arm:
+        buildName: x64_arm
+      Windows x64_arm64:
+        buildName: x64_arm64
+
+  steps:
+  - powershell: |
+      choco install cmake.install --installargs 'ADD_CMAKE_TO_PATH=System'
+    displayName: Install cmake
+    condition: succeededOrFailed()
+  - powershell: |
+      choco install windows-sdk-10.1
+    displayName: Install Windows SDK 10.1
+    condition: succeeded()
+  - powershell: |
+      Invoke-WebRequest "https://aka.ms/vs/15/release/vs_BuildTools.exe" -OutFile vs_BuildTools.exe -UseBasicParsing
+      Start-Process -FilePath 'vs_BuildTools.exe' -ArgumentList '--quiet', '--norestart', '--locale en-US', '--add Microsoft.VisualStudio.Component.VC.Tools.ARM', '--add Microsoft.VisualStudio.Component.VC.Tools.ARM64', '--includeRecommended', '--add Microsoft.VisualStudio.Workload.VCTools', '--add Microsoft.VisualStudio.Component.Windows10SDK.16299.Desktop.arm', '--add Microsoft.VisualStudio.Component.VC.ATL', '--add Microsoft.VisualStudio.Component.VC.ATLMFC', '--add Microsoft.VisualStudio.Component.VC.ATL.ARM', '--add Microsoft.VisualStudio.Component.VC.ATL.ARM64' -Wait
+      Remove-Item .\vs_BuildTools.exe
+      Remove-Item -Force -Recurse 'C:\Program Files (x86)\Microsoft Visual Studio\Installer'
+      setx /M PATH $($Env:PATH + ';' + ${Env:ProgramFiles(x86)} + '\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin')
+    displayName: Install Visual Studio 2017
+    condition: succeeded()
+  - powershell: |
+      $cmakeBinPath = "$env:ProgramFiles\CMake\bin\"
+      if(Test-Path $cmakeBinPath) { $env:Path = "$cmakeBinPath;$env:PATH" } else { throw "CMake not installed under $cmakeBinPath" }
+      $(Build.SourcesDirectory)\tools\releaseBuild\PowerShellNative.ps1 -RepoRoot $(Build.SourcesDirectory) -TargetLocation "$(System.ArtifactsDirectory)\Packages" -Arch $(buildName) -Configuration Release -Symbols
+      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)\Packages\$(buildName)-symbols.zip"
+    displayName: Start build - $(buildName)
+    condition: succeeded()
