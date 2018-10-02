@@ -231,10 +231,10 @@ function Start-BuildNativeWindowsBinaries {
     } elseif ($alternateVCPath) {
         foreach($candidatePath in $alternateVCPath) {
             Write-Verbose -Verbose "Looking under $candidatePath"
-            $atlMfcIncludePath = Get-ChildItem -Path $candidatePath -Recurse -Filter 'atlbase.h' -File
+            $atlMfcIncludePath = @(Get-ChildItem -Path $candidatePath -Recurse -Filter 'atlbase.h' -File)
 
             $atlMfcIncludePath | ForEach-Object {
-                if($$_.FullName.EndsWith('atlmfc\include\atlbase.h')) {
+                if($_.FullName.EndsWith('atlmfc\include\atlbase.h')) {
                     Write-Verbose -Verbose "ATLF MFC found under $($_.FullName)"
                     $atlBaseFound = $true
                     break
