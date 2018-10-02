@@ -75,6 +75,15 @@ end {
         Write-VstsError -Error $_
     }
     finally {
+        $testResultPath = Get-ChildItem $env:AGENT_TEMPDIRECTORY -Recurse -Filter 'linux-x64-native-tests.xml'
+
+        if($testResultPath -and (Test-Path $testResultPath)) {
+            Write-Host "##vso[results.publish type=JUnit;mergeResults=true;runTitle=Native Test Results;publishRunAttachments=true;resultFiles=$testResultPath;]"
+        }
+        else {
+            Write-Verbose -Verbose "Test results file was not found."
+        }
+
         Write-VstsTaskState
         exit 0
     }

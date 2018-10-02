@@ -215,13 +215,39 @@ function Start-BuildNativeWindowsBinaries {
     if ($env:VS140COMNTOOLS -ne $null) {
         $vcPath = (Get-Item(Join-Path -Path "$env:VS140COMNTOOLS" -ChildPath '../../vc')).FullName
     }
+    Write-Verbose -Verbose "VCPath: $vcPath"
 
-    $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse | Select-Object -First 1).FullName
+    $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse).FullName
+    Write-Verbose -Verbose "alternateVCPath: $alternateVCPath"
 
-    $atlMfcIncludePath = Join-Path -Path $vcPath -ChildPath 'atlmfc/include'
+    $atlBaseFound = $false
+
+    if ($vcPath) {
+        $atlMfcIncludePath = Join-Path -Path $vcPath -ChildPath 'atlmfc/include'
+        if(Test-Path -Path "$atlMfcIncludePath\atlbase.h") {
+            Write-Verbose -Verbose "ATLF MFC found under $atlMfcIncludePath\atlbase.h"
+            $atlBaseFound = $true
+        }
+    } elseif ($alternateVCPath) {
+        foreach($candidatePath in $alternateVCPath) {
+            Write-Verbose -Verbose "Looking under $candidatePath"
+            $atlMfcIncludePath = @(Get-ChildItem -Path $candidatePath -Recurse -Filter 'atlbase.h' -File)
+
+            $atlMfcIncludePath | ForEach-Object {
+                if($_.FullName.EndsWith('atlmfc\include\atlbase.h')) {
+                    Write-Verbose -Verbose "ATLF MFC found under $($_.FullName)"
+                    $atlBaseFound = $true
+                    break
+                }
+            }
+        }
+    } else {
+        Write-Verbose -Verbose "PATH: $env:PATH"
+        throw "Visual Studio tools not found in PATH."
+    }
 
     # atlbase.h is included in the pwrshplugin project
-    if ((Test-Path -Path $atlMfcIncludePath\atlbase.h) -eq $false) {
+    if (-not $atlBaseFound) {
         throw "Could not find Visual Studio include file atlbase.h at $atlMfcIncludePath. Please ensure the optional feature 'Microsoft Foundation Classes for C++' is installed."
     }
 

@@ -25,18 +25,34 @@ param (
 )
 
 end {
-
+    Write-Verbose -Verbose "Starting PowerShellNative.ps1 Arch: $Arch, Config: $Configuration, Repo: $RepoRoot, Target: $TargetLocation"
     Import-Module $RepoRoot/build.psm1 -Force
     #$binOut = New-Item -Path $TargetLocation/$Arch -ItemType Directory -Force
     $binOut = New-Item -Path $TargetLocation -ItemType Directory -Force
     Write-Verbose "Created output directory: $binOut" -Verbose
 
     if ($Arch -eq 'linux-x64' -or $Arch -eq 'osx') {
+
+        Write-Verbose "Starting Build for: $Arch" -Verbose
+
         Start-PSBootstrap
         Start-BuildNativeUnixBinaries
 
         $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
         Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+
+        $testResultPath = Join-Path $RepoRoot -ChildPath 'src/libpsl-native/test/native-tests.xml'
+
+        if (Test-Path $testResultPath) {
+            if ($Arch -eq 'linux-x64') {
+                $name = 'linux-x64-native-tests.xml'
+            }
+            else {
+                $name = 'osx-native-tests.xml'
+            }
+
+            Copy-Item $testResultPath -Destination "$TargetLocation/$name" -Verbose
+        }
     }
     elseif ($Arch -eq 'linux-arm') {
         Start-PSBootstrap -BuildLinuxArm
@@ -46,9 +62,11 @@ end {
         Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
     }
     else {
+        Write-Verbose "Starting Start-PSBootstrap" -Verbose
         Start-PSBootstrap -BuildWindowsNative
+        Write-Verbose "Starting Start-BuildNativeWindowsBinaries" -Verbose
         Start-BuildNativeWindowsBinaries -Configuration $Configuration -Arch $Arch -Clean
-
+        Write-Verbose "Completed Start-BuildNativeWindowsBinaries" -Verbose
         $buildOutputPath = Join-Path $RepoRoot "src/powershell-win-core"
         Compress-Archive -Path "$buildOutputPath/*.dll" -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
 

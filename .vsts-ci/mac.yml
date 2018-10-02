@@ -1,0 +1,24 @@
+name: PR-$(System.PullRequest.PullRequestNumber)-$(Date:yyyyMMdd)$(Rev:.rr)
+
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  # Avoid expensive initialization of dotnet cli, see: http://donovanbrown.com/post/Stop-wasting-time-during-NET-Core-builds
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+resources:
+  - repo: self
+    clean: true
+phases:
+- phase: Build
+
+  queue:
+    name: Hosted macOS
+  steps:
+  - powershell: |
+      tools/releaseBuild/PowershellNative.ps1 -Arch osx -Configuration Release -RepoRoot $(Build.SourcesDirectory) -TargetLocation "$(System.ArtifactsDirectory)/Packages" -Verbose
+      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)/Packages/osx-symbols.zip"
+      $testResultPath = Get-ChildItem -Recurse -Filter 'native-tests.xml'
+      if($testResultPath -and (Test-Path $testResultPath)) { Write-Host "##vso[results.publish type=JUnit;mergeResults=true;runTitle=Native Test Results OSX;publishRunAttachments=true;resultFiles=$testResultPath;]"}
+    displayName: Start build
+    condition: succeededOrFailed()
