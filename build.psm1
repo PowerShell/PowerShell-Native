@@ -220,6 +220,8 @@ function Start-BuildNativeWindowsBinaries {
     $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse).FullName
     Write-Verbose -Verbose "alternateVCPath: $alternateVCPath"
 
+    $atlBaseFound = $false
+
     if ($vcPath) {
         $atlMfcIncludePath = Join-Path -Path $vcPath -ChildPath 'atlmfc/include'
         if(Test-Path -Path "$atlMfcIncludePath\atlbase.h") {
@@ -228,9 +230,9 @@ function Start-BuildNativeWindowsBinaries {
         }
     } elseif ($alternateVCPath) {
         foreach($candidatePath in $alternateVCPath) {
-            $atlMfcIncludePath = Join-Path -Path $candidatePath -ChildPath 'atlmfc/include'
-            Write-Verbose -Verbose "Looking under $atlMfcIncludePath"
-            if(Test-Path -Path "$atlMfcIncludePath\atlbase.h") {
+            Write-Verbose -Verbose "Looking under $candidatePath"
+            $atlMfcIncludePath = Get-ChildItem -Path $candidatePath -Recurse -Filter 'atlbase.h' -File
+            if($atlMfcIncludePath.FullName.EndsWith('atlmfc\include\atlbase.h')) {
                 Write-Verbose -Verbose "ATLF MFC found under $atlMfcIncludePath\atlbase.h"
                 $atlBaseFound = $true
                 break
@@ -242,7 +244,7 @@ function Start-BuildNativeWindowsBinaries {
     }
 
     # atlbase.h is included in the pwrshplugin project
-    if ($atlBaseFound) {
+    if (-not $atlBaseFound) {
         throw "Could not find Visual Studio include file atlbase.h at $atlMfcIncludePath. Please ensure the optional feature 'Microsoft Foundation Classes for C++' is installed."
     }
 
