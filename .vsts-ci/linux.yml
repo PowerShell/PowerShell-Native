@@ -25,4 +25,4 @@ phases:
   - powershell: |
       tools/releaseBuild/vstsBuild.ps1 -Name $(buildName) -Verbose
     displayName: Start build - $(buildName)
-    condition: succeededOrFailed()
+    condition: succeeded()

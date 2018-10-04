@@ -17,8 +17,9 @@ phases:
   steps:
   - powershell: |
       tools/releaseBuild/PowershellNative.ps1 -Arch osx -Configuration Release -RepoRoot $(Build.SourcesDirectory) -TargetLocation "$(System.ArtifactsDirectory)/Packages" -Verbose
-      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)/Packages/osx-symbols.zip"
-      $testResultPath = Get-ChildItem -Recurse -Filter 'native-tests.xml'
-      if($testResultPath -and (Test-Path $testResultPath)) { Write-Host "##vso[results.publish type=JUnit;mergeResults=true;runTitle=Native Test Results OSX;publishRunAttachments=true;resultFiles=$testResultPath;]"}
     displayName: Start build
-    condition: succeededOrFailed()
+    condition: succeeded()
+  - powershell: |
+      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)/Packages/osx-symbols.zip"
+    displayName: Upload artifacts
+    condition: ne(variables['Build.Reason'], 'PullRequest')

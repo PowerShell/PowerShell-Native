@@ -38,28 +38,30 @@ end {
         Start-PSBootstrap
         Start-BuildNativeUnixBinaries
 
-        $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
-        Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+        if ($env:BUILD_REASON -ne 'PullRequest') {
+            $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
+            Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+        } else {
+            Write-Verbose -Verbose "Skipping artifact upload since this is a PR."
+        }
 
         $testResultPath = Join-Path $RepoRoot -ChildPath 'src/libpsl-native/test/native-tests.xml'
 
         if (Test-Path $testResultPath) {
-            if ($Arch -eq 'linux-x64') {
-                $name = 'linux-x64-native-tests.xml'
-            }
-            else {
-                $name = 'osx-native-tests.xml'
-            }
-
-            Copy-Item $testResultPath -Destination "$TargetLocation/$name" -Verbose
+            Copy-Item $testResultPath -Destination $TargetLocation -Verbose -Force
         }
     }
     elseif ($Arch -eq 'linux-arm') {
         Start-PSBootstrap -BuildLinuxArm
         Start-BuildNativeUnixBinaries -BuildLinuxArm
 
-        $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
-        Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+        if ($env:BUILD_REASON -ne 'PullRequest') {
+            $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
+            Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+        } else {
+            Write-Verbose -Verbose "Skipping artifact upload since this is a PR."
+        }
+
     }
     else {
         Write-Verbose "Starting Start-PSBootstrap" -Verbose
@@ -67,11 +69,16 @@ end {
         Write-Verbose "Starting Start-BuildNativeWindowsBinaries" -Verbose
         Start-BuildNativeWindowsBinaries -Configuration $Configuration -Arch $Arch -Clean
         Write-Verbose "Completed Start-BuildNativeWindowsBinaries" -Verbose
-        $buildOutputPath = Join-Path $RepoRoot "src/powershell-win-core"
-        Compress-Archive -Path "$buildOutputPath/*.dll" -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
 
-        if ($Symbols.IsPresent) {
-            Compress-Archive -Path "$buildOutputPath/*.pdb" -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Update -Verbose
+        if ($env:BUILD_REASON -ne 'PullRequest') {
+            $buildOutputPath = Join-Path $RepoRoot "src/powershell-win-core"
+            Compress-Archive -Path "$buildOutputPath/*.dll" -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+
+            if ($Symbols.IsPresent) {
+                Compress-Archive -Path "$buildOutputPath/*.pdb" -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Update -Verbose
+            }
+        } else {
+            Write-Verbose -Verbose "Skipping artifact upload since this is a PR."
         }
     }
 }
