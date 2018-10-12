@@ -222,13 +222,7 @@ function Start-BuildNativeWindowsBinaries {
 
     $atlBaseFound = $false
 
-    if ($vcPath) {
-        $atlMfcIncludePath = Join-Path -Path $vcPath -ChildPath 'atlmfc/include'
-        if(Test-Path -Path "$atlMfcIncludePath\atlbase.h") {
-            Write-Verbose -Verbose "ATLF MFC found under $atlMfcIncludePath\atlbase.h"
-            $atlBaseFound = $true
-        }
-    } elseif ($alternateVCPath) {
+    if ($alternateVCPath) {
         foreach($candidatePath in $alternateVCPath) {
             Write-Verbose -Verbose "Looking under $candidatePath"
             $atlMfcIncludePath = @(Get-ChildItem -Path $candidatePath -Recurse -Filter 'atlbase.h' -File)
@@ -240,6 +234,12 @@ function Start-BuildNativeWindowsBinaries {
                     break
                 }
             }
+        }
+    } elseif ($vcPath) {
+        $atlMfcIncludePath = Join-Path -Path $vcPath -ChildPath 'atlmfc/include'
+        if(Test-Path -Path "$atlMfcIncludePath\atlbase.h") {
+            Write-Verbose -Verbose "ATLF MFC found under $atlMfcIncludePath\atlbase.h"
+            $atlBaseFound = $true
         }
     } else {
         Write-Verbose -Verbose "PATH: $env:PATH"
