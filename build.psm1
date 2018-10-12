@@ -391,7 +391,8 @@ cmd.exe /C cd /d "$location" "&" "$vcvarsallbatPath" "$Arch" "&" "$cmakePath" "$
 
 function Start-BuildNativeUnixBinaries {
     param (
-        [switch] $BuildLinuxArm
+        [switch] $BuildLinuxArm,
+        [switch] $BuildLinuxArm64
     )
 
     if (-not $Environment.IsLinux -and -not $Environment.IsMacOS) {
@@ -399,8 +400,8 @@ function Start-BuildNativeUnixBinaries {
         return
     }
 
-    if ($BuildLinuxArm -and -not $Environment.IsUbuntu) {
-        throw "Cross compiling for linux-arm is only supported on Ubuntu environment"
+    if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not $Environment.IsUbuntu) {
+        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
     }
 
     # Verify we have all tools in place to do the build
@@ -411,6 +412,10 @@ function Start-BuildNativeUnixBinaries {
 
     if ($BuildLinuxArm) {
         foreach ($Dependency in 'arm-linux-gnueabihf-gcc', 'arm-linux-gnueabihf-g++') {
+            $precheck = $precheck -and (precheck $Dependency "Build dependency '$Dependency' not found. Run 'Start-PSBootstrap'.")
+        }
+    } elseif ($BuildLinuxArm64) {
+        foreach ($Dependency in 'aarch64-linux-gnu-gcc', 'aarch64-linux-gnu-g++') {
             $precheck = $precheck -and (precheck $Dependency "Build dependency '$Dependency' not found. Run 'Start-PSBootstrap'.")
         }
     }
@@ -437,6 +442,10 @@ function Start-BuildNativeUnixBinaries {
         Push-Location $Native
         if ($BuildLinuxArm) {
             Start-NativeExecution { cmake -DCMAKE_TOOLCHAIN_FILE="./arm.toolchain.cmake" . }
+            Start-NativeExecution { make -j }
+        }
+        elseif ($BuildLinuxArm64) {
+            Start-NativeExecution { cmake -DCMAKE_TOOLCHAIN_FILE="./arm64.toolchain.cmake" . }
             Start-NativeExecution { make -j }
         }
         else {
@@ -610,6 +619,7 @@ function PlaceUnixBinaries
 
     $RuntimePathLinux = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-x64/native') -Force
     $RuntimePathLinuxARM = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-arm/native') -Force
+    $RuntimePathLinuxARM64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-arm64/native') -Force
     $RuntimePathOSX = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/osx/native') -Force
 
     Copy-Item "$BinFolderLinux\*" -Destination $RuntimePathLinux -Verbose
@@ -725,6 +735,7 @@ function Start-PSBuild {
                      "osx-x64",
                      "linux-x64",
                      "linux-arm",
+                     "linux-arm64",
                      "win-arm",
                      "win-arm64")]
         [string]$Runtime,
@@ -739,8 +750,8 @@ function Start-PSBuild {
         [string]$ReleaseTag
     )
 
-    if ($Runtime -eq "linux-arm" -and -not $Environment.IsUbuntu) {
-        throw "Cross compiling for linux-arm is only supported on Ubuntu environment"
+    if (($Runtime -eq "linux-arm" -or $Runtime -eq "linux-arm64") -and -not $Environment.IsUbuntu) {
+        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
     }
 
     if ("win-arm","win-arm64" -contains $Runtime -and -not $Environment.IsWindows) {
@@ -1037,6 +1048,7 @@ function New-PSOptions {
                      "osx-x64",
                      "linux-x64",
                      "linux-arm",
+                     "linux-arm64",
                      "win-arm",
                      "win-arm64")]
         [string]$Runtime,
@@ -1860,6 +1872,7 @@ function Start-PSBootstrap {
         [switch]$NoSudo,
         [switch]$BuildWindowsNative,
         [switch]$BuildLinuxArm,
+        [switch]$BuildLinuxArm64,
         [switch]$Force
     )
 
@@ -1883,8 +1896,8 @@ function Start-PSBootstrap {
                 Pop-Location
             }
 
-            if ($BuildLinuxArm -and -not $Environment.IsUbuntu) {
-                Write-Error "Cross compiling for linux-arm is only supported on Ubuntu environment"
+            if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not $Environment.IsUbuntu) {
+                Write-Error "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
                 return
             }
 
@@ -1896,6 +1909,8 @@ function Start-PSBootstrap {
 
                 if ($BuildLinuxArm) {
                     $Deps += "gcc-arm-linux-gnueabihf", "g++-arm-linux-gnueabihf"
+                } elseif ($BuildLinuxArm64) {
+                    $Deps += "gcc-aarch64-linux-gnu", "g++-aarch64-linux-gnu"
                 }
 
                 # .NET Core required runtime libraries
@@ -2464,6 +2479,7 @@ function Start-CrossGen {
                      "osx-x64",
                      "linux-x64",
                      "linux-arm",
+                     "linux-arm64",
                      "win-arm",
                      "win-arm64")]
         [string]
@@ -2526,6 +2542,8 @@ function Start-CrossGen {
         }
     } elseif ($Runtime -eq "linux-arm") {
         throw "crossgen is not available for 'linux-arm'"
+    } elseif ($Runtime -eq "linux-arm64") {
+        throw "crossgen is not available for 'linux-arm64'"
     } elseif ($Environment.IsLinux) {
         "linux-x64"
     } elseif ($Environment.IsMacOS) {
