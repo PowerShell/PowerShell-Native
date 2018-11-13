@@ -535,7 +535,7 @@ function Start-BuildPowerShellNativePackage
     Expand-Archive -Path $WindowsARMZipPath -DestinationPath $BinFolderARM -Force
     Expand-Archive -Path $WindowsARM64ZipPath -DestinationPath $BinFolderARM64 -Force
     Expand-Archive -Path $LinuxZipPath -DestinationPath $BinFolderLinux -Force
-    Expand-Archive -Path $LinuxAlpineZipPath -DestinationPath $BinFolderLinux -Force
+    Expand-Archive -Path $LinuxAlpineZipPath -DestinationPath $BinFolderLinuxAlpine -Force
     Expand-Archive -Path $LinuxARMZipPath -DestinationPath $BinFolderLinuxARM -Force
     Expand-Archive -Path $macOSZipPath -DestinationPath $BinFolderMacOS -Force
     Expand-Archive -Path $psrpZipPath -DestinationPath $BinFolderPSRP -Force
