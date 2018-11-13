@@ -416,7 +416,6 @@ function Start-BuildNativeUnixBinaries {
         }
     }
 
-
     # Abort if any precheck failed
     if (-not $precheck) {
         return
