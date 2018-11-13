@@ -144,6 +144,7 @@ function Get-EnvironmentInformation
         $environment += @{'IsOpenSUSE42.1' = $Environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '42.1'}
         $environment += @{'IsRedHatFamily' = $Environment.IsCentOS -or $Environment.IsFedora}
         $environment += @{'IsSUSEFamily' = $Environment.IsSLES -or $Environment.IsOpenSUSE}
+        $environment += @{'IsAlpine' = $LinuxInfo.ID -match 'alpine'}
 
         # Workaround for temporary LD_LIBRARY_PATH hack for Fedora 24
         # https://github.com/PowerShell/PowerShell/issues/2511
@@ -414,6 +415,7 @@ function Start-BuildNativeUnixBinaries {
             $precheck = $precheck -and (precheck $Dependency "Build dependency '$Dependency' not found. Run 'Start-PSBootstrap'.")
         }
     }
+
 
     # Abort if any precheck failed
     if (-not $precheck) {
@@ -1979,6 +1981,12 @@ function Start-PSBootstrap {
 
                 # Install patched version of curl
                 Start-NativeExecution { brew install curl --with-openssl --with-gssapi } -IgnoreExitcode
+            } elseif ($Environment.IsAlpine) {
+                $Deps += "build-base", "gcc", "abuild", "binutils", "git", "python", "bash", "cmake"
+
+                # Install dependencies
+                Start-NativeExecution { apk update }
+                Start-NativeExecution { apk add build-base gcc abuild binutils git python bash cmake }
             }
 
             # Install [fpm](https://github.com/jordansissel/fpm) and [ronn](https://github.com/rtomayko/ronn)

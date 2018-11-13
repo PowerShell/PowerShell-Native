@@ -6,7 +6,7 @@
 param (
 
     [Parameter(Mandatory, ParameterSetName = 'Build')]
-    [ValidateSet('x64', 'x86', 'x64_arm', 'x64_arm64', 'linux-x64', 'osx', 'linux-arm')]
+    [ValidateSet('x64', 'x86', 'x64_arm', 'x64_arm64', 'linux-x64', 'osx', 'linux-arm', 'linux-musl')]
     [string]
     $Arch,
 
@@ -31,7 +31,7 @@ end {
     $binOut = New-Item -Path $TargetLocation -ItemType Directory -Force
     Write-Verbose "Created output directory: $binOut" -Verbose
 
-    if ($Arch -eq 'linux-x64' -or $Arch -eq 'osx') {
+    if ($Arch -eq 'linux-x64' -or $Arch -eq 'osx' -or $Arch -eq 'linux-musl') {
 
         Write-Verbose "Starting Build for: $Arch" -Verbose
 
@@ -61,7 +61,6 @@ end {
         } else {
             Write-Verbose -Verbose "Skipping artifact upload since this is a PR."
         }
-
     }
     else {
         Write-Verbose "Starting Start-PSBootstrap" -Verbose
