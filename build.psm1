@@ -495,6 +495,10 @@ function Start-BuildPowerShellNativePackage
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $LinuxAlpineZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
         [string] $macOSZipPath,
 
         [Parameter(Mandatory = $true)]
@@ -522,6 +526,7 @@ function Start-BuildPowerShellNativePackage
     $BinFolderARM64 = Join-Path $tempExtractionPath "ARM64"
     $BinFolderLinux = Join-Path $tempExtractionPath "Linux"
     $BinFolderLinuxARM = Join-Path $tempExtractionPath "LinuxARM"
+    $BinFolderLinuxAlpine = Join-Path $tempExtractionPath "LinuxAlpine"
     $BinFolderMacOS = Join-Path $tempExtractionPath "MacOS"
     $BinFolderPSRP = Join-Path $tempExtractionPath "PSRP"
 
@@ -530,13 +535,14 @@ function Start-BuildPowerShellNativePackage
     Expand-Archive -Path $WindowsARMZipPath -DestinationPath $BinFolderARM -Force
     Expand-Archive -Path $WindowsARM64ZipPath -DestinationPath $BinFolderARM64 -Force
     Expand-Archive -Path $LinuxZipPath -DestinationPath $BinFolderLinux -Force
+    Expand-Archive -Path $LinuxAlpineZipPath -DestinationPath $BinFolderLinux -Force
     Expand-Archive -Path $LinuxARMZipPath -DestinationPath $BinFolderLinuxARM -Force
     Expand-Archive -Path $macOSZipPath -DestinationPath $BinFolderMacOS -Force
     Expand-Archive -Path $psrpZipPath -DestinationPath $BinFolderPSRP -Force
 
     PlaceWindowsNativeBinaries -PackageRoot $PackageRoot -BinFolderX64 $BinFolderX64 -BinFolderX86 $BinFolderX86 -BinFolderARM $BinFolderARM -BinFolderARM64 $BinFolderARM64
 
-    PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderOSX $BinFolderMacOS -BinFolderPSRP $BinFolderPSRP
+    PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderOSX $BinFolderMacOS -BinFolderPSRP $BinFolderPSRP -BinFolderLinuxAlpine $BinFolderLinuxAlpine
 
     $Nuspec = @'
 <?xml version="1.0" encoding="utf-8"?>
@@ -603,6 +609,10 @@ function PlaceUnixBinaries
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderLinuxAlpine,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
         $BinFolderOSX,
 
         [Parameter(Mandatory = $true)]
@@ -612,10 +622,12 @@ function PlaceUnixBinaries
 
     $RuntimePathLinux = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-x64/native') -Force
     $RuntimePathLinuxARM = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-arm/native') -Force
+    $RuntimePathLinuxAlpine = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-musl-x64/native') -Force
     $RuntimePathOSX = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/osx/native') -Force
 
     Copy-Item "$BinFolderLinux\*" -Destination $RuntimePathLinux -Verbose
     Copy-Item "$BinFolderLinuxARM\*" -Destination $RuntimePathLinuxARM -Verbose
+    Copy-Item "$BinFolderLinuxAlpine\*" -Destination $RuntimePathLinuxAlpine -Verbose
     Copy-Item "$BinFolderOSX\*" -Destination $RuntimePathOSX -Verbose
 
     ## LinuxARM is not supported by PSRP
@@ -1986,7 +1998,7 @@ function Start-PSBootstrap {
 
                 # Install dependencies
                 Start-NativeExecution { apk update }
-                Start-NativeExecution { apk add build-base gcc abuild binutils git python bash cmake }
+                Start-NativeExecution { apk add $Deps }
             }
 
             # Install [fpm](https://github.com/jordansissel/fpm) and [ronn](https://github.com/rtomayko/ronn)

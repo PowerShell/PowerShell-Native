@@ -101,7 +101,7 @@
         {
             "Name": "alpine",
             "RepoDestinationPath": "/PowerShellNative",
-            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-musl -Configuration Release",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-musl-x64 -Configuration Release",
             "AdditionalContextFiles": [
                 "./tools/releaseBuild/PowershellNative.ps1"
             ],
