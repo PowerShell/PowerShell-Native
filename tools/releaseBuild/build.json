@@ -97,6 +97,18 @@
             "DockerImageName": "ps-centos-7",
             "BinaryBucket": "release",
             "EnableFeature": [ "ArtifactAsFolder" ]
+        },
+        {
+            "Name": "alpine",
+            "RepoDestinationPath": "/PowerShellNative",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-musl-x64 -Configuration Release",
+            "AdditionalContextFiles": [
+                "./tools/releaseBuild/PowershellNative.ps1"
+            ],
+            "DockerFile": "./tools/releaseBuild/images/Alpine/Dockerfile",
+            "DockerImageName": "ps-alpine",
+            "BinaryBucket": "release",
+            "EnableFeature": [ "ArtifactAsFolder" ]
         }
     ]
 }

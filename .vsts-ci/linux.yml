@@ -20,6 +20,8 @@ phases:
         buildName: ubuntu.16.04
       Linux Native:
         buildName: centos.7
+      Linux Alpine:
+        buildName: alpine
 
   steps:
   - powershell: |
