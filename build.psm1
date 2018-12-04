@@ -503,6 +503,10 @@ function Start-BuildPowerShellNativePackage
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $LinuxARM64ZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
         [string] $LinuxAlpineZipPath,
 
         [Parameter(Mandatory = $true)]
@@ -545,6 +549,7 @@ function Start-BuildPowerShellNativePackage
     Expand-Archive -Path $LinuxZipPath -DestinationPath $BinFolderLinux -Force
     Expand-Archive -Path $LinuxAlpineZipPath -DestinationPath $BinFolderLinuxAlpine -Force
     Expand-Archive -Path $LinuxARMZipPath -DestinationPath $BinFolderLinuxARM -Force
+    Expand-Archive -Path $LinuxARM64ZipPath -DestinationPath $BinFolderLinuxARM64 -Force
     Expand-Archive -Path $macOSZipPath -DestinationPath $BinFolderMacOS -Force
     Expand-Archive -Path $psrpZipPath -DestinationPath $BinFolderPSRP -Force
 
@@ -617,6 +622,10 @@ function PlaceUnixBinaries
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderLinuxARM64,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
         $BinFolderLinuxAlpine,
 
         [Parameter(Mandatory = $true)]
@@ -636,6 +645,7 @@ function PlaceUnixBinaries
 
     Copy-Item "$BinFolderLinux\*" -Destination $RuntimePathLinux -Verbose
     Copy-Item "$BinFolderLinuxARM\*" -Destination $RuntimePathLinuxARM -Verbose
+    Copy-Item "$BinFolderLinuxARM64\*" -Destination $RuntimePathLinuxARM64 -Verbose
     Copy-Item "$BinFolderLinuxAlpine\*" -Destination $RuntimePathLinuxAlpine -Verbose
     Copy-Item "$BinFolderOSX\*" -Destination $RuntimePathOSX -Verbose
 

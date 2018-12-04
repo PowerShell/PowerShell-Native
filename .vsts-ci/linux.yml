@@ -17,9 +17,9 @@ phases:
     parallel: 2
     matrix:
       Linux ARM Native:
-        buildName: ubuntu.16.04
+        buildName: ubuntu.16.04-arm
       Linux ARM64 Native:
-        buildName: ubuntu.16.04
+        buildName: ubuntu.16.04-arm64
       Linux Native:
         buildName: centos.7
       Linux Alpine:
