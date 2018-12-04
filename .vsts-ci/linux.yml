@@ -18,6 +18,8 @@ phases:
     matrix:
       Linux ARM Native:
         buildName: ubuntu.16.04
+      Linux ARM64 Native:
+        buildName: ubuntu.16.04
       Linux Native:
         buildName: centos.7
       Linux Alpine:

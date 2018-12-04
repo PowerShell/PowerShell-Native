@@ -6,7 +6,7 @@
 param (
 
     [Parameter(Mandatory, ParameterSetName = 'Build')]
-    [ValidateSet('x64', 'x86', 'x64_arm', 'x64_arm64', 'linux-x64', 'osx', 'linux-arm', 'linux-musl-x64')]
+    [ValidateSet('x64', 'x86', 'x64_arm', 'x64_arm64', 'linux-x64', 'osx', 'linux-arm', 'linux-arm64', 'linux-musl-x64')]
     [string]
     $Arch,
 
@@ -54,6 +54,17 @@ end {
     elseif ($Arch -eq 'linux-arm') {
         Start-PSBootstrap -BuildLinuxArm
         Start-BuildNativeUnixBinaries -BuildLinuxArm
+
+        if ($env:BUILD_REASON -ne 'PullRequest') {
+            $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
+            Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+        } else {
+            Write-Verbose -Verbose "Skipping artifact upload since this is a PR."
+        }
+    }
+    elseif ($Arch -eq 'linux-arm64') {
+        Start-PSBootstrap -BuildLinuxArm64
+        Start-BuildNativeUnixBinaries -BuildLinuxArm64
 
         if ($env:BUILD_REASON -ne 'PullRequest') {
             $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
