@@ -538,6 +538,7 @@ function Start-BuildPowerShellNativePackage
     $BinFolderARM64 = Join-Path $tempExtractionPath "ARM64"
     $BinFolderLinux = Join-Path $tempExtractionPath "Linux"
     $BinFolderLinuxARM = Join-Path $tempExtractionPath "LinuxARM"
+    $BinFolderLinuxARM64 = Join-Path $tempExtractionPath "LinuxARM64"
     $BinFolderLinuxAlpine = Join-Path $tempExtractionPath "LinuxAlpine"
     $BinFolderMacOS = Join-Path $tempExtractionPath "MacOS"
     $BinFolderPSRP = Join-Path $tempExtractionPath "PSRP"
@@ -555,7 +556,7 @@ function Start-BuildPowerShellNativePackage
 
     PlaceWindowsNativeBinaries -PackageRoot $PackageRoot -BinFolderX64 $BinFolderX64 -BinFolderX86 $BinFolderX86 -BinFolderARM $BinFolderARM -BinFolderARM64 $BinFolderARM64
 
-    PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderOSX $BinFolderMacOS -BinFolderPSRP $BinFolderPSRP -BinFolderLinuxAlpine $BinFolderLinuxAlpine
+    PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderLinuxARM64 $BinFolderLinuxARM64 -BinFolderOSX $BinFolderMacOS -BinFolderPSRP $BinFolderPSRP -BinFolderLinuxAlpine $BinFolderLinuxAlpine
 
     $Nuspec = @'
 <?xml version="1.0" encoding="utf-8"?>
