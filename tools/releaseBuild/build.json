@@ -75,9 +75,21 @@
     ],
     "Linux": [
         {
-            "Name": "ubuntu.16.04",
+            "Name": "ubuntu.16.04-arm",
             "RepoDestinationPath": "/PowerShellNative",
             "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-arm -Configuration Release",
+            "AdditionalContextFiles": [
+                "./tools/releaseBuild/PowershellNative.ps1"
+            ],
+            "DockerFile": "./tools/releaseBuild/images/Ubuntu16.04/Dockerfile",
+            "DockerImageName": "ps-ubunutu-16-04",
+            "BinaryBucket": "release",
+            "EnableFeature": [ "ArtifactAsFolder" ]
+        },
+        {
+            "Name": "ubuntu.16.04-arm64",
+            "RepoDestinationPath": "/PowerShellNative",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-arm64 -Configuration Release",
             "AdditionalContextFiles": [
                 "./tools/releaseBuild/PowershellNative.ps1"
             ],
