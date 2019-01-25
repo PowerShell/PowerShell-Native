@@ -571,6 +571,7 @@ function Start-BuildPowerShellNativePackage
             <projectUrl>https://github.com/PowerShell/PowerShell</projectUrl>
             <iconUrl>https://github.com/PowerShell/PowerShell/blob/master/assets/Powershell_black_64.png?raw=true</iconUrl>
             <licenseUrl>https://github.com/PowerShell/PowerShell/blob/master/LICENSE.txt</licenseUrl>
+            <license type="expression">MIT</license>
             <tags>PowerShell</tags>
             <language>en-US</language>
             <copyright>© Microsoft Corporation. All rights reserved.</copyright>
