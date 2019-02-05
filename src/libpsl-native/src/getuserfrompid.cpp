@@ -32,7 +32,7 @@ char* GetUserFromPid(pid_t pid)
 
     return GetFileOwner(path.c_str());
 
-#elif defined(__APPLE__) && defined(__MACH__)
+#elif (defined(__APPLE__) && defined(__MACH__)) || defined(__FreeBSD__)
 
     // Get effective owner of pid from sysctl
     struct kinfo_proc oldp;
@@ -47,23 +47,11 @@ char* GetUserFromPid(pid_t pid)
         return NULL;
     }
 
-    return GetPwUid(oldp.kp_eproc.e_ucred.cr_uid);
-
-#elif defined(__FreeBSD__)
-
-    // Get effective owner of pid from sysctl
-    struct kinfo_proc oldp;
-    size_t oldlenp = sizeof(oldp);
-    int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid };
-    u_int namelen = sizeof(name)/sizeof(int);
-
-    int ret = sysctl(name, namelen, &oldp, &oldlenp, NULL, 0);
-    if (ret != 0 || oldlenp == 0)
-    {
-        return NULL;
-    }
-
+#if defined(__FreeBSD__)
     return GetPwUid(oldp.ki_uid);
+#else
+    return GetPwUid(oldp.kp_eproc.e_ucred.cr_uid);
+#endif
 
 #else
 
