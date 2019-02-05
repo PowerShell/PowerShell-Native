@@ -15,6 +15,10 @@
 #include <sys/sysctl.h>
 #endif
 
+#if __FreeBSD__
+#include <sys/user.h>
+#endif
+
 char* GetUserFromPid(pid_t pid)
 {
 
@@ -28,7 +32,7 @@ char* GetUserFromPid(pid_t pid)
 
     return GetFileOwner(path.c_str());
 
-#elif defined(__APPLE__) && defined(__MACH__)
+#elif (defined(__APPLE__) && defined(__MACH__)) || defined(__FreeBSD__)
 
     // Get effective owner of pid from sysctl
     struct kinfo_proc oldp;
@@ -43,7 +47,11 @@ char* GetUserFromPid(pid_t pid)
         return NULL;
     }
 
+#if defined(__FreeBSD__)
+    return GetPwUid(oldp.ki_uid);
+#else
     return GetPwUid(oldp.kp_eproc.e_ucred.cr_uid);
+#endif
 
 #else
 
