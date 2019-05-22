@@ -5,10 +5,8 @@ add_executable(psl-native-test
   test-locale.cpp
   test-getuserfrompid.cpp
   test-getcurrentprocessid.cpp
-  test-getusername.cpp
   test-getcomputername.cpp
   test-getlinkcount.cpp
-  test-getfullyqualifiedname.cpp
   test-isdirectory.cpp
   test-isfile.cpp
   test-issymlink.cpp

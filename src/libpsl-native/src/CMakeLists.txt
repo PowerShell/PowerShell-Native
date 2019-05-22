@@ -8,10 +8,8 @@ add_library(psl-native SHARED
   getfileowner.cpp
   getcurrentthreadid.cpp
   getcurrentprocessorid.cpp
-  getusername.cpp
   getcomputername.cpp
   getlinkcount.cpp
-  getfullyqualifiedname.cpp
   geterrorcategory.cpp
   getinodedata.cpp
   isfile.cpp
