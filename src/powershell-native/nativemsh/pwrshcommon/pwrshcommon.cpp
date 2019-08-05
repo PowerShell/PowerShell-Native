@@ -668,6 +668,7 @@ namespace NativeMsh
     // NOTE: The names must not include the .dll extension because it will be added programmatically.
     static PCSTR trustedAssemblies[] =
     {
+        "MailKit",
         "Markdig",
         "Microsoft.ApplicationInsights",
         "Microsoft.CodeAnalysis",
@@ -692,6 +693,7 @@ namespace NativeMsh
         "Microsoft.Win32.SystemEvents",
         "Microsoft.WSMan.Management",
         "Microsoft.WSMan.Runtime",
+        "MimeKit",
         "mscorlib",
         "netstandard",
         "Newtonsoft.Json",
