@@ -2190,6 +2190,12 @@
               event provider
                 1. Operational - for high level diagnositc messages
                 2. Analytic - for high volume high performance trace messages
+
+              read access to restricted to:
+              local system (A;;0xf0007;;;SY)
+              built-in admins (A;;0x7;;;BA)
+              server operators (A;;0x7;;;SO)
+              event log readers (A;;0x1;;;S-1-5-32-573)
 		-->
           <channel
               chid="C_OPERATIONAL"
@@ -2199,6 +2205,7 @@
               name="PowerShellCore/Operational"
               symbol="C_OPERATIONAL"
               type="Operational"
+              access="O:BAG:SYD:(A;;0xf0007;;;SY)(A;;0x7;;;BA)(A;;0x7;;;SO)(A;;0x1;;;S-1-5-32-573)"
               >
             <logging>
               <!--this log is circular, which means older events
@@ -2216,6 +2223,7 @@
               name="PowerShellCore/Analytic"
               symbol="C_ANALYTIC"
               type="Analytic"
+              access="O:BAG:SYD:(A;;0xf0007;;;SY)(A;;0x7;;;BA)(A;;0x7;;;SO)(A;;0x1;;;S-1-5-32-573)"
               >
             <logging>
               <!--this log is not circular, which means user has to
@@ -2243,6 +2251,7 @@
               name="PowerShellCore/Debug"
               symbol="C_DEBUG"
               type="Debug"
+              access="O:BAG:SYD:(A;;0xf0007;;;SY)(A;;0x7;;;BA)(A;;0x7;;;SO)(A;;0x1;;;S-1-5-32-573)"
               >
             <logging>
               <!--this log is not circular, which means user has to
