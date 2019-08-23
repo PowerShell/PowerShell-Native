@@ -15,6 +15,14 @@ struct CommonStat
     int Mode;
     int UserId;
     int GroupId;
+    int HardlinkCount;
+    long Size;
+    long AccessTime;
+    long ModifiedTime;
+    long CreationTime;
+    long BlockSize;
+    int DeviceId;
+    int NumberOfBlocks;
     int IsDirectory;
     int IsFile;
     int IsSymbolicLink;
@@ -26,5 +34,6 @@ struct CommonStat
 
 int32_t GetStat(const char* path, struct stat* buf);
 int GetCommonStat(const char* path, CommonStat* cs);
+int GetCommonLStat(const char* path, CommonStat* cs);
 
 PAL_END_EXTERNC

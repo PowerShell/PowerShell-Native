@@ -15,6 +15,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <stdio.h>
+
 //! @brief returns if the path is a directory; uses stat and so follows symlinks
 //!
 //! IsDirectory

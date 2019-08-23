@@ -13,25 +13,71 @@
 #include <string.h>
 #include <unistd.h>
 
-// Provide a common structure for the various different stat structures
-int GetCommonStat(const char* path, struct CommonStat* commonStat)
+#include <stdio.h>
+
+// Provide a common structure for the various different stat structures.
+// This should be safe to call on all platforms
+int GetCommonLStat(const char* path, struct CommonStat* commonStat)
 {
     struct stat st;
-    struct CommonStat cs;
-    if (GetStat(path, &st) == 0)
+    assert(path);
+    errno = 0;
+    if (lstat(path, &st) == 0)
     {
-        cs.Inode = st.st_ino;
-        cs.IsDirectory = S_ISDIR(st.st_mode);
-        cs.IsFile = S_ISREG(st.st_mode);
-        cs.IsBlockDevice = S_ISBLK(st.st_mode);
-        cs.IsCharacterDevice = S_ISCHR(st.st_mode);
-        cs.IsNamedPipe = S_ISFIFO(st.st_mode);
-        cs.IsSocket = S_ISSOCK(st.st_mode);
-        cs.Mode = st.st_mode;
-        cs.UserId = st.st_uid;
-        cs.GroupId = st.st_gid;
-        commonStat = &cs;
+        commonStat->Inode = st.st_ino;
+        commonStat->Mode = st.st_mode;
+        commonStat->UserId = st.st_uid;
+        commonStat->GroupId = st.st_gid;
+        commonStat->HardlinkCount = st.st_nlink;
+        commonStat->Size = st.st_size;
+        commonStat->AccessTime = st.st_atimespec.tv_sec;
+        commonStat->ModifiedTime = st.st_mtimespec.tv_sec;
+        commonStat->CreationTime = st.st_ctimespec.tv_sec;
+        commonStat->BlockSize = st.st_blksize;
+        commonStat->DeviceId = st.st_dev;
+        commonStat->NumberOfBlocks = st.st_blocks;
+        commonStat->IsBlockDevice = S_ISBLK(st.st_mode);
+        commonStat->IsCharacterDevice = S_ISCHR(st.st_mode);
+        commonStat->IsDirectory = S_ISDIR(st.st_mode);
+        commonStat->IsFile = S_ISREG(st.st_mode);
+        commonStat->IsNamedPipe = S_ISFIFO(st.st_mode);
+        commonStat->IsSocket = S_ISSOCK(st.st_mode);
+        commonStat->IsSymbolicLink = S_ISLNK(st.st_mode);
         return 0;
     }
     return -1;
 }
+
+// Provide a common structure for the various different stat structures.
+// This should be safe to call on all platforms
+int GetCommonStat(const char* path, struct CommonStat* commonStat)
+{
+    struct stat st;
+    assert(path);
+    errno = 0;
+    if (stat(path, &st) == 0)
+    {
+        commonStat->Inode = st.st_ino;
+        commonStat->Mode = st.st_mode;
+        commonStat->UserId = st.st_uid;
+        commonStat->GroupId = st.st_gid;
+        commonStat->HardlinkCount = st.st_nlink;
+        commonStat->Size = st.st_size;
+        commonStat->AccessTime = st.st_atimespec.tv_sec;
+        commonStat->ModifiedTime = st.st_mtimespec.tv_sec;
+        commonStat->CreationTime = st.st_ctimespec.tv_sec;
+        commonStat->BlockSize = st.st_blksize;
+        commonStat->DeviceId = st.st_dev;
+        commonStat->NumberOfBlocks = st.st_blocks;
+        commonStat->IsBlockDevice = S_ISBLK(st.st_mode);
+        commonStat->IsCharacterDevice = S_ISCHR(st.st_mode);
+        commonStat->IsDirectory = S_ISDIR(st.st_mode);
+        commonStat->IsFile = S_ISREG(st.st_mode);
+        commonStat->IsNamedPipe = S_ISFIFO(st.st_mode);
+        commonStat->IsSocket = S_ISSOCK(st.st_mode);
+        commonStat->IsSymbolicLink = S_ISLNK(st.st_mode);
+        return 0;
+    }
+    return -1;
+}
+
