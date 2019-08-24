@@ -45,9 +45,10 @@ TEST(GetCommonStat, GetOwnerIdOfRoot)
      p = popen("/usr/bin/stat -c %u /", "r");
 #endif
     int uid = -1;
-    fscanf(p, "%d", &uid);
+    int result = fscanf(p, "%d", &uid);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(uid, cs.UserId);
 }
 
@@ -61,9 +62,10 @@ TEST(GetCommonStat, GetGroupId)
      p = popen("/usr/bin/stat -c %g /", "r");
 #endif
     int gid = -1;
-    fscanf(p, "%d", &gid);
+    int result = fscanf(p, "%d", &gid);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(gid, cs.UserId);
 }
 
@@ -77,9 +79,10 @@ TEST(GetCommonStat, GetInodeNumber)
      p = popen("/usr/bin/stat -c %i /", "r");
 #endif
     long inode = -1;
-    fscanf(p, "%ld", &inode);
+    int result = fscanf(p, "%ld", &inode);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(inode, cs.Inode);
 }
 
@@ -90,12 +93,13 @@ TEST(GetCommonStat, GetSize)
 #if defined (__APPLE__)
      p = popen("/usr/bin/stat -f %z /", "r");
 #else
-     p = popen("/usr/bin/stat -c %z /", "r");
+     p = popen("/usr/bin/stat -c %s /", "r");
 #endif
     long size = -1;
-    fscanf(p, "%ld", &size);
+    int result = fscanf(p, "%ld", &size);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(size, cs.Size);
 }
 
@@ -106,12 +110,13 @@ TEST(GetCommonStat, GetBlockSize)
 #if defined (__APPLE__)
      p = popen("/usr/bin/stat -f %k /", "r");
 #else
-     p = popen("/usr/bin/stat -c %k /", "r");
+     p = popen("/usr/bin/stat -c %o /", "r");
 #endif
     long bSize = -1;
-    fscanf(p, "%ld", &bSize);
+    int result = fscanf(p, "%ld", &bSize);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(bSize, cs.BlockSize);
 }
 
@@ -125,9 +130,10 @@ TEST(GetCommonStat, GetBlockCount)
      p = popen("/usr/bin/stat -c %b /", "r");
 #endif
     int bSize = -1;
-    fscanf(p, "%d", &bSize);
+    int result = fscanf(p, "%d", &bSize);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(bSize, cs.NumberOfBlocks);
 }
 
@@ -138,12 +144,13 @@ TEST(GetCommonStat, GetLinkCount)
 #if defined (__APPLE__)
      p = popen("/usr/bin/stat -f %l /", "r");
 #else
-     p = popen("/usr/bin/stat -c %l /", "r");
+     p = popen("/usr/bin/stat -c %h /", "r");
 #endif
     int linkcount = -1;
-    fscanf(p, "%d", &linkcount);
+    int result = fscanf(p, "%d", &linkcount);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(linkcount, cs.HardlinkCount);
 }
 
@@ -157,9 +164,10 @@ TEST(GetCommonStat, GetDeviceId)
      p = popen("/usr/bin/stat -c %d /", "r");
 #endif
     int deviceId = -1;
-    fscanf(p, "%d", &deviceId);
+    int result = fscanf(p, "%d", &deviceId);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(deviceId, cs.DeviceId);
 }
 
@@ -170,12 +178,13 @@ TEST(GetCommonStat, GetATime)
 #if defined (__APPLE__)
      p = popen("/usr/bin/stat -f %a /", "r");
 #else
-     p = popen("/usr/bin/stat -c %a /", "r");
+     p = popen("/usr/bin/stat -c %X /", "r");
 #endif
     long aTime = -1;
-    fscanf(p, "%ld", &aTime);
+    int result = fscanf(p, "%ld", &aTime);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(aTime, cs.AccessTime);
 }
 
@@ -186,12 +195,13 @@ TEST(GetCommonStat, GetMTime)
 #if defined (__APPLE__)
      p = popen("/usr/bin/stat -f %m /", "r");
 #else
-     p = popen("/usr/bin/stat -c %m /", "r");
+     p = popen("/usr/bin/stat -c %Y /", "r");
 #endif
     long mTime = -1;
-    fscanf(p, "%ld", &mTime);
+    int result = fscanf(p, "%ld", &mTime);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(mTime, cs.ModifiedTime);
 }
 
@@ -202,11 +212,12 @@ TEST(GetCommonStat, GetCTime)
 #if defined (__APPLE__)
      p = popen("/usr/bin/stat -f %c /", "r");
 #else
-     p = popen("/usr/bin/stat -c %c /", "r");
+     p = popen("/usr/bin/stat -c %Z /", "r");
 #endif
     long cTime = -1;
-    fscanf(p, "%ld", &cTime);
+    int result = fscanf(p, "%ld", &cTime);
     pclose(p);
     GetCommonStat("/", &cs);
+    EXPECT_EQ(result, 1);
     EXPECT_EQ(cTime, cs.CreationTime);
 }
