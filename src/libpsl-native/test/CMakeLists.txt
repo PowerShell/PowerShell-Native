@@ -8,6 +8,8 @@ add_executable(psl-native-test
   test-getcomputername.cpp
   test-getcommonstat.cpp
   test-getlinkcount.cpp
+  test-getgrgid.cpp
+  test-getpwuid.cpp
   test-isdirectory.cpp
   test-isfile.cpp
   test-issymlink.cpp
