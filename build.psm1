@@ -1927,7 +1927,7 @@ function Start-PSBootstrap {
 
             # Install ours and .NET's dependencies
             $Deps = @()
-            if ($Environment.IsUbuntu) {
+            if ($Environment.IsUbuntu -or $Environment.IsDebian) {
                 # Build tools
                 $Deps += "curl", "g++", "cmake", "make"
 
