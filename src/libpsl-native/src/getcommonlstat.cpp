@@ -3,7 +3,6 @@
 
 //! @brief returns the stat of a file
 
-#include "getcommonstat.h"
 
 #include <errno.h>
 #include <assert.h>
@@ -15,14 +14,16 @@
 
 #include <stdio.h>
 
+#include "getcommonlstat.h"
+
 // Provide a common structure for the various different stat structures.
 // This should be safe to call on all platforms
-int GetCommonStat(const char* path, struct CommonStat* commonStat)
+int GetCommonLStat(const char* path, struct CommonStat* commonStat)
 {
     struct stat st;
     assert(path);
     errno = 0;
-    if (stat(path, &st) == 0)
+    if (lstat(path, &st) == 0)
     {
         commonStat->Inode = st.st_ino;
         commonStat->Mode = st.st_mode;

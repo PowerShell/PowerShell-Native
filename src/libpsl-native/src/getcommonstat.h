@@ -34,6 +34,5 @@ struct CommonStat
 
 int32_t GetStat(const char* path, struct stat* buf);
 int GetCommonStat(const char* path, CommonStat* cs);
-int GetCommonLStat(const char* path, CommonStat* cs);
 
 PAL_END_EXTERNC

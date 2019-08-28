@@ -7,35 +7,35 @@
 #include <errno.h>
 #include <unistd.h>
 #include "isdirectory.h"
-#include "getcommonstat.h"
+#include "getcommonlstat.h"
 
-TEST(GetCommonStat, RootIsDirectory)
+TEST(GetCommonLStat, RootIsDirectory)
 {
     CommonStat cs;
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     bool isDir = IsDirectory("/");
-    bool fromCommonStat = (bool)cs.IsDirectory;
-    EXPECT_EQ(isDir, fromCommonStat);
+    bool fromCommonLStat = (bool)cs.IsDirectory;
+    EXPECT_EQ(isDir, fromCommonLStat);
 }
 
-TEST(GetCommonStat, BinLsIsNotDirectory)
+TEST(GetCommonLStat, BinLsIsNotDirectory)
 {
     CommonStat cs;
-    GetCommonStat("/bin/ls", &cs);
+    GetCommonLStat("/bin/ls", &cs);
     bool isDir = IsDirectory("/bin/ls");
-    bool fromCommonStat = (bool)cs.IsDirectory;
-    EXPECT_EQ(isDir, fromCommonStat);
+    bool fromCommonLStat = (bool)cs.IsDirectory;
+    EXPECT_EQ(isDir, fromCommonLStat);
 }
 
 
-TEST(GetCommonStat, ReturnsFalseForFakeDirectory)
+TEST(GetCommonLStat, ReturnsFalseForFakeDirectory)
 {
     CommonStat cs;
-    int badDir = GetCommonStat("/A/Really/Bad/Directory",&cs);
+    int badDir = GetCommonLStat("/A/Really/Bad/Directory",&cs);
     EXPECT_EQ(badDir, -1);
 }
 
-TEST(GetCommonStat, GetOwnerIdOfRoot)
+TEST(GetCommonLStat, GetOwnerIdOfRoot)
 {
     FILE *p;
     CommonStat cs;
@@ -47,12 +47,12 @@ TEST(GetCommonStat, GetOwnerIdOfRoot)
     int uid = -1;
     int result = fscanf(p, "%d", &uid);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(uid, cs.UserId);
 }
 
-TEST(GetCommonStat, GetGroupId)
+TEST(GetCommonLStat, GetGroupId)
 {
     FILE *p;
     CommonStat cs;
@@ -64,12 +64,12 @@ TEST(GetCommonStat, GetGroupId)
     int gid = -1;
     int result = fscanf(p, "%d", &gid);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(gid, cs.UserId);
 }
 
-TEST(GetCommonStat, GetInodeNumber)
+TEST(GetCommonLStat, GetInodeNumber)
 {
     FILE *p;
     CommonStat cs;
@@ -81,29 +81,12 @@ TEST(GetCommonStat, GetInodeNumber)
     long inode = -1;
     int result = fscanf(p, "%ld", &inode);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(inode, cs.Inode);
 }
 
-TEST(GetCommonStat, GetMode)
-{
-    FILE *p;
-    CommonStat cs;
-#if defined (__APPLE__)
-     p = popen("/usr/bin/stat -f %p /", "r");
-#else
-     p = popen("/usr/bin/stat -c %f /", "r");
-#endif
-    long mode = -1;
-    int result = fscanf(p, "%lo", &mode);
-    pclose(p);
-    GetCommonStat("/", &cs);
-    EXPECT_EQ(result, 1);
-    EXPECT_EQ(mode, cs.Mode);
-}
-
-TEST(GetCommonStat, GetSize)
+TEST(GetCommonLStat, GetSize)
 {
     FILE *p;
     CommonStat cs;
@@ -115,12 +98,12 @@ TEST(GetCommonStat, GetSize)
     long size = -1;
     int result = fscanf(p, "%ld", &size);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(size, cs.Size);
 }
 
-TEST(GetCommonStat, GetBlockSize)
+TEST(GetCommonLStat, GetBlockSize)
 {
     FILE *p;
     CommonStat cs;
@@ -132,12 +115,12 @@ TEST(GetCommonStat, GetBlockSize)
     long bSize = -1;
     int result = fscanf(p, "%ld", &bSize);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(bSize, cs.BlockSize);
 }
 
-TEST(GetCommonStat, GetBlockCount)
+TEST(GetCommonLStat, GetBlockCount)
 {
     FILE *p;
     CommonStat cs;
@@ -149,12 +132,12 @@ TEST(GetCommonStat, GetBlockCount)
     int bSize = -1;
     int result = fscanf(p, "%d", &bSize);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(bSize, cs.NumberOfBlocks);
 }
 
-TEST(GetCommonStat, GetLinkCount)
+TEST(GetCommonLStat, GetLinkCount)
 {
     FILE *p;
     CommonStat cs;
@@ -166,12 +149,12 @@ TEST(GetCommonStat, GetLinkCount)
     int linkcount = -1;
     int result = fscanf(p, "%d", &linkcount);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(linkcount, cs.HardlinkCount);
 }
 
-TEST(GetCommonStat, GetDeviceId)
+TEST(GetCommonLStat, GetDeviceId)
 {
     FILE *p;
     CommonStat cs;
@@ -183,12 +166,12 @@ TEST(GetCommonStat, GetDeviceId)
     int deviceId = -1;
     int result = fscanf(p, "%d", &deviceId);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(deviceId, cs.DeviceId);
 }
 
-TEST(GetCommonStat, GetATime)
+TEST(GetCommonLStat, GetATime)
 {
     FILE *p;
     CommonStat cs;
@@ -200,12 +183,12 @@ TEST(GetCommonStat, GetATime)
     long aTime = -1;
     int result = fscanf(p, "%ld", &aTime);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(aTime, cs.AccessTime);
 }
 
-TEST(GetCommonStat, GetMTime)
+TEST(GetCommonLStat, GetMTime)
 {
     FILE *p;
     CommonStat cs;
@@ -217,12 +200,12 @@ TEST(GetCommonStat, GetMTime)
     long mTime = -1;
     int result = fscanf(p, "%ld", &mTime);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(mTime, cs.ModifiedTime);
 }
 
-TEST(GetCommonStat, GetCTime)
+TEST(GetCommonLStat, GetCTime)
 {
     FILE *p;
     CommonStat cs;
@@ -234,7 +217,7 @@ TEST(GetCommonStat, GetCTime)
     long cTime = -1;
     int result = fscanf(p, "%ld", &cTime);
     pclose(p);
-    GetCommonStat("/", &cs);
+    GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
     EXPECT_EQ(cTime, cs.CreationTime);
 }

@@ -7,6 +7,7 @@ add_executable(psl-native-test
   test-getcurrentprocessid.cpp
   test-getcomputername.cpp
   test-getcommonstat.cpp
+  test-getcommonlstat.cpp
   test-getlinkcount.cpp
   test-getgrgid.cpp
   test-getpwuid.cpp
