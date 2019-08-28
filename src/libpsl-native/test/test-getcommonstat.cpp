@@ -90,13 +90,14 @@ TEST(GetCommonStat, GetMode)
 {
     FILE *p;
     CommonStat cs;
+    unsigned int mode = -1;
 #if defined (__APPLE__)
-     p = popen("/usr/bin/stat -f %p /", "r");
-#else
-     p = popen("/usr/bin/stat -c %f /", "r");
-#endif
-    long mode = -1;
+    p = popen("/usr/bin/stat -f %p /", "r");
     int result = fscanf(p, "%lo", &mode);
+#else
+    p = popen("/usr/bin/stat -c %f /", "r");
+    int result = fscanf(p, "%x", &mode);
+#endif
     pclose(p);
     GetCommonStat("/", &cs);
     EXPECT_EQ(result, 1);
