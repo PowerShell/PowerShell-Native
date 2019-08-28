@@ -1985,7 +1985,8 @@ function Start-PSBootstrap {
                 }
             } elseif ($Environment.IsSUSEFamily) {
                 # Build tools
-                $Deps += "gcc", "cmake", "make"
+                # we're using a flag which requires an up to date compiler
+                $Deps += "gcc7", "cmake", "make", "gcc7-c++"
 
                 # Packaging tools
                 if ($Package) { $Deps += "ruby-devel", "rpmbuild", "groff", 'libffi-devel' }
@@ -2003,6 +2004,21 @@ function Start-PSBootstrap {
                 Start-NativeExecution {
                     Invoke-Expression "$baseCommand $Deps"
                 }
+
+                # After installation, create the appropriate symbolic links
+                foreach ($compiler in "gcc-7","g++-7") {
+                    $itemPath = "/usr/bin/${compiler}"
+                    $name = $compiler -replace "-7"
+                    $linkPath = "/usr/bin/${name}"
+                    $link = Get-Item -Path $linkPath -ErrorAction SilentlyContinue
+                    if ($link) {
+                        if ($link.Target) { # Symbolic link - remove it
+                            Remove-Item -Force -Path $linkPath
+                        }
+                    }
+                    New-Item -Type SymbolicLink -Target $itemPath -Path $linkPath
+                }
+                
             } elseif ($Environment.IsMacOS) {
                 precheck 'brew' "Bootstrap dependency 'brew' not found, must install Homebrew! See http://brew.sh/"
 
