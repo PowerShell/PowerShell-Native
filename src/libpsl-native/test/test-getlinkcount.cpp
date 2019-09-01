@@ -33,6 +33,11 @@ protected:
         file = fileTemplateBuf;
     }
 
+    ~getLinkCountTest()
+    {
+       unlink(fileTemplateBuf);
+    }
+
     void createFileForTesting(const std::string &theFile)
     {
         std::ofstream ofs;
@@ -69,10 +74,14 @@ TEST_F(getLinkCountTest, LinkCountOfSinglyLinkedFile)
 {
     createFileForTesting(file);
     int32_t ret = GetLinkCount(file, &count);
+
+printf("001 %s\n", file);
+
+    removeFile(file);
+
     ASSERT_EQ(0, ret);
     EXPECT_EQ(1, count);
 
-    removeFile(file);
 }
 
 TEST_F(getLinkCountTest, LinkCountOfMultiplyLinkedFile)
@@ -80,10 +89,15 @@ TEST_F(getLinkCountTest, LinkCountOfMultiplyLinkedFile)
     createFileForTesting(file);
     std::string newFile = createHardLink(file);
     int32_t ret = GetLinkCount(file, &count);
-    ASSERT_EQ(0, ret);
-    EXPECT_EQ(2, count);
+
+printf("002 %s\n", file);
+printf("003 %s\n", newFile.c_str());
 
     removeFile(file);
     removeFile(newFile);
+
+    ASSERT_EQ(0, ret);
+    EXPECT_EQ(2, count);
+
 }
 

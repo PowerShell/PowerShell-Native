@@ -49,6 +49,9 @@ int GetCommonStat(const char* path, struct CommonStat* commonStat)
         commonStat->IsNamedPipe = S_ISFIFO(st.st_mode);
         commonStat->IsSocket = S_ISSOCK(st.st_mode);
         commonStat->IsSymbolicLink = S_ISLNK(st.st_mode);
+        commonStat->IsSetUid = (st.st_mode & 0xE00) == S_ISUID;
+        commonStat->IsSetGid = (st.st_mode & 0xE00) == S_ISGID;
+        commonStat->IsSticky = (st.st_mode & 0xE00) == S_ISVTX;
         return 0;
     }
     return -1;

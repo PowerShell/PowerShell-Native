@@ -30,6 +30,9 @@ struct CommonStat
     int IsCharacterDevice;
     int IsNamedPipe;
     int IsSocket;
+    int IsSetUid;
+    int IsSetGid;
+    int IsSticky;
 };
 
 int32_t GetStat(const char* path, struct stat* buf);

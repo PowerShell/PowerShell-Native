@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include "isdirectory.h"
 #include "getcommonstat.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 
 TEST(GetCommonStat, RootIsDirectory)
 {
@@ -93,7 +95,7 @@ TEST(GetCommonStat, GetMode)
     unsigned int mode = -1;
 #if defined (__APPLE__)
     p = popen("/usr/bin/stat -f %p /", "r");
-    int result = fscanf(p, "%lo", &mode);
+    int result = fscanf(p, "%o", &mode);
 #else
     p = popen("/usr/bin/stat -c %f /", "r");
     int result = fscanf(p, "%x", &mode);
@@ -239,3 +241,68 @@ TEST(GetCommonStat, GetCTime)
     EXPECT_EQ(result, 1);
     EXPECT_EQ(cTime, cs.CreationTime);
 }
+
+TEST(GetCommonStat, Mode001)
+{
+    const std::string ftemplate = "/tmp/CommonStatModeF_XXXXXX";
+    char fname[PATH_MAX];
+    struct stat buffer;
+    int fd;
+    CommonStat cs;
+    strcpy(fname, ftemplate.c_str());
+    fd = mkstemp(fname);
+    chmod(fname, S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH);
+    stat(fname, &buffer);
+    GetCommonStat(fname, &cs);
+    unlink(fname);
+    EXPECT_EQ(cs.Mode, buffer.st_mode);
+}
+
+TEST(GetCommonStat, Mode002)
+{
+    const std::string ftemplate = "/tmp/CommonStatModeF_XXXXXX";
+    char fname[PATH_MAX];
+    struct stat buffer;
+    int fd;
+    CommonStat cs;
+    strcpy(fname, ftemplate.c_str());
+    fd = mkstemp(fname);
+    chmod(fname, S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_ISUID );
+    stat(fname, &buffer);
+    GetCommonStat(fname, &cs);
+    unlink(fname);
+    EXPECT_EQ(cs.Mode, buffer.st_mode);
+}
+
+TEST(GetCommonStat, Mode003)
+{
+    const std::string ftemplate = "/tmp/CommonStatModeF_XXXXXX";
+    char fname[PATH_MAX];
+    struct stat buffer;
+    int fd;
+    CommonStat cs;
+    strcpy(fname, ftemplate.c_str());
+    fd = mkstemp(fname);
+    chmod(fname, S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH | S_ISGID );
+    stat(fname, &buffer);
+    GetCommonStat(fname, &cs);
+    unlink(fname);
+    EXPECT_EQ(cs.Mode, buffer.st_mode);
+}
+
+TEST(GetCommonStat, Mode004)
+{
+    const std::string ftemplate = "/tmp/CommonStatModeD_XXXXXX";
+    char dname[PATH_MAX];
+    struct stat buffer;
+    char * fd;
+    CommonStat cs;
+    strcpy(dname, ftemplate.c_str());
+    fd = mkdtemp(dname);
+    chmod(dname, S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_ISVTX );
+    stat(dname, &buffer);
+    GetCommonStat(dname, &cs);
+    rmdir(dname);
+    EXPECT_EQ(cs.Mode, buffer.st_mode);
+}
+

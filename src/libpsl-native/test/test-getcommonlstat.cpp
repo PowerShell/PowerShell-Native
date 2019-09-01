@@ -221,3 +221,68 @@ TEST(GetCommonLStat, GetCTime)
     EXPECT_EQ(result, 1);
     EXPECT_EQ(cTime, cs.CreationTime);
 }
+
+TEST(GetCommonLStat, Mode001)
+{
+    const std::string ftemplate = "/tmp/CommonStatModeF_XXXXXX";
+    char fname[PATH_MAX];
+    struct stat buffer;
+    int fd;
+    CommonStat cs;
+    strcpy(fname, ftemplate.c_str());
+    fd = mkstemp(fname);
+    chmod(fname, S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH);
+    lstat(fname, &buffer);
+    GetCommonLStat(fname, &cs);
+    unlink(fname);
+    EXPECT_EQ(cs.Mode, buffer.st_mode);
+}
+
+TEST(GetCommonLStat, Mode002)
+{
+    const std::string ftemplate = "/tmp/CommonStatModeF_XXXXXX";
+    char fname[PATH_MAX];
+    struct stat buffer;
+    int fd;
+    CommonStat cs;
+    strcpy(fname, ftemplate.c_str());
+    fd = mkstemp(fname);
+    chmod(fname, S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_ISUID );
+    lstat(fname, &buffer);
+    GetCommonLStat(fname, &cs);
+    unlink(fname);
+    EXPECT_EQ(cs.Mode, buffer.st_mode);
+}
+
+TEST(GetCommonLStat, Mode003)
+{
+    const std::string ftemplate = "/tmp/CommonStatModeF_XXXXXX";
+    char fname[PATH_MAX];
+    struct stat buffer;
+    int fd;
+    CommonStat cs;
+    strcpy(fname, ftemplate.c_str());
+    fd = mkstemp(fname);
+    chmod(fname, S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH | S_ISGID );
+    lstat(fname, &buffer);
+    GetCommonLStat(fname, &cs);
+    unlink(fname);
+    EXPECT_EQ(cs.Mode, buffer.st_mode);
+}
+
+TEST(GetCommonLStat, Mode004)
+{
+    const std::string ftemplate = "/tmp/CommonStatModeD_XXXXXX";
+    char dname[PATH_MAX];
+    struct stat buffer;
+    char * fd;
+    CommonStat cs;
+    strcpy(dname, ftemplate.c_str());
+    fd = mkdtemp(dname);
+    chmod(dname, S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_ISVTX );
+    lstat(dname, &buffer);
+    GetCommonLStat(dname, &cs);
+    rmdir(dname);
+    EXPECT_EQ(cs.Mode, buffer.st_mode);
+}
+
