@@ -690,10 +690,10 @@ function PlaceWindowsNativeBinaries
     $RuntimePathARM = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-arm/native') -Force
     $RuntimePathARM64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-arm64/native') -Force
 
-    Copy-Item "$BinFolderX64\*" -Destination $RuntimePathX64 -Verbose
-    Copy-Item "$BinFolderX86\*" -Destination $RuntimePathX86 -Verbose
-    Copy-Item "$BinFolderARM\*" -Destination $RuntimePathARM -Verbose
-    Copy-Item "$BinFolderARM64\*" -Destination $RuntimePathARM64 -Verbose
+    Copy-Item "$BinFolderX64\*" -Destination $RuntimePathX64 -Verbose -Exclude '*.pdb'
+    Copy-Item "$BinFolderX86\*" -Destination $RuntimePathX86 -Verbose -Exclude '*.pdb'
+    Copy-Item "$BinFolderARM\*" -Destination $RuntimePathARM -Verbose -Exclude '*.pdb'
+    Copy-Item "$BinFolderARM64\*" -Destination $RuntimePathARM64 -Verbose -Exclude '*.pdb'
 }
 
 <#
