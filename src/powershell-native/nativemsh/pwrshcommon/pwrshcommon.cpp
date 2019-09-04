@@ -871,6 +871,7 @@ namespace NativeMsh
         "System.Web",
         "System.Web.HttpUtility",
         "System.Windows",
+        "System.Windows.Forms",
         "System.Xml",
         "System.Xml.Linq",
         "System.Xml.ReaderWriter",
