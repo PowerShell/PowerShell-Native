@@ -231,6 +231,7 @@ TEST(GetCommonLStat, Mode001)
     CommonStat cs;
     strcpy(fname, ftemplate.c_str());
     fd = mkstemp(fname);
+    EXPECT_NE(fd, -1);
     chmod(fname, S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH);
     lstat(fname, &buffer);
     GetCommonLStat(fname, &cs);
@@ -247,6 +248,7 @@ TEST(GetCommonLStat, Mode002)
     CommonStat cs;
     strcpy(fname, ftemplate.c_str());
     fd = mkstemp(fname);
+    EXPECT_NE(fd, -1);
     chmod(fname, S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_ISUID );
     lstat(fname, &buffer);
     GetCommonLStat(fname, &cs);
@@ -263,6 +265,7 @@ TEST(GetCommonLStat, Mode003)
     CommonStat cs;
     strcpy(fname, ftemplate.c_str());
     fd = mkstemp(fname);
+    EXPECT_NE(fd, -1);
     chmod(fname, S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH | S_ISGID );
     lstat(fname, &buffer);
     GetCommonLStat(fname, &cs);
@@ -279,6 +282,7 @@ TEST(GetCommonLStat, Mode004)
     CommonStat cs;
     strcpy(dname, ftemplate.c_str());
     fd = mkdtemp(dname);
+    EXPECT_NE(fd, ftemplate);
     chmod(dname, S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_ISVTX );
     lstat(dname, &buffer);
     GetCommonLStat(dname, &cs);
