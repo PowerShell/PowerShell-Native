@@ -66,7 +66,7 @@ TEST(GetCommonLStat, GetGroupId)
     pclose(p);
     GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
-    EXPECT_EQ(gid, cs.UserId);
+    EXPECT_EQ(gid, cs.GroupId);
 }
 
 TEST(GetCommonLStat, GetInodeNumber)
