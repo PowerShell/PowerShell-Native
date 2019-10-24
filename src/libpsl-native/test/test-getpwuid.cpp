@@ -12,3 +12,4 @@ TEST(GetPwUid, Success)
     char* expected = getpwuid(geteuid())->pw_name;
     EXPECT_STREQ(GetPwUid(geteuid()), expected);
 }
+

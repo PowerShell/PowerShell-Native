@@ -16,3 +16,4 @@ int32_t GetLStat(const char* path, struct stat* buf);
 int GetCommonLStat(const char* path, CommonStat* cs);
 
 PAL_END_EXTERNC
+

@@ -65,3 +65,4 @@ allocate:
     free(buf);
     return groupname;
 }
+

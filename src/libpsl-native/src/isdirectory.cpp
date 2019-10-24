@@ -43,3 +43,4 @@ bool IsDirectory(const char* path)
 
     return S_ISDIR(buf.st_mode);
 }
+

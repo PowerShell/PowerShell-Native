@@ -12,3 +12,4 @@ TEST(GetGrGid, Success)
     char* expected = getgrgid(getegid())->gr_name;
     EXPECT_STREQ(GetGrGid(getegid()), expected);
 }
+

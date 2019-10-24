@@ -12,3 +12,4 @@ PAL_BEGIN_EXTERNC
 char* GetGrGid(gid_t gid);
 
 PAL_END_EXTERNC
+

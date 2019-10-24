@@ -45,3 +45,4 @@ int32_t GetLStat(const char* path, struct stat* buf)
 
     return lstat(path, buf);
 }
+
