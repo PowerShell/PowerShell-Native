@@ -33,11 +33,11 @@ int GetCommonStat(const char* path, struct CommonStat* commonStat)
 #if defined (__APPLE__)
         commonStat->AccessTime   = st.st_atimespec.tv_sec;
         commonStat->ModifiedTime = st.st_mtimespec.tv_sec;
-        commonStat->CreationTime = st.st_ctimespec.tv_sec;
+        commonStat->ChangeTime = st.st_ctimespec.tv_sec;
 #else
         commonStat->AccessTime   = st.st_atime;
         commonStat->ModifiedTime = st.st_mtime;
-        commonStat->CreationTime = st.st_ctime;
+        commonStat->ChangeTime = st.st_ctime;
 #endif
         commonStat->BlockSize = st.st_blksize;
         commonStat->DeviceId = st.st_dev;

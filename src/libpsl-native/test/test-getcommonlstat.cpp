@@ -219,7 +219,7 @@ TEST(GetCommonLStat, GetCTime)
     pclose(p);
     GetCommonLStat("/", &cs);
     EXPECT_EQ(result, 1);
-    EXPECT_EQ(cTime, cs.CreationTime);
+    EXPECT_EQ(cTime, cs.ChangeTime);
 }
 
 TEST(GetCommonLStat, Mode001)

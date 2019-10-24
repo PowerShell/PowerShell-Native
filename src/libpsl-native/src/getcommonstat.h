@@ -19,7 +19,7 @@ struct CommonStat
     long Size;
     long AccessTime;
     long ModifiedTime;
-    long CreationTime;
+    long ChangeTime;
     long BlockSize;
     int DeviceId;
     int NumberOfBlocks;
