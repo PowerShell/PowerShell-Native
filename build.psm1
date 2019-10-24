@@ -439,6 +439,19 @@ function Start-BuildNativeUnixBinaries {
 
     git clean -qfdX $Native
 
+    # the stat tests rely on stat(1). On most platforms, this is /usr/bin/stat,
+    # but on alpine it is in /bin. Be sure that /usr/bin/stat exists, or
+    # create a link from /bin/stat. If /bin/stat is missing, we'll have to fail the build
+
+    if ( ! (Test-Path /usr/bin/stat) ) {
+        if ( Test-Path /bin/stat ) {
+            New-Item -Type SymbolicLink -Path /usr/bin/stat -Target /bin/stat
+        }
+        else {
+            throw "Cannot create symlink to stat(1)"
+        }
+    }
+
     try {
         Push-Location $Native
         if ($BuildLinuxArm) {
