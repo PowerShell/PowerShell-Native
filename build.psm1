@@ -2018,7 +2018,7 @@ function Start-PSBootstrap {
                     }
                     New-Item -Type SymbolicLink -Target $itemPath -Path $linkPath
                 }
-                
+
             } elseif ($Environment.IsMacOS) {
                 precheck 'brew' "Bootstrap dependency 'brew' not found, must install Homebrew! See http://brew.sh/"
 
