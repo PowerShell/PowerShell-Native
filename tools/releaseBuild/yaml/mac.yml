@@ -1,0 +1,18 @@
+steps:
+- task: PowerShell@2
+  displayName: 'Build native assemblies'
+  inputs:
+    targetType: filePath
+    filePath: ./tools/releaseBuild/PowershellNative.ps1
+    arguments: '-Arch osx -Configuration Release -RepoRoot $(Build.SourcesDirectory) -TargetLocation $(PackageRoot)'
+
+- powershell: |
+    $filePath = "$(PackageRoot)/osx-symbols.zip"
+    Write-Verbose "Artifact to upload: $filePath" -Verbose
+    Write-Host "##vso[artifact.upload containerfolder=release;artifactname=release]$filePath"
+  displayName: 'Upload artifact'
+
+- task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+  displayName: 'Component Detection'
+  inputs:
+    sourceScanPath: '$(Build.SourcesDirectory)'

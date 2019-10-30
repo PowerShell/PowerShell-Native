@@ -1,0 +1,57 @@
+steps:
+
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-binskim.BinSkim@3
+  displayName: 'Run BinSkim '
+  inputs:
+    InputType: Basic
+    AnalyzeTarget: '$(System.ArtifactsDirectory)\uncompressed\*.dll;$(System.ArtifactsDirectory)\uncompressed\*.exe'
+    AnalyzeSymPath: 'SRV*http://symweb'
+    AnalyzeVerbose: true
+    AnalyzeHashes: true
+    AnalyzeStatistics: true
+
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
+  displayName: 'Run MpCmdRun.exe'
+
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-apiscan.APIScan@1
+  displayName: 'Run APIScan'
+  inputs:
+    softwareFolder: '$(System.ArtifactsDirectory)\uncompressed'
+    softwareName: PowerShell
+    softwareVersionNum: '$(NugetPackageVersion)'
+    isLargeApp: false
+
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@2
+  displayName: 'Run CredScan'
+  inputs:
+    debugMode: false
+
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-policheck.PoliCheck@1
+  displayName: 'Run PoliCheck'
+  inputs:
+    targetType: F
+
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@2
+  displayName: 'Publish Security Analysis Logs'
+
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-uploadtotsa.TSAUpload@1
+  displayName: 'TSA upload to Codebase: PowerShellNative Stamp: Azure'
+  inputs:
+    codebase: NewOrUpdate
+    tsaStamp: Azure
+    codeBaseName: PowerShellNative
+    notificationAlias: '4e50053a.microsoft.com@amer.teams.ms'
+    codeBaseAdmins: 'adityap;tplunk;dongbow;slee'
+    instanceUrlAzure: MSAZURE
+    projectNameMSAZURE: One
+    areaPath: 'One\MGMT\Azure Automation\PowerShell\PowerShell Core'
+    iterationPath: 'One\_Default'
+    uploadFortifySCA: false
+    uploadFxCop: false
+    uploadModernCop: false
+    uploadPREfast: false
+    uploadRoslyn: false
+    uploadTSLint: false
+
+- task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+  displayName: 'Component Detection'
