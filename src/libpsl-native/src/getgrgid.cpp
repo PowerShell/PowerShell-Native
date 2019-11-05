@@ -53,7 +53,7 @@ allocate:
         return NULL;
     }
 
-    // no result
+    // no group found
     if (result == NULL)
     {
         return NULL;
