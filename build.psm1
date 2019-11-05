@@ -439,6 +439,19 @@ function Start-BuildNativeUnixBinaries {
 
     git clean -qfdX $Native
 
+    # the stat tests rely on stat(1). On most platforms, this is /usr/bin/stat,
+    # but on alpine it is in /bin. Be sure that /usr/bin/stat exists, or
+    # create a link from /bin/stat. If /bin/stat is missing, we'll have to fail the build
+
+    if ( ! (Test-Path /usr/bin/stat) ) {
+        if ( Test-Path /bin/stat ) {
+            New-Item -Type SymbolicLink -Path /usr/bin/stat -Target /bin/stat
+        }
+        else {
+            throw "Cannot create symlink to stat(1)"
+        }
+    }
+
     try {
         Push-Location $Native
         if ($BuildLinuxArm) {
@@ -1927,7 +1940,7 @@ function Start-PSBootstrap {
 
             # Install ours and .NET's dependencies
             $Deps = @()
-            if ($Environment.IsUbuntu) {
+            if ($Environment.IsUbuntu -or $Environment.IsDebian) {
                 # Build tools
                 $Deps += "curl", "g++", "cmake", "make"
 
@@ -1985,7 +1998,8 @@ function Start-PSBootstrap {
                 }
             } elseif ($Environment.IsSUSEFamily) {
                 # Build tools
-                $Deps += "gcc", "cmake", "make"
+                # we're using a flag which requires an up to date compiler
+                $Deps += "gcc7", "cmake", "make", "gcc7-c++"
 
                 # Packaging tools
                 if ($Package) { $Deps += "ruby-devel", "rpmbuild", "groff", 'libffi-devel' }
@@ -2003,6 +2017,21 @@ function Start-PSBootstrap {
                 Start-NativeExecution {
                     Invoke-Expression "$baseCommand $Deps"
                 }
+
+                # After installation, create the appropriate symbolic links
+                foreach ($compiler in "gcc-7","g++-7") {
+                    $itemPath = "/usr/bin/${compiler}"
+                    $name = $compiler -replace "-7"
+                    $linkPath = "/usr/bin/${name}"
+                    $link = Get-Item -Path $linkPath -ErrorAction SilentlyContinue
+                    if ($link) {
+                        if ($link.Target) { # Symbolic link - remove it
+                            Remove-Item -Force -Path $linkPath
+                        }
+                    }
+                    New-Item -Type SymbolicLink -Target $itemPath -Path $linkPath
+                }
+
             } elseif ($Environment.IsMacOS) {
                 precheck 'brew' "Bootstrap dependency 'brew' not found, must install Homebrew! See http://brew.sh/"
 

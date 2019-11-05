@@ -2,7 +2,11 @@ include(CheckIncludeFiles)
 
 add_library(psl-native SHARED
   getstat.cpp
+  getlstat.cpp
+  getcommonstat.cpp
+  getcommonlstat.cpp
   getpwuid.cpp
+  getgrgid.cpp
   getppid.cpp
   getuserfrompid.cpp
   getfileowner.cpp
