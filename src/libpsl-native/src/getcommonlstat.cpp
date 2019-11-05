@@ -3,7 +3,6 @@
 
 //! @brief returns the stat of a file
 
-
 #include <errno.h>
 #include <assert.h>
 #include <sys/types.h>

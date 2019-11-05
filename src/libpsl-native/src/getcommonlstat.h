@@ -5,7 +5,6 @@
 
 #include "pal.h"
 
-
 #include <sys/stat.h>
 
 #include "getcommonstat.h"
