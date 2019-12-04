@@ -22,4 +22,4 @@ phases:
   - powershell: |
       Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)/Packages/osx-symbols.zip"
     displayName: Upload artifacts
-    condition: ne(variables['Build.Reason'], 'PullRequest')
+    condition: succeeded()

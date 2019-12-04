@@ -30,3 +30,7 @@ phases:
       tools/releaseBuild/vstsBuild.ps1 -Name $(buildName) -Verbose
     displayName: Start build - $(buildName)
     condition: succeeded()
+  - powershell: |
+      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)/Packages/$(buildName)-symbols.zip"
+    displayName: Upload artifacts
+    condition: succeeded()
