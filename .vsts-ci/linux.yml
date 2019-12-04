@@ -30,14 +30,3 @@ phases:
       tools/releaseBuild/vstsBuild.ps1 -Name $(buildName) -Verbose
     displayName: Start build - $(buildName)
     condition: succeeded()
-  - powershell: |
-      $packageName = switch ('$(buildName)') {
-          "ubuntu.16.04-arm" { "linux-arm-symbols.zip" }
-          "ubuntu.16.04-arm64" { "linux-arm64-symbols.zip" }
-          "centos.7" { "linux-x64-symbols.zip" }
-          "alpine" { "linux-musl-x64-symbols.zip" }
-      }
-
-      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)/Packages/$packageName"
-    displayName: Upload artifacts
-    condition: succeeded()
