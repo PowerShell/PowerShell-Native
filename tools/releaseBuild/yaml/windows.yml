@@ -30,8 +30,8 @@ steps:
     Write-verbose "--git branch ---" -verbose
     git branch
     exit 0
-    displayName: 'Docker cleanup and get environment'
-    continueOnError: true
+  displayName: 'Docker cleanup and get environment'
+  continueOnError: true
 
 - task: PowerShell@2
   displayName: 'Build Windows Universal'
@@ -52,12 +52,12 @@ steps:
     Write-Host "##$vstsCommandString"
   displayName: 'Get Symbols Path'
 
-#- task: PkgESCodeSign@10
-#  displayName: 'CodeSign $(ARCHITECTURE)'
-#  inputs:
-#    signConfigXml: '$(Build.SourcesDirectory)\tools\releaseBuild\signing.xml'
-#    inPathRoot: '$(Symbols)'
-#    outPathRoot: '$(Symbols)\Signed'
+- task: PkgESCodeSign@10
+  displayName: 'CodeSign $(ARCHITECTURE)'
+  inputs:
+    signConfigXml: '$(Build.SourcesDirectory)\tools\releaseBuild\signing.xml'
+    inPathRoot: '$(Symbols)'
+    outPathRoot: '$(Symbols)\Signed'
 
 - task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
   displayName: 'Run MpCmdRun.exe'
