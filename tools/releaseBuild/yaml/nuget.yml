@@ -151,8 +151,8 @@ steps:
    $packages | ForEach-Object {  Start-NativeExecution -sb { nuget.exe verify -All $_.FullName } }
   displayName: 'Validate NuGet package is signed'
 
-- template: uploadArtifacts.yml
+- template: uploadArtifact.yml
   parameters:
-    artifactPath: "$(System.ArtifactsDirectory)\signed"
-    artifactFilter: "Microsoft.PowerShell.Native.$(NugetPackageVersion).nupkg"
+    artifactPath: '$(System.ArtifactsDirectory)\signed'
+    artifactFilter: 'Microsoft.PowerShell.Native.$(NugetPackageVersion).nupkg'
     artifactName: 'finalResults'
