@@ -1,9 +1,16 @@
 steps:
 - task: PkgESSetupBuild@10
-  displayName: 'Initialize Build'
-  inputs:
-    useDfs: false
-    productName: PowerShellCore
+    displayName: 'Initialize build'
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    inputs:
+      useDfs: false
+      productName: PowerShellCore
+      branchVersion: true
+      disableWorkspace: true
+      disableBuildTools: true
+      disableNugetPack: true
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'))
 
 - powershell: |
     docker container prune --force
