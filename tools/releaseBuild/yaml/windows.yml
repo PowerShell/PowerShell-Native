@@ -58,6 +58,17 @@ steps:
     signConfigXml: '$(Build.SourcesDirectory)\tools\releaseBuild\signing.xml'
     inPathRoot: '$(Symbols)'
     outPathRoot: '$(Symbols)\Signed'
+  condition: ne(variables['SKIP_SIGNING'], 'True')
+
+- powershell: |
+    Get-ChildItem -Path '$(Symbols)\*' -Recurse | Copy-Item -Destination '$(Symbols)\Signed' -Force -Verbose
+  displayName: Copy unsigned binaries as signing is skipped
+  condition: eq(variables['SKIP_SIGNING'], 'True')
+
+- template: uploadArtifact.yml
+  parameters:
+    artifactPath: '$(Symbols)\Signed'
+    artifactName: 'finalResults'
 
 - task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
   displayName: 'Run MpCmdRun.exe'

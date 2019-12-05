@@ -131,6 +131,12 @@ steps:
     signConfigXml: '$(NuGetPackagePath)\NugetSigning.xml'
     inPathRoot: ' $(NuGetPackagePath)'
     outPathRoot: '$(System.ArtifactsDirectory)\signed'
+  condition: ne(variables['SKIP_SIGNING'], 'True')
+
+- powershell: |
+    Copy-Item  $(NuGetPackagePath)\*.nupkg -DestinationPath '$(System.ArtifactsDirectory)\signed' -Force -Verbose
+  displayName: Copy unsigned nuget packge as signing is disabled
+  condition: eq(variables['SKIP_SIGNING'], 'True')
 
 - powershell: |
    Import-Module $env:BUILD_SOURCESDIRECTORY\build.psm1 -Force
@@ -145,8 +151,8 @@ steps:
    $packages | ForEach-Object {  Start-NativeExecution -sb { nuget.exe verify -All $_.FullName } }
   displayName: 'Validate NuGet package is signed'
 
-- powershell: |
-   $filePath = "$(System.ArtifactsDirectory)\signed\Microsoft.PowerShell.Native.$(NugetPackageVersion).nupkg"
-   Write-Verbose "Artifact to upload: $filePath" -Verbose
-   Write-Host "##vso[artifact.upload containerfolder=release;artifactname=release]$filePath"
-  displayName: 'Publish artifact'
+- template: uploadArtifacts.yml
+  parameters:
+    artifactPath: "$(System.ArtifactsDirectory)\signed"
+    artifactFilter: "Microsoft.PowerShell.Native.$(NugetPackageVersion).nupkg"
+    artifactName: 'finalResults'
