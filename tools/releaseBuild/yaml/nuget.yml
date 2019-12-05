@@ -146,10 +146,6 @@ steps:
   displayName: 'Validate NuGet package is signed'
 
 - powershell: |
-    Get-ChildItem "$(NuGetPackagePath)\*.nupkg" | Copy-Item -Destination '$(System.ArtifactsDirectory)\signed'
-  displayName: 'Task to be removed'
-
-- powershell: |
    $filePath = "$(System.ArtifactsDirectory)\signed\Microsoft.PowerShell.Native.$(NugetPackageVersion).nupkg"
    Write-Verbose "Artifact to upload: $filePath" -Verbose
    Write-Host "##vso[artifact.upload containerfolder=release;artifactname=release]$filePath"
