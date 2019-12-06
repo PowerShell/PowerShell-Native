@@ -9,7 +9,7 @@ steps:
 - task: DownloadPipelineArtifact@2
   inputs:
     buildType: current
-    artifactName: release
+    artifactName: signed
     targetPath: "$(System.ArtifactsDirectory)/signed"
   displayName: Download signed windows native packages
 
@@ -39,6 +39,8 @@ steps:
         }
     }
 
+    Write-Verbose -Verbose -Message "Expanding signed Windows binaries"
+
     Get-ChildItem $(System.ArtifactsDirectory)/signed/*.zip | ForEach-Object {
         $baseName = $_.BaseName
         if($baseName -match 'x64_arm') {
@@ -51,7 +53,7 @@ steps:
     }
 
     Write-Host "Extracted files:"
-    Get-ChildItem -Recurse $extractedRoot
+    Get-ChildItem -Recurse $extractedRoot -File
   displayName: 'Extract All Zips'
 
 - template: compliance.yml
