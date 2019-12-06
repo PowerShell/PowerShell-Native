@@ -70,6 +70,11 @@ steps:
   condition: ne(variables['SKIP_SIGNING'], 'True')
 
 - powershell: |
+    Compress-Archive -Path '$(Symbols)\Signed\*' -DestinationPath '$(Symbols)\Signed\win-$(ARCHITECTURE).zip'
+  displayName: Compress signed binaries
+  condition: ne(variables['SKIP_SIGNING'], 'True')
+
+- powershell: |
     Get-ChildItem -Path '$(Symbols)\*' -Recurse | Copy-Item -Destination '$(Symbols)\Signed' -Force -Verbose
   displayName: Copy unsigned binaries as signing is skipped
   condition: eq(variables['SKIP_SIGNING'], 'True')
@@ -77,7 +82,8 @@ steps:
 - template: uploadArtifact.yml
   parameters:
     artifactPath: '$(Symbols)\Signed'
-    artifactName: 'finalResults'
+    artifactFilter: 'win-*.zip'
+    artifactName: 'signed'
 
 - task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
   displayName: 'Run MpCmdRun.exe'
