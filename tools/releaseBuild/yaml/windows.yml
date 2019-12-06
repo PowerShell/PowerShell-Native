@@ -61,6 +61,8 @@ steps:
 
 - task: PkgESCodeSign@10
   displayName: 'CodeSign $(ARCHITECTURE)'
+  env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
   inputs:
     signConfigXml: '$(Build.SourcesDirectory)\tools\releaseBuild\signing.xml'
     inPathRoot: '$(Symbols)'

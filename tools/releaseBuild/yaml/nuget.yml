@@ -127,6 +127,8 @@ steps:
 
 - task: PkgESCodeSign@10
   displayName: 'Package ES - CodeSign $(NuGetPackagePath)\NugetSigning.xml'
+  env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
   inputs:
     signConfigXml: '$(NuGetPackagePath)\NugetSigning.xml'
     inPathRoot: ' $(NuGetPackagePath)'
