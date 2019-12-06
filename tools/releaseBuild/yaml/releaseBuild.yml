@@ -67,72 +67,14 @@ stages:
     steps:
     - template: nuget.yml
 
-- stage: ReleaseAzDevOps
-  displayName: Release PowerShell-Native to AzFeedRelease
-  condition: and(succeeded('Build'), eq(variables['Build.Reason'], 'Manual'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
+- template: publish.yml
+  parameters:
+    stageName: AzArtifactsFeed
+    environmentName: PSNativeAzArtifactApproval
+    feedCredential: AzArtifactsFeed
 
-  jobs:
-  - deployment: AzFeed
-    displayName: Release to AzDevops Feed
-    pool:
-      vmImage: windows-latest
-
-    environment: PSNativeAzArtifactApproval
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - download: current
-            artifact: release
-
-          - powershell: |
-              Get-ChildItem -Recurse "$(Pipeline.Workspace)/release"
-            displayName: Capture downloaded artifact
-
-          - powershell: |
-              Copy-Item "$(Pipeline.Workspace)/release/Microsoft.PowerShell.Native.*.nupkg" -Destination "$(Build.ArtifactStagingDirectory)" -Force
-              Get-ChildItem "$(Build.ArtifactStagingDirectory)/Microsoft.PowerShell.Native.*.nupkg"
-            displayName: 'Copy and Capture NuGet package'
-
-          - task: NuGetCommand@2
-            displayName: 'NuGet push'
-            inputs:
-              command: push
-              packagesToPush: '$(Build.ReleaseDirectory)/Microsoft.PowerShell.Native.*.nupkg'
-              nuGetFeedType: external
-              publishFeedCredentials: AzArtifactsFeed
-
-- stage: ReleaseNuGet
-  displayName: Release PowerShell-Native to Nuget.org
-  condition: and(succeeded('ReleaseAzDevOps'), eq(variables['Build.Reason'], 'Manual'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
-
-  jobs:
-  - deployment: NuGet
-    displayName: Release to NuGet.org
-    pool:
-      vmImage: windows-latest
-
-    environment: PSNativeNuGetApproval
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - download: current
-            artifact: release
-
-          - powershell: |
-              Get-ChildItem -Recurse "$(Pipeline.Workspace)/release"
-            displayName: Capture downloaded artifact
-
-          - powershell: |
-              Copy-Item "$(Pipeline.Workspace)/release/Microsoft.PowerShell.Native.*.nupkg" -Destination "$(Build.ArtifactStagingDirectory)" -Force
-              Get-ChildItem "$(Build.ArtifactStagingDirectory)/Microsoft.PowerShell.Native.*.nupkg"
-            displayName: 'Copy and Capture NuGet package'
-
-          - task: NuGetCommand@2
-            displayName: 'NuGet push'
-            inputs:
-              command: push
-              packagesToPush: '$(Build.ReleaseDirectory)/Microsoft.PowerShell.Native.*.nupkg'
-              nuGetFeedType: external
-              publishFeedCredentials: PowerShellNuGetOrgPush
+- template: publish.yml
+  parameters:
+    stageName: NuGet
+    environmentName: PSNativeNuGetApproval
+    feedCredential: PowerShellNuGetOrgPush
