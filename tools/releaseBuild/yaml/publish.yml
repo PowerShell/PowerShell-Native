@@ -4,17 +4,17 @@ parameters:
   feedCredential: ''
 
 stages:
-- stage: '${{ parameters.stageName }}'
+- stage: ${{ parameters.stageName }}
   displayName: Release PowerShell-Native to '${{ parameters.stageName }}'
   condition: and(succeeded('Build'), eq(variables['Build.Reason'], 'Manual'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
 
   jobs:
-  - deployment: Publish_'${{ parameters.stageName }}'
+  - deployment: Publish_${{ parameters.stageName }}
     displayName: Release to Feed
     pool:
       vmImage: windows-latest
 
-    environment: '${{ parameters.environmentName }}'
+    environment: ${{ parameters.environmentName }}
     strategy:
       runOnce:
         deploy:
@@ -37,4 +37,4 @@ stages:
               command: push
               packagesToPush: '$(Build.ReleaseDirectory)/Microsoft.PowerShell.Native.*.nupkg'
               nuGetFeedType: external
-              publishFeedCredentials: '${{ parameters.feedCredential }}'
+              publishFeedCredentials: ${{ parameters.feedCredential }}
