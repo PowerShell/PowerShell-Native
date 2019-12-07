@@ -126,7 +126,7 @@ steps:
 
   displayName: 'Generate signing file'
 
-- powershell: 'Get-Content $(NuGetPackagePath)\NugetSigning.xml '
+- powershell: 'Get-Content $(NuGetPackagePath)\NugetSigning.xml'
   displayName: 'Capture package signing file'
 
 - task: PkgESCodeSign@10
