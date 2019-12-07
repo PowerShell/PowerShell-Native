@@ -129,9 +129,6 @@ steps:
 - powershell: 'Get-Content $(NuGetPackagePath)\NugetSigning.xml '
   displayName: 'Capture package signing file'
 
-- powershell: 'New-Item -ItemType Directory $(System.ArtifactsDirectory)\signed'
-  displayName: 'Create empty signed folder'
-
 - task: PkgESCodeSign@10
   displayName: 'Package ES - CodeSign $(NuGetPackagePath)\NugetSigning.xml'
   env:
