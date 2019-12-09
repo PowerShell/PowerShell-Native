@@ -584,10 +584,15 @@ private:
             return g_MANAGED_PLUGIN_ALREADY_LOADED;
         }
 
+// Not used for CORECLR plugins
+#if !CORECLR
+
         if ((NULL == wszVCLRVersion) || (NULL == wszVAppBase))
         {
             return g_INVALID_INPUT;
         }
+
+#endif
 
         do
         {
@@ -646,6 +651,10 @@ private:
 
     void LoadPowerShell(PCWSTR version) throw (...)
     {
+        unsigned int exitCode = EXIT_CODE_SUCCESS;
+
+// PowerShell core plugin does not depend on registered Windows PowerShell version.
+#if !CORECLR
         // Verify incoming powershell version format.
         int iPSMajorVersion = 0;
         int iPSMinorVersion = 0;
@@ -671,16 +680,18 @@ private:
         {
             requestedMonadMajorVersion = 1;
         }
+#endif
 
         wchar_t* wszMonadVersion = NULL;    // Allocated via ConstructPowerShellVersion || GetRegistryInfo
         wchar_t* wszTempCLRVersion = NULL;  // Allocated via GetRegistryInfo
         wchar_t* wszTempAppBase = NULL;     // Allocated via GetRegistryInfo
         PWSTR wszMgdPlugInFileName = NULL;  // Allocated in CreateMgdPluginFileName
-        unsigned int exitCode = EXIT_CODE_SUCCESS;
         PlugInException* pErrorMsg = NULL;
 
         do
         {
+// PowerShell core plugin does not depend on registered Windows PowerShell version.
+#if !CORECLR
             exitCode = ConstructPowerShellVersion(iPSMajorVersion, iPSMinorVersion, &wszMonadVersion);
             if (exitCode != EXIT_CODE_SUCCESS)
             {
@@ -711,9 +722,11 @@ private:
             {
                 break;
             }
+#endif
 
             if (!bIsPluginLoaded)
             {
+		// wszMgdPlugInFileName is ignored for CORECLR.
                 this->powerShellClrHost = PowerShellClrWorkerFactory(wszMgdPlugInFileName);
                 if (NULL == this->powerShellClrHost)
                 {
@@ -721,6 +734,7 @@ private:
                     break;
                 }
 
+		// wszMonadVersion, wszTempCLRVersion ignored for CORECLR.
                 exitCode = powerShellClrHost->LaunchClr(wszMonadVersion, wszTempCLRVersion, "PwrshPlugin");
                 if (EXIT_CODE_SUCCESS != exitCode)
                 {
@@ -730,8 +744,10 @@ private:
                     break;
                 }
 
+		// wszMgdPlugInFileName, wszTempCLRVersion, wszTempAppBase ignored for CORECLR.
                 exitCode = LoadManagedPlugIn(wszMgdPlugInFileName, wszTempCLRVersion, wszTempAppBase, &pErrorMsg);
             }
+#if !CORECLR
             else
             {
                 if (requestedMonadMajorVersion != iMajorVersion)
@@ -747,6 +763,7 @@ private:
                     exitCode = g_OPTION_SET_APP_BASE_NOT_MATCH;
                 }
             }
+#endif
         } while (false);
 
         if (NULL != wszMonadVersion)
