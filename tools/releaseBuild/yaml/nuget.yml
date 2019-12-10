@@ -1,0 +1,164 @@
+steps:
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: current
+    artifactName: release
+    targetPath: "$(System.ArtifactsDirectory)/release"
+  displayName: Download native packages
+
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: current
+    artifactName: signed
+    targetPath: "$(System.ArtifactsDirectory)/signed"
+  displayName: Download signed windows native packages
+
+- powershell: |
+    $null = New-Item $(PackageRoot) -ItemType Directory -Force -Verbose
+    if(-not (Test-Path '$(System.ArtifactsDirectory)/release' ))
+    {
+      New-Item -ItemType Directory -Path '$(System.ArtifactsDirectory)/release' -Force
+    }
+    Invoke-WebRequest -Uri '$(PSRPBlobUrl)' -OutFile $(System.ArtifactsDirectory)/release/psrp.zip -Verbose
+  displayName: 'Download PSRP package'
+
+- powershell: 'Get-ChildItem $(System.ArtifactsDirectory)/release'
+  displayName: 'Capture downloaded zips'
+
+- powershell: |
+    $extractedRoot = New-Item $(System.ArtifactsDirectory)/uncompressed -ItemType Directory -Force -Verbose
+
+    Get-ChildItem $(System.ArtifactsDirectory)/release/*.zip | ForEach-Object {
+        $baseName = $_.BaseName
+        if($baseName -match 'x64_arm') {
+            Write-Verbose "Skipping expanding file $_.Name" -Verbose
+        }
+        else {
+            $folderPath = Join-Path $extractedRoot $baseName
+            Expand-Archive $_.FullName -DestinationPath $folderPath -Force
+        }
+    }
+
+    Write-Host "Extracted files:"
+    Get-ChildItem -Recurse $extractedRoot -File
+  displayName: 'Extract All Zips'
+
+- template: compliance.yml
+
+- template: upload.yml
+  parameters:
+      fileName: 'x64_arm64-symbols.zip'
+      sourcePath: '$(System.ArtifactsDirectory)\release\x64_arm64-symbols.zip'
+- template: upload.yml
+  parameters:
+      fileName: 'x64-symbols.zip'
+      sourcePath: '$(System.ArtifactsDirectory)\release\x64-symbols.zip'
+- template: upload.yml
+  parameters:
+      fileName: 'x64_arm-symbols.zip'
+      sourcePath: '$(System.ArtifactsDirectory)\release\x64_arm-symbols.zip'
+- template: upload.yml
+  parameters:
+      fileName: 'x86-symbols.zip'
+      sourcePath: '$(System.ArtifactsDirectory)\release\x86-symbols.zip'
+
+- task: NuGetToolInstaller@0
+  displayName: 'Install NuGet 5.3.1'
+  inputs:
+    versionSpec: 5.3.1
+
+- powershell: |
+    $Branch = $env:BUILD_SOURCEBRANCH
+    $branchOnly = $Branch -replace '^refs/heads/';
+    $branchOnly = $branchOnly -replace '[_\-]'
+
+    $packageVersion = if($env:PACKAGE_VERSION -eq 'fromBranch' -or !$env:PACKAGE_VERSION)
+    {
+      if($Branch -match '^.*(release[-/])')
+      {
+        Write-verbose "release branch:" -verbose
+        $Branch -replace '^.*(release[-/]v)'
+      }
+      else
+      {
+        "0.0.0"
+      }
+    }
+    else {
+      "0.0.0"
+    }
+
+    $vstsCommandString = "vso[task.setvariable variable=NugetPackageVersion]$packageVersion"
+    Write-Verbose -Message "setting $Variable to $packageVersion" -Verbose
+    Write-Host -Object "##$vstsCommandString"
+
+  displayName: Set NuGetPackageVersion
+
+- powershell: |
+   Import-Module $(Build.SourcesDirectory)\build.psm1
+   $PackageRoot = New-Item -ItemType Directory -Path  $(System.ArtifactsDirectory)\NugetPackage
+
+   $WindowsX64ZipPath = Join-Path "$(System.ArtifactsDirectory)/signed" 'win-x64.zip'
+   $WindowsX86ZipPath = Join-Path "$(System.ArtifactsDirectory)/signed" 'win-x86.zip'
+   $WindowsARMZipPath = Join-Path "$(System.ArtifactsDirectory)/signed" 'win-x64_arm.zip'
+   $WindowsARM64ZipPath = Join-Path "$(System.ArtifactsDirectory)/signed" 'win-x64_arm64.zip'
+   $LinuxZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-x64-symbols.zip'
+   $LinuxARMZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-arm-symbols.zip'
+   $LinuxARM64ZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-arm64-symbols.zip'
+   $LinuxAlpineZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-musl-x64-symbols.zip'
+   $macOSZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'osx-symbols.zip'
+   $psrpZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'psrp.zip'
+
+   Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(NugetPackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARMZipPath $WindowsARMZipPath  -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath -psrpZipPath $psrpZipPath -NuGetOutputPath $(NuGetPackagePath)
+
+  displayName: 'Build NuGet package'
+
+- powershell: 'Get-Childitem $(NuGetPackagePath)'
+  displayName: 'Capture nuget package'
+
+- powershell: |
+   ## Get the nuget file paths
+   $files = (Get-ChildItem $(NuGetPackagePath)\*.nupkg).FullName
+
+   if($files.Count -lt 1) { throw "No packages available to publish" }
+
+   & $(Build.SourcesDirectory)\tools\releaseBuild\generatePackgeSigning.ps1 -Path "$(NuGetPackagePath)\NugetSigning.xml" -NuPkgFiles $files
+
+  displayName: 'Generate signing file'
+
+- powershell: 'Get-Content $(NuGetPackagePath)\NugetSigning.xml'
+  displayName: 'Capture package signing file'
+
+- task: PkgESCodeSign@10
+  displayName: 'Package ES - CodeSign $(NuGetPackagePath)\NugetSigning.xml'
+  env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+  inputs:
+    signConfigXml: '$(NuGetPackagePath)\NugetSigning.xml'
+    inPathRoot: ' $(NuGetPackagePath)'
+    outPathRoot: '$(System.ArtifactsDirectory)\signed'
+  condition: ne(variables['SKIP_SIGNING'], 'True')
+
+- powershell: |
+    Copy-Item  $(NuGetPackagePath)\*.nupkg -DestinationPath '$(System.ArtifactsDirectory)\signed' -Force -Verbose
+  displayName: Copy unsigned nuget packge as signing is disabled
+  condition: eq(variables['SKIP_SIGNING'], 'True')
+
+- powershell: |
+   Import-Module $env:BUILD_SOURCESDIRECTORY\build.psm1 -Force
+
+   $packages = Get-ChildItem -Recurse $(System.ArtifactsDirectory)\signed\*.nupkg -Verbose
+
+   if ($packages.Count -eq 0)
+   {
+       throw "No signed package found at: $(System.ArtifactsDirectory)\signed"
+   }
+
+   $packages | ForEach-Object {  Start-NativeExecution -sb { nuget.exe verify -All $_.FullName } }
+  displayName: 'Validate NuGet package is signed'
+
+- template: uploadArtifact.yml
+  parameters:
+    artifactPath: '$(System.ArtifactsDirectory)\signed'
+    artifactFilter: 'Microsoft.PowerShell.Native.$(NugetPackageVersion).nupkg'
+    artifactName: 'finalResults'

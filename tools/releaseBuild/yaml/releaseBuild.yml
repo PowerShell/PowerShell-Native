@@ -1,0 +1,80 @@
+variables:
+  AuthenticodeSignType: '400'
+  BuildConfiguration: 'Release'
+  NuGetPackagePath: '$(System.ArtifactsDirectory)/NuGetRelease'
+  PackageRoot: '$(System.ArtifactsDirectory)/Packages'
+
+stages:
+- stage: Build
+  displayName: Build Native Binaries
+  dependsOn: []
+  jobs:
+  - job: BuildWin
+    pool:
+      name: PowerShell
+      demands:
+      - DotNetFramework
+      - Agent.Image
+    displayName: Windows
+    strategy:
+      matrix:
+        x64:
+          ARCHITECTURE: x64
+        x86:
+          ARCHITECTURE: x86
+        x64ARM:
+          ARCHITECTURE: x64_arm
+        x64ARM64:
+          ARCHITECTURE: x64_arm64
+    steps:
+    - template: windows.yml
+
+  - job: BuildLinux
+    displayName: Linux
+    pool:
+      vmImage: ubuntu-16.04
+    strategy:
+        matrix:
+          UbuntuArm:
+            LINUX_BUILDNAME: 'ubuntu.16.04-arm'
+          CentOS:
+            LINUX_BUILDNAME: 'centos.7'
+          Alpine:
+            LINUX_BUILDNAME: 'alpine'
+          UbuntuArm64:
+            LINUX_BUILDNAME: 'ubuntu.16.04-arm64'
+    steps:
+    - template: linux.yml
+
+  - job: BuildMac
+    displayName: Build Native Binaries on macOS
+    pool: Hosted Mac Internal
+    steps:
+    - template: mac.yml
+
+  - job: BuildNuGetPkg
+    displayName: Build NuGet Package
+    dependsOn:
+    - BuildWin
+    - BuildLinux
+    - BuildMac
+    pool:
+      name: PowerShell
+      demands:
+      - DotNetFramework
+      - Agent.Image
+
+    steps:
+    - template: nuget.yml
+
+- template: publish.yml
+  parameters:
+    stageName: AzArtifactsFeed
+    environmentName: PSNativeAzArtifactApproval
+    feedCredential: AzArtifactsFeed
+
+- template: publish.yml
+  parameters:
+    stageName: NuGet
+    environmentName: PSNativeNuGetApproval
+    feedCredential: PowerShellNuGetOrgPush

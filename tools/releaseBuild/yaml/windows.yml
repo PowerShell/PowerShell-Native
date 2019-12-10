@@ -1,0 +1,94 @@
+steps:
+- task: PkgESSetupBuild@10
+  displayName: 'Initialize build'
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+  inputs:
+    useDfs: false
+    productName: PowerShellCore
+    branchVersion: true
+    disableWorkspace: true
+    disableBuildTools: true
+    disableNugetPack: true
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'))
+
+- powershell: |
+    docker container prune --force
+    docker container ls --all --format '{{ json .ID }}' | ConvertFrom-Json | %{docker container rm --force --volumes $_}
+    docker image ls --format '{{ json .}}' | ConvertFrom-Json |% {
+        if($_.tag -eq '<none>')
+        {
+            $formatString = 'yyyy-MM-dd HH:mm:ss zz00'
+            $createdAtString = $_.CreatedAt.substring(0,$_.CreatedAt.Length -4)
+            $createdAt = [DateTime]::ParseExact($createdAtString, $formatString,[System.Globalization.CultureInfo]::InvariantCulture)
+            if($createdAt -lt (Get-Date).adddays(-1))
+            {
+                  docker image rm $_.ID
+            }
+        }
+    }
+
+    Write-verbose "--docker info---" -verbose
+    docker info
+    Write-verbose "--docker image ls---" -verbose
+    docker image ls
+    Write-verbose "--docker container ls --all---" -verbose
+    docker container ls --all
+    Write-verbose "--git branch ---" -verbose
+    git branch
+    exit 0
+  displayName: 'Docker cleanup and get environment'
+  continueOnError: true
+
+- task: PowerShell@2
+  displayName: 'Build Windows Universal'
+  inputs:
+    targetType: filePath
+    filePath: $(Build.SourcesDirectory)/tools/releaseBuild/vstsBuild.ps1
+    arguments: '-Name win-$(ARCHITECTURE)-symbols -Verbose'
+
+- task: PowerShell@2
+  displayName: 'Update Signing Xml'
+  inputs:
+    targetType: filePath
+    filePath: $(Build.SourcesDirectory)/tools/releaseBuild/updateSigning.ps1
+
+- powershell: |
+    $vstsCommandString = "vso[task.setvariable variable=Symbols]${env:Symbols_$(ARCHITECTURE)}"
+    Write-Host "sending " + $vstsCommandString
+    Write-Host "##$vstsCommandString"
+  displayName: 'Get Symbols Path'
+
+- task: PkgESCodeSign@10
+  displayName: 'CodeSign $(ARCHITECTURE)'
+  env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+  inputs:
+    signConfigXml: '$(Build.SourcesDirectory)\tools\releaseBuild\signing.xml'
+    inPathRoot: '$(Symbols)'
+    outPathRoot: '$(Symbols)\Signed'
+  condition: ne(variables['SKIP_SIGNING'], 'True')
+
+- powershell: |
+    Compress-Archive -Path '$(Symbols)\Signed\*' -DestinationPath '$(Symbols)\Signed\win-$(ARCHITECTURE).zip'
+  displayName: Compress signed binaries
+  condition: ne(variables['SKIP_SIGNING'], 'True')
+
+- powershell: |
+    Get-ChildItem -Path '$(Symbols)\*' -Recurse | Copy-Item -Destination '$(Symbols)\Signed' -Force -Verbose
+  displayName: Copy unsigned binaries as signing is skipped
+  condition: eq(variables['SKIP_SIGNING'], 'True')
+
+- template: uploadArtifact.yml
+  parameters:
+    artifactPath: '$(Symbols)\Signed'
+    artifactFilter: 'win-*.zip'
+    artifactName: 'signed'
+
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
+  displayName: 'Run MpCmdRun.exe'
+
+- task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+  displayName: 'Component Detection'
+  inputs:
+    sourceScanPath: '$(Build.SourcesDirectory)'
