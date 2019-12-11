@@ -23,11 +23,11 @@ stages:
             artifact: finalResults
 
           - powershell: |
-              Get-ChildItem -Recurse "$(Pipeline.Workspace)/release"
+              Get-ChildItem -Recurse "$(Pipeline.Workspace)/finalResults"
             displayName: Capture downloaded artifact
 
           - powershell: |
-              Copy-Item "$(Pipeline.Workspace)/release/Microsoft.PowerShell.Native.*.nupkg" -Destination "$(Build.ArtifactStagingDirectory)" -Force
+              Copy-Item "$(Pipeline.Workspace)/finalResults/Microsoft.PowerShell.Native.*.nupkg" -Destination "$(Build.ArtifactStagingDirectory)" -Force
               Get-ChildItem "$(Build.ArtifactStagingDirectory)/Microsoft.PowerShell.Native.*.nupkg"
             displayName: 'Copy and Capture NuGet package'
 
