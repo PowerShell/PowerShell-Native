@@ -20,7 +20,7 @@ stages:
         deploy:
           steps:
           - download: current
-            artifact: release
+            artifact: finalResults
 
           - powershell: |
               Get-ChildItem -Recurse "$(Pipeline.Workspace)/release"
