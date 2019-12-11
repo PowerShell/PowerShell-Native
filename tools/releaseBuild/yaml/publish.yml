@@ -35,6 +35,6 @@ stages:
             displayName: 'NuGet push'
             inputs:
               command: push
-              packagesToPush: '$(Build.ReleaseDirectory)/Microsoft.PowerShell.Native.*.nupkg'
+              packagesToPush: '$(Build.ArtifactStagingDirectory)/Microsoft.PowerShell.Native.*.nupkg'
               nuGetFeedType: external
               publishFeedCredentials: ${{ parameters.feedCredential }}
