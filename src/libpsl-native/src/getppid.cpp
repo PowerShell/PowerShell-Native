@@ -7,7 +7,9 @@
 #include <sys/user.h>
 #include <sys/param.h>
 
-#if HAVE_SYS_SYSCTL_H
+#if HAVE_SYSCONF
+// do nothing
+#elif HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
 

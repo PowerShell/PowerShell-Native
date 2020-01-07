@@ -1,4 +1,5 @@
 include(CheckIncludeFiles)
+include(CheckFunctionExists)
 
 add_library(psl-native SHARED
   getstat.cpp
@@ -28,8 +29,10 @@ add_library(psl-native SHARED
   createprocess.cpp
   nativesyslog.cpp)
 
+check_function_exists(sysconf HAVE_SYSCONF)
+
 check_include_files(
-    "sys/types.h;sys/sysctl.h"
+    "sys/sysctl.h"
     HAVE_SYS_SYSCTL_H)
 
 configure_file(
