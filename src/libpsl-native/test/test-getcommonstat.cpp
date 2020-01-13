@@ -274,6 +274,7 @@ TEST(GetCommonStat, Mode002)
     GetCommonStat(fname, &cs);
     unlink(fname);
     EXPECT_EQ(cs.Mode, buffer.st_mode);
+    EXPECT_EQ(cs.IsSetUid, 1);
 }
 
 TEST(GetCommonStat, Mode003)
@@ -291,6 +292,7 @@ TEST(GetCommonStat, Mode003)
     GetCommonStat(fname, &cs);
     unlink(fname);
     EXPECT_EQ(cs.Mode, buffer.st_mode);
+    // don't check for IsSetGid as that can vary from platform based on file system
 }
 
 TEST(GetCommonStat, Mode004)
@@ -308,5 +310,6 @@ TEST(GetCommonStat, Mode004)
     GetCommonStat(dname, &cs);
     rmdir(dname);
     EXPECT_EQ(cs.Mode, buffer.st_mode);
+    EXPECT_EQ(cs.IsSticky, 1);
 }
 

@@ -11,16 +11,16 @@ PAL_BEGIN_EXTERNC
 
 struct CommonStat
 {
-    long Inode;
+    int64_t Inode;
     int Mode;
     int UserId;
     int GroupId;
     int HardlinkCount;
-    long Size;
-    long AccessTime;
-    long ModifiedTime;
-    long ChangeTime;
-    long BlockSize;
+    int64_t Size;
+    int64_t AccessTime;
+    int64_t ModifiedTime;
+    int64_t ChangeTime;
+    int64_t BlockSize;
     int DeviceId;
     int NumberOfBlocks;
     int IsDirectory;
