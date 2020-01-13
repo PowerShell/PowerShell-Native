@@ -11,7 +11,11 @@
 #include <sstream>
 #include <errno.h>
 
-#if HAVE_SYS_SYSCTL_H
+#if __APPLE__
+#include <sys/sysctl.h>
+#elif HAVE_SYSCONF
+// do nothing
+#elif HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
 
