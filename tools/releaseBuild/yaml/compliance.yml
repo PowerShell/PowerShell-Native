@@ -37,6 +37,7 @@ steps:
 - task: securedevelopmentteam.vss-secure-development-tools.build-task-uploadtotsa.TSAUpload@1
   displayName: 'TSA upload to Codebase: PowerShellNative Stamp: Azure'
   inputs:
+    tsaVersion: TsaV2
     codebase: NewOrUpdate
     tsaStamp: Azure
     codeBaseName: PowerShellNative
@@ -44,7 +45,7 @@ steps:
     codeBaseAdmins: 'adityap;tplunk;dongbow;slee'
     instanceUrlAzure: MSAZURE
     projectNameMSAZURE: One
-    areaPath: 'One\MGMT\Azure Automation\PowerShell\PowerShell Core'
+    areaPath: 'One\MGMT\Compute\Powershell\Powershell'
     iterationPath: 'One\_Default'
     uploadFortifySCA: false
     uploadFxCop: false
