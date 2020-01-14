@@ -35,20 +35,17 @@ steps:
   displayName: 'Publish Security Analysis Logs'
 
 - task: securedevelopmentteam.vss-secure-development-tools.build-task-uploadtotsa.TSAUpload@1
-  displayName: 'TSA upload to Codebase: PowerShellNative Stamp: Azure'
+  displayName: 'TSA upload to Codebase: PowerShellNative Version: TsaV2'
   inputs:
-    codebase: NewOrUpdate
-    tsaStamp: Azure
+    tsaVersion: TsaV2
     codeBaseName: PowerShellNative
-    notificationAlias: '4e50053a.microsoft.com@amer.teams.ms'
-    codeBaseAdmins: 'adityap;tplunk;dongbow;slee'
-    instanceUrlAzure: MSAZURE
-    projectNameMSAZURE: One
-    areaPath: 'One\MGMT\Azure Automation\PowerShell\PowerShell Core'
-    iterationPath: 'One\_Default'
+    uploadAPIScan: true
+    uploadBinSkim: true
+    uploadCredScan: true
     uploadFortifySCA: false
     uploadFxCop: false
     uploadModernCop: false
+    uploadPoliCheck: true
     uploadPREfast: false
     uploadRoslyn: false
     uploadTSLint: false
