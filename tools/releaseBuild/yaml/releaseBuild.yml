@@ -1,3 +1,5 @@
+trigger: none
+
 variables:
   AuthenticodeSignType: '400'
   BuildConfiguration: 'Release'
@@ -11,10 +13,7 @@ stages:
   jobs:
   - job: BuildWin
     pool:
-      name: PowerShell
-      demands:
-      - DotNetFramework
-      - Agent.Image
+      vmImage: vs2017-win2016
     displayName: Windows
     strategy:
       matrix:
@@ -27,7 +26,28 @@ stages:
         x64ARM64:
           ARCHITECTURE: x64_arm64
     steps:
-    - template: windows.yml
+    - template: windows-build.yml
+
+  - job: SignWin
+    pool:
+      name: PowerShell
+      demands:
+      - DotNetFramework
+      - Agent.Image
+    displayName: Sign Windows
+    dependsOn: BuildWin
+    strategy:
+      matrix:
+        x64:
+          ARCHITECTURE: x64
+        x86:
+          ARCHITECTURE: x86
+        x64ARM:
+          ARCHITECTURE: x64_arm
+        x64ARM64:
+          ARCHITECTURE: x64_arm64
+    steps:
+    - template: windows-sign.yml
 
   - job: BuildLinux
     displayName: Linux
@@ -55,7 +75,7 @@ stages:
   - job: BuildNuGetPkg
     displayName: Build NuGet Package
     dependsOn:
-    - BuildWin
+    - SignWin
     - BuildLinux
     - BuildMac
     pool:

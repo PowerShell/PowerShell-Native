@@ -1,0 +1,20 @@
+steps:
+  - powershell: |
+      choco install cmake.install --installargs 'ADD_CMAKE_TO_PATH=System'
+    displayName: Install cmake
+    condition: succeeded()
+  - powershell: |
+      $vsPath = ${Env:ProgramFiles(x86)} + '\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin'
+      Write-Host "##vso[task.prependpath]$vsPath"
+    displayName: Set Visual Studio Path
+    condition: succeeded()
+  - powershell: |
+      $cmakeBinPath = "$env:ProgramFiles\CMake\bin\"
+      if(Test-Path $cmakeBinPath) { $env:Path = "$cmakeBinPath;$env:PATH" } else { throw "CMake not installed under $cmakeBinPath" }
+      $(Build.SourcesDirectory)\tools\releaseBuild\PowerShellNative.ps1 -RepoRoot $(Build.SourcesDirectory) -TargetLocation "$(System.ArtifactsDirectory)\Packages" -Arch $(ARCHITECTURE) -Configuration Release -Symbols
+    displayName: Start build - $(ARCHITECTURE)
+    condition: succeeded()
+  - powershell: |
+      Write-Host "##vso[artifact.upload containerfolder=release;artifactname=release]$(System.ArtifactsDirectory)\Packages\$(ARCHITECTURE)-symbols.zip"
+    displayName: Upload artifacts
+    condition: succeeded()

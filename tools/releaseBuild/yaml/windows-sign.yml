@@ -1,0 +1,69 @@
+steps:
+- task: PkgESSetupBuild@10
+  displayName: 'Initialize build'
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+  inputs:
+    useDfs: false
+    productName: PowerShellCore
+    branchVersion: true
+    disableWorkspace: true
+    disableBuildTools: true
+    disableNugetPack: true
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'))
+
+- task: DownloadBuildArtifacts@0
+  inputs:
+    buildType: current
+    artifactName: release
+
+- powershell: |
+    $zipFilePath = '$(System.ArtifactsDirectory)\release\$(ARCHITECTURE)-symbols.zip'
+    Get-ChildItem $zipFilePath -Verbose
+
+    Expand-Archive $zipFilePath -Destination '$(System.ArtifactsDirectory)\Expanded' -Force
+
+    $vstsCommandString = "vso[task.setvariable variable=Symbols]$(System.ArtifactsDirectory)\Expanded"
+    Write-Host "sending " + $vstsCommandString
+    Write-Host "##$vstsCommandString"
+  displayName: Expand artifact $(ARCHITECTURE)-symbols.zip
+
+- task: PowerShell@2
+  displayName: 'Update Signing Xml'
+  inputs:
+    targetType: filePath
+    filePath: $(Build.SourcesDirectory)/tools/releaseBuild/updateSigning.ps1
+
+- task: PkgESCodeSign@10
+  displayName: 'CodeSign $(ARCHITECTURE)'
+  env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+  inputs:
+    signConfigXml: '$(Build.SourcesDirectory)\tools\releaseBuild\signing.xml'
+    inPathRoot: '$(Symbols)'
+    outPathRoot: '$(Symbols)\Signed'
+  condition: ne(variables['SKIP_SIGNING'], 'True')
+
+- powershell: |
+    Compress-Archive -Path '$(Symbols)\Signed\*' -DestinationPath '$(Symbols)\Signed\win-$(ARCHITECTURE).zip'
+  displayName: Compress signed binaries
+  condition: ne(variables['SKIP_SIGNING'], 'True')
+
+- powershell: |
+    Get-ChildItem -Path '$(Symbols)\*' -Recurse | Copy-Item -Destination '$(Symbols)\Signed' -Force -Verbose
+  displayName: Copy unsigned binaries as signing is skipped
+  condition: eq(variables['SKIP_SIGNING'], 'True')
+
+- template: uploadArtifact.yml
+  parameters:
+    artifactPath: '$(Symbols)\Signed'
+    artifactFilter: 'win-*.zip'
+    artifactName: 'signed'
+
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
+  displayName: 'Run MpCmdRun.exe'
+
+- task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+  displayName: 'Component Detection'
+  inputs:
+    sourceScanPath: '$(Build.SourcesDirectory)'
