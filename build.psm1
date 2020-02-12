@@ -305,6 +305,8 @@ function Start-BuildNativeWindowsBinaries {
         $savedPath = $env:PATH
         $sdkPath = Get-LatestWinSDK
 
+        Set-SdkEnv -arch $Arch
+
         try {
             $env:PATH = "$sdkPath;$env:PATH"
             $mcFound = Get-Command mc.exe
@@ -3370,3 +3372,35 @@ $script:RESX_TEMPLATE = @'
 {0}
 </root>
 '@
+
+
+function Set-SdkEnv($arch)
+{
+    $cmdContents = @"
+@echo off
+call "%ProgramFiles(x86)%\Microsoft Visual C++ Build Tools\vcbuildtools.bat" $arch
+set
+"@
+
+    $cmdPath = Join-Path $env:temp -ChildPath ([System.IO.Path]::GetRandomFileName() + '.cmd')
+    Get-Content $cmdPath | Out-String | Write-Verbose -Verbose
+    Set-Content -LiteralPath $cmdPath -Value $cmdContents -Encoding Ascii
+    try
+    {
+        &$cmdPath | Foreach-Object {
+            $cmdVar,$cmdVal=$_.split('=')
+            if($cmdVar -ne 'Platform')
+            {
+                if((Get-Item -Path env:$cmdVar -Exclude SilentlyContinue).Value -ne $cmdVal)
+                {
+                    Write-Verbose "setting machine variable $cmdVar to $cmdVal" -Verbose
+                    [System.Environment]::SetEnvironmentVariable($cmdVar,$cmdVal,[System.EnvironmentVariableTarget]::Process)
+                }
+            }
+        }
+    }
+    finally
+    {
+        Remove-Item -LiteralPath $cmdPath -ErrorAction SilentlyContinue -Force
+    }
+}
