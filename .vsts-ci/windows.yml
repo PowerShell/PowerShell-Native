@@ -17,7 +17,6 @@ jobs:
     vmImage: vs2017-win2016
 
   strategy:
-    maxparallel: 4
     matrix:
       Windows x86:
         buildName: x86
