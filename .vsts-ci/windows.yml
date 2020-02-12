@@ -9,12 +9,14 @@ variables:
 resources:
   - repo: self
     clean: true
-phases:
-- phase: Build
 
-  queue:
-    name: Hosted Windows Container
-    parallel: 4
+jobs:
+- job: Build
+
+  pool:
+    vmImage: vs2017-win2016
+
+  strategy:
     matrix:
       Windows x86:
         buildName: x86
@@ -31,17 +33,9 @@ phases:
     displayName: Install cmake
     condition: succeeded()
   - powershell: |
-      choco install windows-sdk-10.1
-    displayName: Install Windows SDK 10.1
-    condition: succeeded()
-  - powershell: |
-      Invoke-WebRequest "https://aka.ms/vs/15/release/vs_BuildTools.exe" -OutFile vs_BuildTools.exe -UseBasicParsing
-      Start-Process -FilePath 'vs_BuildTools.exe' -ArgumentList '--quiet', '--norestart', '--locale en-US', '--add Microsoft.VisualStudio.Component.VC.Tools.ARM', '--add Microsoft.VisualStudio.Component.VC.Tools.ARM64', '--includeRecommended', '--add Microsoft.VisualStudio.Workload.VCTools', '--add Microsoft.VisualStudio.Component.Windows10SDK.16299.Desktop.arm', '--add Microsoft.VisualStudio.Component.VC.ATL.Spectre', '--add Microsoft.VisualStudio.Component.VC.ATLMFC.Spectre', '--add Microsoft.VisualStudio.Component.VC.ATL.ARM.Spectre', '--add Microsoft.VisualStudio.Component.VC.ATL.ARM64.Spectre', '--add Microsoft.VisualStudio.Component.VC.Runtimes.ARM.Spectre', '--add Microsoft.VisualStudio.Component.VC.Runtimes.ARM64.Spectre', '--add Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre' -Wait
-      Remove-Item .\vs_BuildTools.exe
-      Remove-Item -Force -Recurse 'C:\Program Files (x86)\Microsoft Visual Studio\Installer'
       $vsPath = ${Env:ProgramFiles(x86)} + '\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin'
       Write-Host "##vso[task.prependpath]$vsPath"
-    displayName: Install Visual Studio 2017
+    displayName: Set Visual Studio Path
     condition: succeeded()
   - powershell: |
       $cmakeBinPath = "$env:ProgramFiles\CMake\bin\"
