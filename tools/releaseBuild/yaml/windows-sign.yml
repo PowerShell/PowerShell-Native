@@ -18,7 +18,7 @@ steps:
     artifactName: artifacts
 
 - powershell:
-    $zipFilePath = Join-Path '$(System.ArtifactsDirectory)' 'artifacts\$(ARCHITECTURE)-symbols.zip'
+    $zipFilePath = '$(System.ArtifactsDirectory)\artifacts\$(ARCHITECTURE)-symbols.zip'
     Get-ChildItem $zipFilePath -Verbose
 
     Expand-Archive $zipFilePath -Destination '$(System.ArtifactsDirectory)\Expanded' -Force
