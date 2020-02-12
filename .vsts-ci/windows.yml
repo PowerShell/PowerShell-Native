@@ -13,7 +13,7 @@ phases:
 - phase: Build
 
   queue:
-    name: Hosted Windows Container
+    name: vs2017-win2016
     parallel: 4
     matrix:
       Windows x86:
