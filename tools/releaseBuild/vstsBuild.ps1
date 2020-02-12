@@ -50,11 +50,11 @@ end {
 
     Write-Verbose "cloning -b $psReleaseBranch --quiet https://github.com/$psReleaseFork/PSRelease.git" -verbose
     & $gitBinFullPath clone -b $psReleaseBranch --quiet https://github.com/$psReleaseFork/PSRelease.git $psReleaseLocation
-    & $gitBinFullPath checkout '07afd6de7ebc87ccc872ab217750804d827787bb' -b LKG
 
     Push-Location -Path $PWD.Path
     try {
         Set-Location $psReleaseLocation
+        & $gitBinFullPath checkout '07afd6de7ebc87ccc872ab217750804d827787bb' -b LKG
         & $gitBinFullPath  submodule update --init --recursive --quiet
     }
     finally {
