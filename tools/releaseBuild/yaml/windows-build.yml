@@ -15,6 +15,6 @@ steps:
     displayName: Start build - $(ARCHITECTURE)
     condition: succeeded()
   - powershell: |
-      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=release]$(System.ArtifactsDirectory)\Packages\$(ARCHITECTURE)-symbols.zip"
+      Write-Host "##vso[artifact.upload containerfolder=release;artifactname=release]$(System.ArtifactsDirectory)\Packages\$(ARCHITECTURE)-symbols.zip"
     displayName: Upload artifacts
     condition: succeeded()
