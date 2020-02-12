@@ -34,7 +34,7 @@ stages:
       demands:
       - DotNetFramework
       - Agent.Image
-    displayName: Windows
+    displayName: Sign Windows
     dependsOn: BuildWin
     strategy:
       matrix:

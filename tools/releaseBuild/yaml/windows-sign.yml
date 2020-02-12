@@ -21,10 +21,9 @@ steps:
     $zipFilePath = Join-Path '$(System.ArtifactsDirectory)' 'artifacts\$(ARCHITECTURE)-symbols.zip'
     Get-ChildItem $zipFilePath -Verbose
 
-    $expandedPath = Join-Path '$(System.ArtifactsDirectory)' 'Expanded'
-    Expand-Archive $zipFilePath -Destination $expandedPath -Force
+    Expand-Archive $zipFilePath -Destination '$(System.ArtifactsDirectory)\Expanded' -Force
 
-    $vstsCommandString = "vso[task.setvariable variable=Symbols]$expandedPath"
+    $vstsCommandString = "vso[task.setvariable variable=Symbols]$(System.ArtifactsDirectory)\Expanded"
     Write-Host "sending " + $vstsCommandString
     Write-Host "##$vstsCommandString"
   displayName: Expand artifact $(ARCHITECTURE)-symbols.zip
