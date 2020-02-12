@@ -1,3 +1,5 @@
+trigger: none
+
 variables:
   AuthenticodeSignType: '400'
   BuildConfiguration: 'Release'
@@ -73,7 +75,7 @@ stages:
   - job: BuildNuGetPkg
     displayName: Build NuGet Package
     dependsOn:
-    - BuildSign
+    - SignWin
     - BuildLinux
     - BuildMac
     pool:
