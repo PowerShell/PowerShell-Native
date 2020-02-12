@@ -15,10 +15,10 @@ steps:
 - task: DownloadBuildArtifacts@0
   inputs:
     buildType: current
-    artifactName: artifacts
+    artifactName: release
 
 - powershell: |
-    $zipFilePath = '$(System.ArtifactsDirectory)\artifacts\$(ARCHITECTURE)-symbols.zip'
+    $zipFilePath = '$(System.ArtifactsDirectory)\release\$(ARCHITECTURE)-symbols.zip'
     Get-ChildItem $zipFilePath -Verbose
 
     Expand-Archive $zipFilePath -Destination '$(System.ArtifactsDirectory)\Expanded' -Force
