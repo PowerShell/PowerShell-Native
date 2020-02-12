@@ -12,9 +12,9 @@ steps:
       $cmakeBinPath = "$env:ProgramFiles\CMake\bin\"
       if(Test-Path $cmakeBinPath) { $env:Path = "$cmakeBinPath;$env:PATH" } else { throw "CMake not installed under $cmakeBinPath" }
       $(Build.SourcesDirectory)\tools\releaseBuild\PowerShellNative.ps1 -RepoRoot $(Build.SourcesDirectory) -TargetLocation "$(System.ArtifactsDirectory)\Packages" -Arch $(ARCHITECTURE) -Configuration Release -Symbols
-    displayName: Start build - $(buildName)
+    displayName: Start build - $(ARCHITECTURE)
     condition: succeeded()
   - powershell: |
-      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)\Packages\$(buildName)-symbols.zip"
+      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)\Packages\$(ARCHITECTURE)-symbols.zip"
     displayName: Upload artifacts
     condition: succeeded()
