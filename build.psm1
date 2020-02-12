@@ -3383,8 +3383,8 @@ set
 "@
 
     $cmdPath = Join-Path $env:temp -ChildPath ([System.IO.Path]::GetRandomFileName() + '.cmd')
-    Get-Content $cmdPath | Out-String | Write-Verbose -Verbose
     Set-Content -LiteralPath $cmdPath -Value $cmdContents -Encoding Ascii
+    Get-Content $cmdPath | Out-String | Write-Verbose -Verbose
     try
     {
         &$cmdPath | Foreach-Object {
