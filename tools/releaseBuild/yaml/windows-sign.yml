@@ -17,7 +17,7 @@ steps:
     buildType: current
     artifactName: artifacts
 
-- powershell:
+- powershell: |
     $zipFilePath = '$(System.ArtifactsDirectory)\artifacts\$(ARCHITECTURE)-symbols.zip'
     Get-ChildItem $zipFilePath -Verbose
 
