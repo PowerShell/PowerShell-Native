@@ -981,7 +981,7 @@ Fix steps:
 
         Start-NativeExecution { & "~/.rcedit/rcedit-x64.exe" $pwshPath --set-icon "$PSScriptRoot\assets\Powershell_black.ico" `
             --set-file-version $fileVersion --set-product-version $ReleaseVersion --set-version-string "ProductName" "PowerShell Core 6" `
-            --set-version-string "LegalCopyright" "(C) Microsoft Corporation.  All Rights Reserved." `
+            --set-version-string "LegalCopyright" "(c) Microsoft Corporation." `
             --application-manifest "$PSScriptRoot\assets\pwsh.manifest" } | Write-Verbose
     }
 
