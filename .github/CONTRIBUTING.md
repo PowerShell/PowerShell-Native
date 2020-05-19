@@ -153,7 +153,7 @@ Additional references:
   It is standard practice to have both a copyright and license notice for each source file.
   * For `.h`, `.cpp`, and `.cs` files use:
 
-        // Copyright (c) Microsoft Corporation. All rights reserved.
+        // Copyright (c) Microsoft Corporation.
         // Licensed under the MIT License.
 
   * For `.ps1` and `.psm1` files use:
