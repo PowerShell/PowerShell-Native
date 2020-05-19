@@ -586,7 +586,7 @@ function Start-BuildPowerShellNativePackage
             <license type="expression">MIT</license>
             <tags>PowerShell</tags>
             <language>en-US</language>
-            <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+            <copyright>© Microsoft Corporation.</copyright>
             <contentFiles>
                 <files include="**/*" buildAction="None" copyToOutput="true" flatten="false" />
             </contentFiles>

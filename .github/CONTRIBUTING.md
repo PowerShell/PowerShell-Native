@@ -166,7 +166,7 @@ Additional references:
   ```powershell
   Author = "PowerShell"
   Company = "Microsoft Corporation"
-  Copyright = "Copyright (c) Microsoft Corporation. All rights reserved."
+  Copyright = "Copyright (c) Microsoft Corporation."
   ```
 
 ### Pull Request - Work in Progress

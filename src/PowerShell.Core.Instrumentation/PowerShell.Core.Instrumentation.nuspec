@@ -7,6 +7,6 @@
     <owners>Microsoft</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>PowerShell Core ETW resource binary</description>
-    <copyright>(c) Microsoft Corporation. All rights reserved.</copyright>
+    <copyright>(c) Microsoft Corporation.</copyright>
   </metadata>
 </package>
