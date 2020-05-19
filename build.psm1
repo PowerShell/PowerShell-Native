@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation. All rights reserved.
+﻿# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
 # On Unix paths is separated by colon

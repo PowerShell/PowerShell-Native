@@ -158,7 +158,7 @@ Additional references:
 
   * For `.ps1` and `.psm1` files use:
 
-        # Copyright (c) Microsoft Corporation. All rights reserved.
+        # Copyright (c) Microsoft Corporation.
         # Licensed under the MIT License.
 
 * If your change adds a new module manifest (.psd1 file), ensure that:
