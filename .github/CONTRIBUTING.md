@@ -151,7 +151,7 @@ Additional references:
   (See [Contributing to documentation related to PowerShell](#contributing-to-documentation-related-to-powershell) for more info.)
 * If your change adds a new source file, ensure the appropriate copyright and license headers is on top.
   It is standard practice to have both a copyright and license notice for each source file.
-  * For `.h`, `.cpp`, and `.cs` files use:
+  * For `.h`, `.cpp`, `.cs`, and `.rc` files use:
 
         // Copyright (c) Microsoft Corporation.
         // Licensed under the MIT License.

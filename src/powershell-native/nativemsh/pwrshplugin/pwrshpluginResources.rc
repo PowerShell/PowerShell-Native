@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 // resource script for msh.exe
-//
 
 #include <windows.h>
 
