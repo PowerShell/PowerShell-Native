@@ -1,5 +1,6 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+
 param(
     [string] $SigningXmlPath = (Join-Path -Path $PSScriptRoot  -ChildPath 'signing.xml')
 )
