@@ -769,6 +769,7 @@ namespace NativeMsh
         "System.Management.Automation",
         "System.Memory",
         "System.Net",
+        "System.Net.Connections"
         "System.Net.Http",
         "System.Net.Http.WinHttpHandler",
         "System.Net.HttpListener",
