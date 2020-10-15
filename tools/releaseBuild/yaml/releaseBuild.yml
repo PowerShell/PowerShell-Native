@@ -29,11 +29,7 @@ stages:
     - template: windows-build.yml
 
   - job: SignWin
-    pool:
-      name: PowerShell
-      demands:
-      - DotNetFramework
-      - Agent.Image
+    pool: Package ES Standard Build
     displayName: Sign Windows
     dependsOn: BuildWin
     strategy:
@@ -78,11 +74,7 @@ stages:
     - SignWin
     - BuildLinux
     - BuildMac
-    pool:
-      name: PowerShell
-      demands:
-      - DotNetFramework
-      - Agent.Image
+    pool: Package ES Standard Build
 
     steps:
     - template: nuget.yml
