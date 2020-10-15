@@ -579,14 +579,14 @@ function Start-BuildPowerShellNativePackage
         <version>{0}</version>
         <authors>Microsoft</authors>
         <owners>Microsoft,PowerShell</owners>
-        <requireLicenseAcceptance>true</requireLicenseAcceptance>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Native binaries for PowerShell Core</description>
-            <projectUrl>https://github.com/PowerShell/PowerShell</projectUrl>
+            <projectUrl>https://github.com/PowerShell/PowerShell-Native</projectUrl>
             <iconUrl>https://github.com/PowerShell/PowerShell/blob/master/assets/Powershell_black_64.png?raw=true</iconUrl>
             <license type="expression">MIT</license>
             <tags>PowerShell</tags>
             <language>en-US</language>
-            <copyright>© Microsoft Corporation.</copyright>
+            <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
             <contentFiles>
                 <files include="**/*" buildAction="None" copyToOutput="true" flatten="false" />
             </contentFiles>
