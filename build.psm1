@@ -581,20 +581,23 @@ function Start-BuildPowerShellNativePackage
         <owners>Microsoft,PowerShell</owners>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Native binaries for PowerShell Core</description>
-            <projectUrl>https://github.com/PowerShell/PowerShell-Native</projectUrl>
-            <iconUrl>https://github.com/PowerShell/PowerShell/blob/master/assets/Powershell_black_64.png?raw=true</iconUrl>
-            <license type="expression">MIT</license>
-            <tags>PowerShell</tags>
-            <language>en-US</language>
-            <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
-            <contentFiles>
-                <files include="**/*" buildAction="None" copyToOutput="true" flatten="false" />
-            </contentFiles>
-        </metadata>
+        <projectUrl>https://github.com/PowerShell/PowerShell-Native</projectUrl>
+        <icon>{1}</icon>
+        <license type="expression">MIT</license>
+        <tags>PowerShell</tags>
+        <language>en-US</language>
+        <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
+        <contentFiles>
+            <files include="**/*" buildAction="None" copyToOutput="true" flatten="false" />
+        </contentFiles>
+    </metadata>
 </package>
 '@
 
-    $Nuspec -f $Version | Out-File -FilePath (Join-Path $PackageRoot -ChildPath 'Microsoft.PowerShell.Native.nuspec') -Force
+    $iconFileName = "Powershell_black_64.png"
+    $iconPath = Join-Path $pwd -ChildPath "assets\$iconFileName" -Resolve
+
+    $Nuspec -f $Version, $iconPath | Out-File -FilePath (Join-Path $PackageRoot -ChildPath 'Microsoft.PowerShell.Native.nuspec') -Force
 
     if(-not (Test-Path $NuGetOutputPath))
     {
