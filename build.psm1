@@ -595,7 +595,7 @@ function Start-BuildPowerShellNativePackage
 '@
 
     $iconFileName = "Powershell_black_64.png"
-    $iconPath = Join-Path $pwd -ChildPath "assets\$iconFileName" -Resolve
+    $iconPath = Join-Path $PSScriptRoot -ChildPath "assets\$iconFileName" -Resolve
 
     $Nuspec -f $Version, $iconPath | Out-File -FilePath (Join-Path $PackageRoot -ChildPath 'Microsoft.PowerShell.Native.nuspec') -Force
 
