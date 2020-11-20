@@ -43,8 +43,6 @@ steps:
     Get-ChildItem -Recurse $extractedRoot -File
   displayName: 'Extract All Zips'
 
-- template: compliance.yml
-
 - template: upload.yml
   parameters:
       fileName: 'x64_arm64-symbols.zip'

@@ -6,6 +6,13 @@ variables:
   NuGetPackagePath: '$(System.ArtifactsDirectory)/NuGetRelease'
   PackageRoot: '$(System.ArtifactsDirectory)/Packages'
 
+resources:
+  repositories:
+  - repository: ComplianceRepo
+    type: github
+    endpoint: ComplianceGHRepo
+    name: PowerShell/compliance
+
 stages:
 - stage: Build
   displayName: Build Native Binaries
@@ -78,6 +85,70 @@ stages:
 
     steps:
     - template: nuget.yml
+
+- stage: compliance
+  displayName: Compliance
+  dependsOn: Build
+  jobs:
+  - job: Compliance_Job
+    pool:
+      name: Package ES Standard Build
+    steps:
+    - checkout: self
+      clean: true
+    - checkout: ComplianceRepo
+      clean: true
+
+    - download: current
+      artifact: release
+
+    - download: current
+      artifact: signed
+
+    - powershell: |
+        $null = New-Item $(PackageRoot) -ItemType Directory -Force -Verbose
+        if(-not (Test-Path '$(Pipeline.Workspace)/release' ))
+        {
+          New-Item -ItemType Directory -Path '$(Pipeline.Workspace)/release' -Force
+        }
+        Invoke-WebRequest -Uri '$(PSRPBlobUrl)' -OutFile $(Pipeline.Workspace)/release/psrp.zip -Verbose
+      displayName: 'Download PSRP package'
+
+    - powershell: 'Get-ChildItem $(Pipeline.Workspace)/release'
+      displayName: 'Capture downloaded zips'
+
+    - powershell: |
+        $extractedRoot = New-Item $(Pipeline.Workspace)/uncompressed -ItemType Directory -Force -Verbose
+        Get-ChildItem $(Pipeline.Workspace)/release/*.zip | ForEach-Object {
+            $baseName = $_.BaseName
+            if($baseName -match 'x64_arm') {
+                Write-Verbose "Skipping expanding file $_.Name" -Verbose
+            }
+            else {
+                $folderPath = Join-Path $extractedRoot $baseName
+                Expand-Archive $_.FullName -DestinationPath $folderPath -Force
+            }
+        }
+        Write-Host "Extracted files:"
+        Get-ChildItem -Recurse $extractedRoot -File
+      displayName: 'Extract All Zips'
+
+    - template: assembly-module-compliance.yml@ComplianceRepo
+      parameters:
+        # binskim
+        AnalyzeTarget: '$(Pipeline.Workspace)/uncompressed/*.dll'
+        AnalyzeSymPath: 'SRV*'
+        # component-governance
+        sourceScanPath: '$(Build.SourcesDirectory)/powershell-native'
+        # credscan
+        suppressionsFile: ''
+        # TermCheck
+        optionsRulesDBPath: ''
+        optionsFTPath: ''
+        # tsa-upload
+        codeBaseName: 'PowerShellNative'
+        # selections
+        APIScan: true # set to false when not using Windows APIs.
 
 - template: publish.yml
   parameters:
