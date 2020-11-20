@@ -1,17 +1,4 @@
 steps:
-- task: PkgESSetupBuild@10
-  displayName: 'Initialize build'
-  env:
-    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-  inputs:
-    useDfs: false
-    productName: PowerShellCore
-    branchVersion: true
-    disableWorkspace: true
-    disableBuildTools: true
-    disableNugetPack: true
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'))
-
 - task: DownloadBuildArtifacts@0
   inputs:
     buildType: current
@@ -28,21 +15,22 @@ steps:
     Write-Host "##$vstsCommandString"
   displayName: Expand artifact $(ARCHITECTURE)-symbols.zip
 
-- task: PowerShell@2
-  displayName: 'Update Signing Xml'
-  inputs:
-    targetType: filePath
-    filePath: $(Build.SourcesDirectory)/tools/releaseBuild/updateSigning.ps1
-
-- task: PkgESCodeSign@10
-  displayName: 'CodeSign $(ARCHITECTURE)'
-  env:
-      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-  inputs:
-    signConfigXml: '$(Build.SourcesDirectory)\tools\releaseBuild\signing.xml'
-    inPathRoot: '$(Symbols)'
-    outPathRoot: '$(Symbols)\Signed'
-  condition: ne(variables['SKIP_SIGNING'], 'True')
+- template: EsrpSign.yml@ComplianceRepo
+  parameters:
+      # the folder which contains the binaries to sign
+      buildOutputPath: $(Symbols)
+      # the location to put the signed output
+      signOutputPath: '$(Symbols)\signed'
+      # the certificate ID to use
+      certificateId: "CP-230012"
+      # The file pattern to use
+      # If not using minimatch: comma separated, with * supported
+      # If using minimatch: newline separated, with !, **, and * supported.
+      # See link in the useMinimatch comments.
+      pattern: '*.dll'
+      # decides if the task should use minimatch for the pattern matching.
+      # https://github.com/isaacs/minimatch#features
+      useMinimatch: false
 
 - powershell: |
     Compress-Archive -Path '$(Symbols)\Signed\*' -DestinationPath '$(Symbols)\Signed\win-$(ARCHITECTURE).zip'
@@ -62,8 +50,3 @@ steps:
 
 - task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
   displayName: 'Run MpCmdRun.exe'
-
-- task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-  displayName: 'Component Detection'
-  inputs:
-    sourceScanPath: '$(Build.SourcesDirectory)'
