@@ -134,7 +134,7 @@ steps:
 - powershell: |
     Copy-Item  $(NuGetPackagePath)\*.nupkg -DestinationPath '$(System.ArtifactsDirectory)\signed' -Force -Verbose
   displayName: Copy unsigned nuget packge as signing is disabled
-  condition: eq(variables['SKIP_SIGNING'], 'True')
+  condition: eq(variables['SkipSigning'], 'True')
 
 - powershell: |
    Import-Module $env:BUILD_SOURCESDIRECTORY\build.psm1 -Force

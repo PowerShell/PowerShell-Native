@@ -40,7 +40,7 @@ steps:
 - powershell: |
     Get-ChildItem -Path '$(Symbols)\*' -Recurse | Copy-Item -Destination '$(Symbols)\Signed' -Force -Verbose
   displayName: Copy unsigned binaries as signing is skipped
-  condition: eq(variables['SKIP_SIGNING'], 'True')
+  condition: eq(variables['SkipSigning'], 'True')
 
 - template: uploadArtifact.yml
   parameters:
