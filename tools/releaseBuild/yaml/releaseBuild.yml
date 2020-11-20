@@ -21,8 +21,6 @@ stages:
   - job: BuildWin
     pool:
       vmImage: vs2017-win2016
-    variables:
-      - group: ESRP
     displayName: Windows
     strategy:
       matrix:
@@ -40,6 +38,8 @@ stages:
   - job: SignWin
     pool: Package ES Standard Build
     displayName: Sign Windows
+    variables:
+    - group: ESRP
     dependsOn: BuildWin
     strategy:
       matrix:
@@ -85,7 +85,7 @@ stages:
     - BuildMac
     pool: Package ES Standard Build
     variables:
-      - group: ESRP
+    - group: ESRP
 
     steps:
     - template: nuget.yml
