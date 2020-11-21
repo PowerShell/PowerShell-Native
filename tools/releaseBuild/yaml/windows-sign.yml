@@ -15,12 +15,18 @@ steps:
     Write-Host "##$vstsCommandString"
   displayName: Expand artifact $(ARCHITECTURE)-symbols.zip
 
+- powershell: |
+    $vstsCommandString = "vso[task.setvariable variable=SignedOutput]$(System.ArtifactsDirectory)\Signed"
+    Write-Host "sending " + $vstsCommandString
+    Write-Host "##$vstsCommandString"
+  displayName: Define signedOutput variable
+
 - template: EsrpSign.yml@ComplianceRepo
   parameters:
       # the folder which contains the binaries to sign
       buildOutputPath: $(Symbols)
       # the location to put the signed output
-      signOutputPath: '$(Symbols)\signed'
+      signOutputPath: '$(SignedOutput)'
       # the certificate ID to use
       certificateId: "CP-230012"
       # The file pattern to use
@@ -33,18 +39,18 @@ steps:
       useMinimatch: false
 
 - powershell: |
-    Compress-Archive -Path '$(Symbols)\Signed\*' -DestinationPath '$(Symbols)\Signed\win-$(ARCHITECTURE).zip'
+    Compress-Archive -Path '$(SignedOutput)\*' -DestinationPath '$(SignedOutput)\win-$(ARCHITECTURE).zip'
   displayName: Compress signed binaries
   condition: ne(variables['SkipSigning'], 'false')
 
 - powershell: |
-    Get-ChildItem -Path '$(Symbols)\*' -Recurse | Copy-Item -Destination '$(Symbols)\Signed' -Force -Verbose
+    Get-ChildItem -Path '$(Symbols)\*' -Recurse | Copy-Item -Destination '$(SignedOutput)' -Force -Verbose
   displayName: Copy unsigned binaries as signing is skipped
   condition: eq(variables['SkipSigning'], 'True')
 
 - template: uploadArtifact.yml
   parameters:
-    artifactPath: '$(Symbols)\Signed'
+    artifactPath: '$(SignedOutput)'
     artifactFilter: 'win-*.zip'
     artifactName: 'signed'
 
