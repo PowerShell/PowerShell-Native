@@ -41,7 +41,7 @@ steps:
 - powershell: |
     Compress-Archive -Path '$(SignedOutput)\*' -DestinationPath '$(SignedOutput)\win-$(ARCHITECTURE).zip'
   displayName: Compress signed binaries
-  condition: ne(variables['SkipSigning'], 'false')
+  condition: eq(variables['SkipSigning'], 'false')
 
 - powershell: |
     Get-ChildItem -Path '$(Symbols)\*' -Recurse | Copy-Item -Destination '$(SignedOutput)' -Force -Verbose
