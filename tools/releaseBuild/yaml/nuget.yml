@@ -43,8 +43,6 @@ steps:
     Get-ChildItem -Recurse $extractedRoot -File
   displayName: 'Extract All Zips'
 
-- template: compliance.yml
-
 - template: upload.yml
   parameters:
       fileName: 'x64_arm64-symbols.zip'
@@ -116,33 +114,27 @@ steps:
 - powershell: 'Get-Childitem $(NuGetPackagePath)'
   displayName: 'Capture nuget package'
 
-- powershell: |
-   ## Get the nuget file paths
-   $files = (Get-ChildItem $(NuGetPackagePath)\*.nupkg).FullName
-
-   if($files.Count -lt 1) { throw "No packages available to publish" }
-
-   & $(Build.SourcesDirectory)\tools\releaseBuild\generatePackgeSigning.ps1 -Path "$(NuGetPackagePath)\NugetSigning.xml" -NuPkgFiles $files
-
-  displayName: 'Generate signing file'
-
-- powershell: 'Get-Content $(NuGetPackagePath)\NugetSigning.xml'
-  displayName: 'Capture package signing file'
-
-- task: PkgESCodeSign@10
-  displayName: 'Package ES - CodeSign $(NuGetPackagePath)\NugetSigning.xml'
-  env:
-      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-  inputs:
-    signConfigXml: '$(NuGetPackagePath)\NugetSigning.xml'
-    inPathRoot: ' $(NuGetPackagePath)'
-    outPathRoot: '$(System.ArtifactsDirectory)\signed'
-  condition: ne(variables['SKIP_SIGNING'], 'True')
+- template: EsrpSign.yml@ComplianceRepo
+  parameters:
+      # the folder which contains the binaries to sign
+      buildOutputPath: $(NuGetPackagePath)
+      # the location to put the signed output
+      signOutputPath: '$(System.ArtifactsDirectory)\signed'
+      # the certificate ID to use
+      certificateId: "CP-401405"
+      # The file pattern to use
+      # If not using minimatch: comma separated, with * supported
+      # If using minimatch: newline separated, with !, **, and * supported.
+      # See link in the useMinimatch comments.
+      pattern: '*.nupkg'
+      # decides if the task should use minimatch for the pattern matching.
+      # https://github.com/isaacs/minimatch#features
+      useMinimatch: false
 
 - powershell: |
     Copy-Item  $(NuGetPackagePath)\*.nupkg -DestinationPath '$(System.ArtifactsDirectory)\signed' -Force -Verbose
   displayName: Copy unsigned nuget packge as signing is disabled
-  condition: eq(variables['SKIP_SIGNING'], 'True')
+  condition: eq(variables['SkipSigning'], 'True')
 
 - powershell: |
    Import-Module $env:BUILD_SOURCESDIRECTORY\build.psm1 -Force
