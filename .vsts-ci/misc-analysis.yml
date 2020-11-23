@@ -30,6 +30,3 @@ jobs:
   - checkout: ComplianceRepo
     clean: true
   - template: ci-compliance.yml@ComplianceRepo
-
-
-
