@@ -13,7 +13,7 @@ phases:
 - phase: Build
 
   queue:
-    name: Hosted macOS
+    name: Hosted macOS-latest
   steps:
   - powershell: |
       tools/releaseBuild/PowershellNative.ps1 -Arch osx -Configuration Release -RepoRoot $(Build.SourcesDirectory) -TargetLocation "$(System.ArtifactsDirectory)/Packages" -Verbose
