@@ -462,6 +462,11 @@ function Start-BuildNativeUnixBinaries {
             Start-NativeExecution { cmake -DCMAKE_TOOLCHAIN_FILE="./arm64.toolchain.cmake" . }
             Start-NativeExecution { make -j }
         }
+        elseif ($IsMacOS) {
+            Start-NativeExecution { cmake -DCMAKE_TOOLCHAIN_FILE="./macos.toolchain.cmake" . }
+            Start-NativeExecution { make -j }            
+            Start-NativeExecution { ctest --verbose }
+        }
         else {
             Start-NativeExecution { cmake -DCMAKE_BUILD_TYPE=Debug . }
             Start-NativeExecution { make -j }
@@ -774,6 +779,7 @@ function Start-PSBuild {
         # If this parameter is not provided it will get determined automatically.
         [ValidateSet("win7-x64",
                      "win7-x86",
+                     "osx-arm64",
                      "osx-x64",
                      "linux-x64",
                      "linux-arm",
@@ -1087,6 +1093,7 @@ function New-PSOptions {
         [ValidateSet("",
                      "win7-x86",
                      "win7-x64",
+                     "osx-arm64",
                      "osx-x64",
                      "linux-x64",
                      "linux-arm",
@@ -1139,7 +1146,12 @@ function New-PSOptions {
         if ($Environment.IsLinux) {
             $Runtime = "linux-x64"
         } elseif ($Environment.IsMacOS) {
-            $Runtime = "osx-x64"
+            if ($PSVersionTable.OS.Contains('ARM64')) {
+                $Runtime = "osx-arm64"
+            }
+            else {
+                $Runtime = "osx-x64"
+            }
         } else {
             $RID = dotnet --info | ForEach-Object {
                 if ($_ -match "RID") {
@@ -2540,6 +2552,7 @@ function Start-CrossGen {
         [Parameter(Mandatory=$true)]
         [ValidateSet("win7-x86",
                      "win7-x64",
+                     "osx-arm64",
                      "osx-x64",
                      "linux-x64",
                      "linux-arm",
@@ -2610,6 +2623,8 @@ function Start-CrossGen {
         throw "crossgen is not available for 'linux-arm64'"
     } elseif ($Environment.IsLinux) {
         "linux-x64"
+    } elseif ($Runtime -eq "osx-arm64") {
+        "osx-arm64"
     } elseif ($Environment.IsMacOS) {
         "osx-x64"
     }
