@@ -1,0 +1,3 @@
+dotnet-install.sh
+dotnet-uninstall-pkgs.sh
+src/powershell-unix

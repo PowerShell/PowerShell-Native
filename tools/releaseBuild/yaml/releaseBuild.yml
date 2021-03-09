@@ -73,7 +73,8 @@ stages:
 
   - job: BuildMac
     displayName: Build Native Binaries on macOS
-    pool: Hosted Mac Internal
+    pool:
+      vmImage: macOS-Latest
     steps:
     - template: mac.yml
 
