@@ -65,32 +65,7 @@ steps:
   inputs:
     versionSpec: 5.3.1
 
-- powershell: |
-    $Branch = $env:BUILD_SOURCEBRANCH
-    $branchOnly = $Branch -replace '^refs/heads/';
-    $branchOnly = $branchOnly -replace '[_\-]'
-
-    $packageVersion = if($env:PACKAGE_VERSION -eq 'fromBranch' -or !$env:PACKAGE_VERSION)
-    {
-      if($Branch -match '^.*(release[-/])')
-      {
-        Write-verbose "release branch:" -verbose
-        $Branch -replace '^.*(release[-/]v)'
-      }
-      else
-      {
-        "0.0.0"
-      }
-    }
-    else {
-      "0.0.0"
-    }
-
-    $vstsCommandString = "vso[task.setvariable variable=NugetPackageVersion]$packageVersion"
-    Write-Verbose -Message "setting $Variable to $packageVersion" -Verbose
-    Write-Host -Object "##$vstsCommandString"
-
-  displayName: Set NuGetPackageVersion
+- template: setVersion.yml
 
 - powershell: |
    Import-Module $(Build.SourcesDirectory)\build.psm1
@@ -107,7 +82,7 @@ steps:
    $macOSZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'osx-symbols.zip'
    $psrpZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'psrp.zip'
 
-   Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(NugetPackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARMZipPath $WindowsARMZipPath  -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath -psrpZipPath $psrpZipPath -NuGetOutputPath $(NuGetPackagePath)
+   Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARMZipPath $WindowsARMZipPath  -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath -psrpZipPath $psrpZipPath -NuGetOutputPath $(NuGetPackagePath)
 
   displayName: 'Build NuGet package'
 
@@ -152,5 +127,5 @@ steps:
 - template: uploadArtifact.yml
   parameters:
     artifactPath: '$(System.ArtifactsDirectory)\signed'
-    artifactFilter: 'Microsoft.PowerShell.Native.$(NugetPackageVersion).nupkg'
+    artifactFilter: 'Microsoft.PowerShell.Native.$(PackageVersion).nupkg'
     artifactName: 'finalResults'

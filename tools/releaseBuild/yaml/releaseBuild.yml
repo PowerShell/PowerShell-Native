@@ -110,6 +110,12 @@ stages:
     - download: current
       artifact: signed
 
+    - template: setVersion.yml
+
+    - pwsh: |
+        Get-ChildItem -Path 'ENV:'
+      displayName: Capture environment
+
     - powershell: |
         $null = New-Item $(PackageRoot) -ItemType Directory -Force -Verbose
         if(-not (Test-Path '$(Pipeline.Workspace)/release' ))
@@ -138,6 +144,10 @@ stages:
         Get-ChildItem -Recurse $extractedRoot -File
       displayName: 'Extract All Zips'
 
+    - pwsh: |
+        Write-Verbose -Verbose "$(PackageVersion)"
+      displayName: 'Write the package version'
+
     - template: assembly-module-compliance.yml@ComplianceRepo
       parameters:
         # binskim
@@ -153,6 +163,9 @@ stages:
         # tsa-upload
         codeBaseName: 'PowerShellNative'
         # selections
+        softwareName: 'PowerShellNative'
+        softwareNameFolder: '$(Pipeline.Workspace)/uncompressed'
+        softwareVersion: '$(PackageVersion)'
         APIScan: true # set to false when not using Windows APIs.
 
 - template: publish.yml
