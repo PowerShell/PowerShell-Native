@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/powershell:ubuntu16.04
+FROM mcr.microsoft.com/powershell:ubuntu-16.04
 
 LABEL maintainer="PowerShell Team <powershellteam@hotmail.com>"
 
