@@ -37,6 +37,8 @@ unsigned int PowerShellCoreClrWorker::LaunchClr(
     _In_ LPCWSTR wszRuntimeVersion,
     _In_ LPCSTR friendlyName)
 {
+    // Allocate a console so that the codepage is setup correctly
+    AllocConsole();
     return commonLib->LaunchCoreCLR(hostWrapper, hostEnvironment, friendlyName);
 }
 
