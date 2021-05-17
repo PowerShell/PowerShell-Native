@@ -27,7 +27,9 @@ add_library(psl-native SHARED
   createsymlink.cpp
   followsymlink.cpp
   createprocess.cpp
-  nativesyslog.cpp)
+  nativesyslog.cpp
+  killprocess.cpp
+  waitpid.cpp)
 
 check_function_exists(sysconf HAVE_SYSCONF)
 
