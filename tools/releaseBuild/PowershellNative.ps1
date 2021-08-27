@@ -62,8 +62,8 @@ end {
         Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
     }
     elseif ($Arch -eq 'linux-musl-arm64') {
-        Start-PSBootstrap -BuildAlpineArm64
-        Start-BuildNativeUnixBinaries -BuildLinuxArm64
+        Start-PSBootstrap
+        Start-BuildNativeUnixBinaries -BuildAlpineArm64
 
         $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
         Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
