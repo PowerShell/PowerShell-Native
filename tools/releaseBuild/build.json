@@ -121,6 +121,18 @@
             "DockerImageName": "ps-alpine",
             "BinaryBucket": "release",
             "EnableFeature": [ "ArtifactAsFolder" ]
+        },
+        {
+            "Name": "alpine-arm64",
+            "RepoDestinationPath": "/PowerShellNative",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-musl-arm64 -Configuration Release",
+            "AdditionalContextFiles": [
+                "./tools/releaseBuild/PowershellNative.ps1"
+            ],
+            "DockerFile": "./tools/releaseBuild/images/Alpine/Dockerfile",
+            "DockerImageName": "ps-alpine-arm64",
+            "BinaryBucket": "release",
+            "EnableFeature": [ "ArtifactAsFolder" ]
         }
     ]
 }

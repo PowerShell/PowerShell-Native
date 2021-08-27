@@ -68,6 +68,8 @@ stages:
             LINUX_BUILDNAME: 'alpine'
           UbuntuArm64:
             LINUX_BUILDNAME: 'ubuntu.16.04-arm64'
+          AlpineArm64:
+            LINUX_BUILDNAME: 'alpine-arm64'
     steps:
     - template: linux.yml
 
