@@ -79,11 +79,12 @@ steps:
    $LinuxARMZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-arm-symbols.zip'
    $LinuxARM64ZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-arm64-symbols.zip'
    $LinuxAlpineZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-musl-x64-symbols.zip'
+   $LinuxAlpineArmZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-musl-arm-symbols.zip'
    $LinuxAlpineArm64ZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-musl-arm64-symbols.zip'
    $macOSZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'osx-symbols.zip'
    $psrpZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'psrp.zip'
 
-   Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARMZipPath $WindowsARMZipPath  -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -LinuxAlpineArm64ZipPath $LinuxAlpineArm64ZipPath -macOSZipPath $macOSZipPath -psrpZipPath $psrpZipPath -NuGetOutputPath $(NuGetPackagePath)
+   Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARMZipPath $WindowsARMZipPath  -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -LinuxAlpineArm64ZipPath $LinuxAlpineArm64ZipPath -LinuxAlpineArmZipPath $LinuxAlpineArmZipPath -macOSZipPath $macOSZipPath -psrpZipPath $psrpZipPath -NuGetOutputPath $(NuGetPackagePath)
 
   displayName: 'Build NuGet package'
 

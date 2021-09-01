@@ -394,7 +394,8 @@ function Start-BuildNativeUnixBinaries {
     param (
         [switch] $BuildLinuxArm,
         [switch] $BuildLinuxArm64,
-        [switch] $BuildAlpineArm64
+        [switch] $BuildAlpineArm64,
+        [switch] $BuildAlpineArm
     )
 
     if (-not $Environment.IsLinux -and -not $Environment.IsMacOS) {
@@ -406,8 +407,8 @@ function Start-BuildNativeUnixBinaries {
         throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
     }
 
-    if ($BuildAlpineArm64 -and -not $Environment.IsAlpine) {
-        throw "Cross compiling for linux-musl-arm64 are only supported on Alpine environment"
+    if ($BuildAlpineArm64 -or $BuildAlpineArm -and -not $Environment.IsAlpine) {
+        throw "Cross compiling for linux-musl-arm linux-musl-arm64 are only supported on Alpine environment"
     }
 
     # Verify we have all tools in place to do the build
@@ -476,6 +477,10 @@ function Start-BuildNativeUnixBinaries {
             Start-NativeExecution { cmake -DCMAKE_TOOLCHAIN_FILE="./alpine.arm64.toolchain.cmake" . }
             Start-NativeExecution { make -j }
         }
+        elseif ($BuildAlpineArm) {
+            Start-NativeExecution { cmake -DCMAKE_TOOLCHAIN_FILE="./alpine.arm.toolchain.cmake" . }
+            Start-NativeExecution { make -j }
+        }
         else {
             Start-NativeExecution { cmake -DCMAKE_BUILD_TYPE=Debug . }
             Start-NativeExecution { make -j }
@@ -538,6 +543,10 @@ function Start-BuildPowerShellNativePackage
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Leaf})]
+        [string] $LinuxAlpineArmZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Leaf})]
         [string] $LinuxAlpineArm64ZipPath,
 
         [Parameter(Mandatory = $true)]
@@ -581,6 +590,7 @@ function Start-BuildPowerShellNativePackage
     Expand-Archive -Path $WindowsARM64ZipPath -DestinationPath $BinFolderARM64 -Force
     Expand-Archive -Path $LinuxZipPath -DestinationPath $BinFolderLinux -Force
     Expand-Archive -Path $LinuxAlpineZipPath -DestinationPath $BinFolderLinuxAlpine -Force
+    Expand-Archive -Path $LinuxAlpineArmZipPath -DestinationPath $BinFolderLinuxAlpineArm -Force
     Expand-Archive -Path $LinuxAlpineArm64ZipPath -DestinationPath $BinFolderLinuxAlpineArm64 -Force
     Expand-Archive -Path $LinuxARMZipPath -DestinationPath $BinFolderLinuxARM -Force
     Expand-Archive -Path $LinuxARM64ZipPath -DestinationPath $BinFolderLinuxARM64 -Force
@@ -589,7 +599,7 @@ function Start-BuildPowerShellNativePackage
 
     PlaceWindowsNativeBinaries -PackageRoot $PackageRoot -BinFolderX64 $BinFolderX64 -BinFolderX86 $BinFolderX86 -BinFolderARM $BinFolderARM -BinFolderARM64 $BinFolderARM64
 
-    PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderLinuxARM64 $BinFolderLinuxARM64 -BinFolderOSX $BinFolderMacOS -BinFolderPSRP $BinFolderPSRP -BinFolderLinuxAlpine $BinFolderLinuxAlpine -BinFolderLinuxAlpineArm64 $BinFolderLinuxAlpineArm64
+    PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderLinuxARM64 $BinFolderLinuxARM64 -BinFolderOSX $BinFolderMacOS -BinFolderPSRP $BinFolderPSRP -BinFolderLinuxAlpine $BinFolderLinuxAlpine -BinFolderLinuxAlpineArm64 $BinFolderLinuxAlpineArm64 -BinFolderLinuxAlpineArm $BinFolderLinuxAlpineArm
 
     $Nuspec = @'
 <?xml version="1.0" encoding="utf-8"?>
@@ -669,6 +679,10 @@ function PlaceUnixBinaries
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Container})]
+        $BinFolderLinuxAlpineArm,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
         $BinFolderLinuxAlpineArm64,
 
         [Parameter(Mandatory = $true)]
@@ -684,6 +698,7 @@ function PlaceUnixBinaries
     $RuntimePathLinuxARM = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-arm/native') -Force
     $RuntimePathLinuxARM64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-arm64/native') -Force
     $RuntimePathLinuxAlpine = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-musl-x64/native') -Force
+    $RuntimePathLinuxAlpineArm = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-musl-arm/native') -Force
     $RuntimePathLinuxAlpineArm64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/linux-musl-arm64/native') -Force
     $RuntimePathOSX = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/osx/native') -Force
 
@@ -691,6 +706,7 @@ function PlaceUnixBinaries
     Copy-Item "$BinFolderLinuxARM\*" -Destination $RuntimePathLinuxARM -Verbose
     Copy-Item "$BinFolderLinuxARM64\*" -Destination $RuntimePathLinuxARM64 -Verbose
     Copy-Item "$BinFolderLinuxAlpine\*" -Destination $RuntimePathLinuxAlpine -Verbose
+    Copy-Item "$BinFolderLinuxAlpineArm\*" -Destination $RuntimePathLinuxAlpineArm -Verbose
     Copy-Item "$BinFolderLinuxAlpineArm64\*" -Destination $RuntimePathLinuxAlpineArm64 -Verbose
     Copy-Item "$BinFolderOSX\*" -Destination $RuntimePathOSX -Verbose
 
