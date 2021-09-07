@@ -12,7 +12,8 @@ resources:
 
 jobs:
 - job: Build
-  vmImage: ubuntu-latest
+  pool:
+    vmImage: ubuntu-latest
   strategy:
     matrix:
       Linux ARM Native:
