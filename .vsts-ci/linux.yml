@@ -9,12 +9,11 @@ variables:
 resources:
   - repo: self
     clean: true
-phases:
-- phase: Build
 
-  queue:
-    name: Hosted Ubuntu 1604
-    parallel: 2
+jobs:
+- job: Build
+  vmImage: ubuntu-latest
+  strategy:
     matrix:
       Linux ARM Native:
         buildName: ubuntu.16.04-arm
@@ -24,6 +23,10 @@ phases:
         buildName: centos.7
       Linux Alpine:
         buildName: alpine
+      Linux Alpine ARM:
+        buildName: alpine-arm
+      Linux Alpine ARM64:
+        buildName: alpine-arm64
 
   steps:
   - powershell: |
