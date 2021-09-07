@@ -41,4 +41,4 @@ configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/pal_config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/pal_config.h)
 
-target_include_directories(psl-native PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(psl-native PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
