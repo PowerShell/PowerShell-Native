@@ -36,7 +36,11 @@ stages:
     - template: windows-build.yml
 
   - job: SignWin
-    pool: Package ES Standard Build
+    pool:
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals MMS2019
+
     displayName: Sign Windows
     variables:
     - group: ESRP
@@ -84,7 +88,10 @@ stages:
     - SignWin
     - BuildLinux
     - BuildMac
-    pool: Package ES Standard Build
+    pool:
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals MMS2019
     variables:
     - group: ESRP
 
@@ -97,7 +104,9 @@ stages:
   jobs:
   - job: Compliance_Job
     pool:
-      name: Package ES Standard Build
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals MMS2019
     steps:
     - checkout: self
       clean: true
