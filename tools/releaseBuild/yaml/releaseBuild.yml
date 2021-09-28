@@ -1,10 +1,13 @@
 trigger: none
 
 variables:
-  AuthenticodeSignType: '400'
-  BuildConfiguration: 'Release'
-  NuGetPackagePath: '$(System.ArtifactsDirectory)/NuGetRelease'
-  PackageRoot: '$(System.ArtifactsDirectory)/Packages'
+  - name: BuildConfiguration
+    value: 'Release'
+  - name: NuGetPackagePath
+    value: '$(System.ArtifactsDirectory)/NuGetRelease'
+  - name: PackageRoot
+    value: '$(System.ArtifactsDirectory)/Packages'
+  - group: PSNativeAPIScan
 
 resources:
   repositories:
@@ -175,6 +178,7 @@ stages:
         softwareName: 'PowerShellNative'
         softwareNameFolder: '$(Pipeline.Workspace)/uncompressed'
         softwareVersion: '$(PackageVersion)'
+        connectionString: RunAs=App;AppId=$(APIScanClient);TenantId=$(APIScanTenant);AppKey=$(APIScanSecret)
         APIScan: true # set to false when not using Windows APIs.
 
 - template: publish.yml
