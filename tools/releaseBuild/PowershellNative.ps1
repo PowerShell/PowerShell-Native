@@ -6,7 +6,7 @@
 param (
 
     [Parameter(Mandatory, ParameterSetName = 'Build')]
-    [ValidateSet('x64', 'x86', 'x64_arm', 'x64_arm64', 'linux-x64', 'osx', 'linux-arm', 'linux-arm64', 'linux-musl-x64')]
+    [ValidateSet('x64', 'x86', 'x64_arm', 'x64_arm64', 'linux-x64', 'osx', 'linux-arm', 'linux-arm64', 'linux-musl-x64', 'linux-musl-arm', 'linux-musl-arm64')]
     [string]
     $Arch,
 
@@ -61,6 +61,20 @@ end {
         $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
         Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
     }
+    elseif ($Arch -eq 'linux-musl-arm') {
+        Start-PSBootstrap
+        Start-BuildNativeUnixBinaries -BuildAlpineArm
+
+        $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
+        Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+    }
+    elseif ($Arch -eq 'linux-musl-arm64') {
+        Start-PSBootstrap
+        Start-BuildNativeUnixBinaries -BuildAlpineArm64
+
+        $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
+        Compress-Archive -Path $buildOutputPath/libpsl-native.* -DestinationPath "$TargetLocation/$Arch-symbols.zip" -Verbose
+    }
     else {
         Write-Verbose "Starting Start-PSBootstrap" -Verbose
         Start-PSBootstrap -BuildWindowsNative
@@ -76,4 +90,3 @@ end {
         }
     }
 }
-
