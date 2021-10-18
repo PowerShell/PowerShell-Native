@@ -64,7 +64,7 @@ stages:
   - job: BuildLinux
     displayName: Linux
     pool:
-      vmImage: ubuntu-16.04
+      vmImage: ubuntu-20.04
     strategy:
         matrix:
           UbuntuArm:
