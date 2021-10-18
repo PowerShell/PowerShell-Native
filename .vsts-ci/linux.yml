@@ -9,12 +9,12 @@ variables:
 resources:
   - repo: self
     clean: true
-phases:
-- phase: Build
-
-  queue:
-    name: Hosted Ubuntu 1604
-    parallel: 2
+jobs:
+- job: Build
+  pool:
+    vmImageName: ubuntu-latest
+  displayName: Linux
+  strategy:
     matrix:
       Linux ARM Native:
         buildName: ubuntu.16.04-arm
