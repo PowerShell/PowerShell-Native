@@ -42,7 +42,7 @@ stages:
     pool:
       name: PowerShell1ES
       demands:
-      - ImageOverride -equals MMS2019
+      - ImageOverride -equals MMSWindows2019-Secure
 
     displayName: Sign Windows
     variables:
@@ -64,7 +64,9 @@ stages:
   - job: BuildLinux
     displayName: Linux
     pool:
-      vmImage: ubuntu-latest
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals MMSUbuntu20.04-Secure
     strategy:
         matrix:
           UbuntuArm:
@@ -94,7 +96,7 @@ stages:
     pool:
       name: PowerShell1ES
       demands:
-      - ImageOverride -equals MMS2019
+      - ImageOverride -equals MMSWindows2019-Secure
     variables:
     - group: ESRP
 
@@ -109,7 +111,7 @@ stages:
     pool:
       name: PowerShell1ES
       demands:
-      - ImageOverride -equals MMS2019
+      - ImageOverride -equals MMSWindows2019-Secure
     steps:
     - checkout: self
       clean: true
