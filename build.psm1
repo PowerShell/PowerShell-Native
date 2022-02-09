@@ -464,7 +464,7 @@ function Start-BuildNativeUnixBinaries {
         }
         elseif ($IsMacOS) {
             Start-NativeExecution { cmake -DCMAKE_TOOLCHAIN_FILE="./macos.toolchain.cmake" . }
-            Start-NativeExecution { make -j }            
+            Start-NativeExecution { make -j }
             Start-NativeExecution { ctest --verbose }
         }
         else {
@@ -2154,7 +2154,7 @@ function Start-PSBootstrap {
                 $sdkPresent = Test-Win10SDK
 
                 # Install chocolatey
-                $chocolateyPath = "$env:AllUsersProfile\chocolatey\bin"
+                <#$chocolateyPath = "$env:AllUsersProfile\chocolatey\bin"
 
                 if(precheck 'choco' $null) {
                     Write-Log "Chocolatey is already installed. Skipping installation."
@@ -2177,25 +2177,34 @@ function Start-PSBootstrap {
                 } else {
                     Write-Log "Skipping installation of chocolatey, cause both cmake and Win 10 SDK are present."
                 }
+                #>
 
                 # Install cmake
-                $cmakePath = "${env:ProgramFiles}\CMake\bin"
-                if($cmakePresent -and !($force.IsPresent)) {
-                    Write-Log "Cmake is already installed. Skipping installation."
+                #$cmakePath = "${env:ProgramFiles}\CMake\bin"
+                if($cmakePresent) {
+                    Write-Log "Cmake is already installed."
                 } else {
-                    Write-Log "Cmake not present or -Force used. Installing cmake."
-                    Start-NativeExecution { choco install cmake -y --version 3.10.0 }
+                    throw "Cmake not present."
+
+                    <#Start-NativeExecution { choco install cmake -y --version 3.10.0 }
                     if (-not ($machinePath.ToLower().Contains($cmakePath.ToLower()))) {
                         Write-Log "Adding $cmakePath to Path environment variable"
                         $env:Path += ";$cmakePath"
                         $newMachineEnvironmentPath = "$cmakePath;$newMachineEnvironmentPath"
                     } else {
                         Write-Log "$cmakePath already present in Path environment variable"
-                    }
+                    }#>
+                }
+
+                if ($sdkPresent) {
+                    Write-Log "Windows 10 SDK is already installed."
+                }
+                else {
+                    throw "Windows 10 SDK not present."
                 }
 
                 # Install Windows 10 SDK
-                $packageName = "windows-sdk-10.0"
+                <#$packageName = "windows-sdk-10.0"
 
                 if (-not $sdkPresent) {
                     Write-Log "Windows 10 SDK not present. Installing $packageName."
@@ -2211,6 +2220,7 @@ function Start-PSBootstrap {
                         [Environment]::SetEnvironmentVariable('Path', $newMachineEnvironmentPath, 'MACHINE')
                     }
                 }
+                #>
             }
         }
     } finally {
