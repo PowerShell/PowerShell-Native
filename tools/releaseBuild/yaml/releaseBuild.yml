@@ -23,7 +23,9 @@ stages:
   jobs:
   - job: BuildWin
     pool:
-      vmImage: vs2017-win2016
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
     displayName: Windows
     strategy:
       matrix:
