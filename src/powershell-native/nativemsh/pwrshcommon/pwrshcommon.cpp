@@ -835,6 +835,7 @@ namespace NativeMsh
         "System.Security",
         "System.Security.AccessControl",
         "System.Security.Claims",
+        "System.Security.Cryptography",
         "System.Security.Cryptography.Algorithms",
         "System.Security.Cryptography.Cng",
         "System.Security.Cryptography.Csp",
