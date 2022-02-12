@@ -12,7 +12,7 @@ resources:
 jobs:
 - job: Build
   pool:
-    vmImageName: ubuntu-latest
+    vmImage: ubuntu-latest
   displayName: Linux
   strategy:
     matrix:
