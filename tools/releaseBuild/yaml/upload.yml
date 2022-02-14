@@ -3,7 +3,7 @@ parameters:
   sourcePath: ''
 
 steps:
-- task: AzureFileCopy@2
+- task: AzureFileCopy@4
   displayName: 'Upload ${{ parameters.fileName }} to azure blob'
   inputs:
     SourcePath: '${{ parameters.sourcePath }}'

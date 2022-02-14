@@ -23,7 +23,9 @@ stages:
   jobs:
   - job: BuildWin
     pool:
-      vmImage: vs2017-win2016
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
     displayName: Windows
     strategy:
       matrix:
@@ -42,7 +44,7 @@ stages:
     pool:
       name: PowerShell1ES
       demands:
-      - ImageOverride -equals MMS2019
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
 
     displayName: Sign Windows
     variables:
@@ -64,7 +66,9 @@ stages:
   - job: BuildLinux
     displayName: Linux
     pool:
-      vmImage: ubuntu-latest
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMSUbuntu20.04-Secure
     strategy:
         matrix:
           UbuntuArm:
@@ -94,7 +98,7 @@ stages:
     pool:
       name: PowerShell1ES
       demands:
-      - ImageOverride -equals MMS2019
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
     variables:
     - group: ESRP
 
@@ -109,7 +113,7 @@ stages:
     pool:
       name: PowerShell1ES
       demands:
-      - ImageOverride -equals MMS2019
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
     steps:
     - checkout: self
       clean: true
