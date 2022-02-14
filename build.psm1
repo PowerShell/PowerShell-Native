@@ -2153,47 +2153,12 @@ function Start-PSBootstrap {
                 $cmakePresent = precheck 'cmake' $null
                 $sdkPresent = Test-Win10SDK
 
-                # Install chocolatey
-                <#$chocolateyPath = "$env:AllUsersProfile\chocolatey\bin"
-
-                if(precheck 'choco' $null) {
-                    Write-Log "Chocolatey is already installed. Skipping installation."
-                }
-                elseif(($cmakePresent -eq $false) -or ($sdkPresent -eq $false)) {
-                    Write-Log "Chocolatey not present. Installing chocolatey."
-                    if ($Force -or "Install chocolatey via https://chocolatey.org/install.ps1") {
-                        Invoke-Expression ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
-                        if (-not ($machinePath.ToLower().Contains($chocolateyPath.ToLower()))) {
-                            Write-Log "Adding $chocolateyPath to Path environment variable"
-                            $env:Path += ";$chocolateyPath"
-                            $newMachineEnvironmentPath += ";$chocolateyPath"
-                        } else {
-                            Write-Log "$chocolateyPath already present in Path environment variable"
-                        }
-                    } else {
-                        Write-Error "Chocolatey is required to install missing dependencies. Please install it from https://chocolatey.org/ manually. Alternatively, install cmake and Windows 10 SDK."
-                        return
-                    }
-                } else {
-                    Write-Log "Skipping installation of chocolatey, cause both cmake and Win 10 SDK are present."
-                }
-                #>
-
                 # Install cmake
                 #$cmakePath = "${env:ProgramFiles}\CMake\bin"
                 if($cmakePresent) {
                     Write-Log "Cmake is already installed."
                 } else {
                     throw "Cmake not present."
-
-                    <#Start-NativeExecution { choco install cmake -y --version 3.10.0 }
-                    if (-not ($machinePath.ToLower().Contains($cmakePath.ToLower()))) {
-                        Write-Log "Adding $cmakePath to Path environment variable"
-                        $env:Path += ";$cmakePath"
-                        $newMachineEnvironmentPath = "$cmakePath;$newMachineEnvironmentPath"
-                    } else {
-                        Write-Log "$cmakePath already present in Path environment variable"
-                    }#>
                 }
 
                 if ($sdkPresent) {
@@ -2202,25 +2167,6 @@ function Start-PSBootstrap {
                 else {
                     throw "Windows 10 SDK not present."
                 }
-
-                # Install Windows 10 SDK
-                <#$packageName = "windows-sdk-10.0"
-
-                if (-not $sdkPresent) {
-                    Write-Log "Windows 10 SDK not present. Installing $packageName."
-                    Start-NativeExecution { choco install windows-sdk-10.0 -y }
-                } else {
-                    Write-Log "Windows 10 SDK present. Skipping installation."
-                }
-
-                # Update path machine environment variable
-                if ($newMachineEnvironmentPath -ne $machinePath) {
-                    Write-Log "Updating Path machine environment variable"
-                    if ($Force -or $PSCmdlet.ShouldProcess("Update Path machine environment variable to $newMachineEnvironmentPath")) {
-                        [Environment]::SetEnvironmentVariable('Path', $newMachineEnvironmentPath, 'MACHINE')
-                    }
-                }
-                #>
             }
         }
     } finally {
