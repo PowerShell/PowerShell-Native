@@ -602,6 +602,10 @@ function Start-BuildPowerShellNativePackage
     $Nuspec -f $Version, $iconFileName | Out-File -FilePath (Join-Path $PackageRoot -ChildPath 'Microsoft.PowerShell.Native.nuspec') -Force
 }
 
+<#
+.SYNOPSIS
+ Pack the new nuget package from af folder.
+#>
 function New-NugetPackage {
     param (
         [Parameter(Mandatory)]

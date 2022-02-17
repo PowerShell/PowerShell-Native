@@ -95,6 +95,7 @@ steps:
       PackageVersion: $(PackageVersion)
 
 - pwsh: |
+    Import-Module $(Build.SourcesDirectory)\build.psm1
     $PackageRoot = "$(System.ArtifactsDirectory)\NugetPackage"
     New-NugetPackage -PackageRoot $PackageRoot -NuGetOutputPath $(NuGetPackagePath)
   displayName: Build NuGet package
