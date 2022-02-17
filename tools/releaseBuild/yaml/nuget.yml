@@ -95,7 +95,7 @@ steps:
       PackageVersion: $(PackageVersion)
 
 - pwsh: |
-    $PackageRoot = New-Item -ItemType Directory -Path  $(System.ArtifactsDirectory)\NugetPackage
+    $PackageRoot = "$(System.ArtifactsDirectory)\NugetPackage"
     New-NugetPackage -PackageRoot $PackageRoot -NuGetOutputPath $(NuGetPackagePath)
   displayName: Build NuGet package
 
