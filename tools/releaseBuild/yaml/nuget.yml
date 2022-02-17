@@ -82,9 +82,22 @@ steps:
    $macOSZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'osx-symbols.zip'
    $psrpZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'psrp.zip'
 
-   Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARMZipPath $WindowsARMZipPath  -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath -psrpZipPath $psrpZipPath -NuGetOutputPath $(NuGetPackagePath)
+   Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARMZipPath $WindowsARMZipPath  -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath -psrpZipPath $psrpZipPath
 
-  displayName: 'Build NuGet package'
+  displayName: 'Collate NuGet package structure'
+
+- ${{ if ne(variables['SkipSigning'], 'True') }}:
+  - template: Sbom.yml@ComplianceRepo
+    parameters:
+      BuildDropPath: '$(System.ArtifactsDirectory)\NugetPackage'
+      Build_Repository_Uri: https://github.com/PowerShell/PowerShell-Native
+      PackageName: Microsoft.PowerShell.Native
+      PackageVersion: $(PackageVersion)
+
+- pwsh: |
+    $PackageRoot = New-Item -ItemType Directory -Path  $(System.ArtifactsDirectory)\NugetPackage
+    New-NugetPackage -PackageRoot $PackageRoot -NuGetOutputPath $(NuGetPackagePath)
+  displayName: Build NuGet package
 
 - powershell: 'Get-Childitem $(NuGetPackagePath)'
   displayName: 'Capture nuget package'
