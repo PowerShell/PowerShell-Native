@@ -533,12 +533,7 @@ function Start-BuildPowerShellNativePackage
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Leaf})]
-        [string] $psrpZipPath,
-
-        [Parameter(Mandatory = $true)]
-        [string] $NuGetOutputPath,
-
-        [switch] $SkipCleanup = $false
+        [string] $psrpZipPath
     )
 
     if(-not (Test-Path $PackageRoot))
@@ -605,23 +600,31 @@ function Start-BuildPowerShellNativePackage
     Copy-Item $iconPath (Join-Path $PackageRoot -ChildPath $iconFileName) -Verbose
 
     $Nuspec -f $Version, $iconFileName | Out-File -FilePath (Join-Path $PackageRoot -ChildPath 'Microsoft.PowerShell.Native.nuspec') -Force
+}
 
-    if(-not (Test-Path $NuGetOutputPath))
-    {
-        $null = New-Item $NuGetOutputPath -Force -Verbose -ItemType Directory
-    }
+<#
+.SYNOPSIS
+ Pack the new nuget package from af folder.
+#>
+function New-NugetPackage {
+    param (
+        [Parameter(Mandatory)]
+        [string] $PackageRoot,
+
+        [Parameter(Mandatory)]
+        [string] $NuGetOutputPath
+    )
 
     try {
+        if (-not (Test-Path $NuGetOutputPath)) {
+            $null = New-Item $NuGetOutputPath -Force -Verbose -ItemType Directory
+        }
+
         Push-Location $PackageRoot
         nuget.exe pack . -OutputDirectory $NuGetOutputPath
     }
     finally {
         Pop-Location
-    }
-
-    if(-not $SkipCleanup -and (Test-Path $tempExtractionPath))
-    {
-        Remove-Item $tempExtractionPath -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 
