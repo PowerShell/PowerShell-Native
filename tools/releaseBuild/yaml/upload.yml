@@ -15,7 +15,7 @@ steps:
           #Update-Module $module -verbose
         }
       }
-    displayName: Install PowerShell modules
+  displayName: Install PowerShell modules
 
 - powershell: |
     $azureRMModule = Get-Module -Name AzureRM -ListAvailable -ErrorAction SilentlyContinue
