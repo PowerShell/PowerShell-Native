@@ -5,6 +5,10 @@ parameters:
 steps:
 
 - powershell: |
+    Install-Module PowerShellGet -RequiredVersion 2.2.5 -SkipPublisherCheck
+  displayName: Update PowerShell Get
+
+- powershell: |
       $modules = 'Az.Accounts', 'Az.Storage'
       foreach($module in $modules) {
         if(!(get-module $module -listavailable)) {
