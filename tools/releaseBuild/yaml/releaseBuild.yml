@@ -9,6 +9,7 @@ variables:
     value: '$(System.ArtifactsDirectory)/Packages'
   - group: PSNativeAPIScan
   - group: SymbolPublish
+  - group: Azure Blob variable group
 
 resources:
   repositories:

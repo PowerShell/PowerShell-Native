@@ -7,8 +7,8 @@ steps:
   displayName: 'Upload ${{ parameters.fileName }} to azure blob'
   inputs:
     SourcePath: '${{ parameters.sourcePath }}'
-    azureSubscription: 'MGMT-Powershell-CICDInfra (94cf12ad-4fe9-490b-b281-0a260198a4e0)'
+    azureSubscription: '$(AzureFileCopySubscription)'
     Destination: AzureBlob
-    storage: pscoretestdata
+    storage: '$(StorageAccount)'
     ContainerName: 'PowerShell-Native-Symbols'
     BlobPrefix: '$(Build.SourceBranchName)'
