@@ -15,7 +15,7 @@ steps:
   displayName: Update PowerShell Get
 
 - powershell: |
-      $modules = 'Az.Accounts', 'Az.Storage'
+      $modules = 'Az.Accounts', 'Az.Storage', 'Az.Resources'
       foreach($module in $modules) {
         if(!(get-module $module -listavailable)) {
           Write-Verbose "installing $module..." -verbose
