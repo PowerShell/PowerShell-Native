@@ -5,7 +5,13 @@ parameters:
 steps:
 
 - powershell: |
-    Install-Module PowerShellGet -RequiredVersion 2.2.5 -SkipPublisherCheck
+    [System.Net.ServicePointManager]::SecurityProtocol =
+        [System.Net.ServicePointManager]::SecurityProtocol -bor
+        [System.Security.Authentication.SslProtocols]::Tls12 -bor
+        [System.Security.Authentication.SslProtocols]::Tls11
+
+    Get-PackageProvider -Name NuGet -ForceBootstrap
+    Install-Module PowerShellGet -RequiredVersion 2.2.5 -SkipPublisherCheck -Force
   displayName: Update PowerShell Get
 
 - powershell: |
