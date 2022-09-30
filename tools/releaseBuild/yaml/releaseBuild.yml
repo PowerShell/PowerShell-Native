@@ -133,7 +133,7 @@ stages:
           Expand-Archive -Path $_.FullName -DestinationPath $destFolder -Force
 
           Get-ChildItem -Path $destFolder -Recurse -Filter '*.pdb' | ForEach-Object {
-            $runtimeFolder = New-Item -Path "$symbolsRoot/$($_.BaseName)/" -ItemType Directory -Verbose
+            $runtimeFolder = New-Item -Path "$symbolsRoot/$($destFolder.BaseName)/" -ItemType Directory -Verbose
             Copy-Item -Path $_.FullName -Destination $runtimeFolder -Verbose
           }
         }
