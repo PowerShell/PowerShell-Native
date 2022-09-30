@@ -121,7 +121,7 @@ stages:
       artifact: release
 
     - pwsh: |
-        Write-Verbose -Verbose "Enumerating "$(Pipeline.Workspace)/release"
+        Write-Verbose -Verbose "Enumerating $(Pipeline.Workspace)/release"
         $downloadedArtifacts = Get-ChildItem -Recurse "$(Pipeline.Workspace)/release"
         $downloadedArtifacts
 
@@ -132,7 +132,7 @@ stages:
           $destFolder = New-Item -Path "$expandedRoot/$($_.BaseName)/" -ItemType Directory -Verbose
           Expand-Archive -Path $_.FullName -DestinationPath $destFolder -Force
 
-          Get-ChildItem -Path $destFolder -Recurse -Filter *.pdb | ForEach-Object {
+          Get-ChildItem -Path $destFolder -Recurse -Filter '*.pdb' | ForEach-Object {
             $runtimeFolder = New-Item -Path "$symbolsRoot/$($_.BaseName)/" -ItemType Directory -Verbose
             Copy-Item -Path $_.FullName -Destination $runtimeFolder -Verbose
           }
