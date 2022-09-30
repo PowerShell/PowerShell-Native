@@ -119,7 +119,6 @@ stages:
     steps:
     - download: current
       artifact: release
-      patterns: 'x*.zip'
 
     - pwsh: |
         Write-Verbose -Verbose "Enumerating "$(Pipeline.Workspace)/release"
@@ -129,7 +128,7 @@ stages:
         $expandedRoot = New-Item -Path "$(Pipeline.Workspace)/expanded" -ItemType Directory -Verbose
         $symbolsRoot = New-Item -Path "$(Pipeline.Workspace)/symbols" -ItemType Directory -Verbose
 
-        $downloadedArtifacts | Where-Object { $_.Extension -eq 'zip' } | ForEach-Object {
+        $downloadedArtifacts | Where-Object { $_.Name -like 'x*-symbols.zip'} | ForEach-Object {
           $destFolder = New-Item -Path "$expandedRoot/$($_.BaseName)/" -ItemType Directory -Verbose
           Expand-Archive -Path $_.FullName -DestinationPath $destFolder -Force
 
@@ -139,7 +138,7 @@ stages:
           }
         }
 
-        Write-Verbose -Verbose "Enumerating "$symbolsRoot"
+        Write-Verbose -Verbose "Enumerating $symbolsRoot"
         Get-ChildItem -Path $symbolsRoot -Recurse
 
         $vstsCommandString = "vso[task.setvariable variable=SymbolsPath]$symbolsRoot"
