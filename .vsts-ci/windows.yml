@@ -14,7 +14,9 @@ jobs:
 - job: Build
 
   pool:
-    vmImage: windows-2019
+    name: PS-PowerShell-x64
+      demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
 
   strategy:
     matrix:
