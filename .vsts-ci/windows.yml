@@ -15,7 +15,7 @@ jobs:
 
   pool:
     name: PS-PowerShell-x64
-      demands:
+    demands:
       - ImageOverride -equals PSMMS2019-PS-Native-Secure
 
   strategy:
