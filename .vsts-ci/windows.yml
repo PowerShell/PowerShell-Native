@@ -14,7 +14,9 @@ jobs:
 - job: Build
 
   pool:
-    vmImage: vs2017-win2016
+    name: PS-PowerShell-x64
+    demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
 
   strategy:
     matrix:
@@ -28,10 +30,6 @@ jobs:
         buildName: x64_arm64
 
   steps:
-  - powershell: |
-      choco install cmake.install --installargs 'ADD_CMAKE_TO_PATH=System'
-    displayName: Install cmake
-    condition: succeeded()
   - powershell: |
       $vsPath = ${Env:ProgramFiles(x86)} + '\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin'
       Write-Host "##vso[task.prependpath]$vsPath"
