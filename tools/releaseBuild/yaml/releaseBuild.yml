@@ -8,6 +8,8 @@ variables:
   - name: PackageRoot
     value: '$(System.ArtifactsDirectory)/Packages'
   - group: PSNativeAPIScan
+  - group: SymbolPublish
+  - group: Azure Blob variable group
 
 resources:
   repositories:
@@ -104,6 +106,54 @@ stages:
 
     steps:
     - template: nuget.yml
+
+- stage: PublishSymbol
+  displayName: Publish pwrshplugin symbols
+  dependsOn: Build
+  jobs:
+  - job: Symbols_Job
+    pool:
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
+    steps:
+    - download: current
+      artifact: release
+
+    - pwsh: |
+        Write-Verbose -Verbose "Enumerating $(Pipeline.Workspace)/release"
+        $downloadedArtifacts = Get-ChildItem -Recurse "$(Pipeline.Workspace)/release"
+        $downloadedArtifacts
+
+        $expandedRoot = New-Item -Path "$(Pipeline.Workspace)/expanded" -ItemType Directory -Verbose
+        $symbolsRoot = New-Item -Path "$(Pipeline.Workspace)/symbols" -ItemType Directory -Verbose
+
+        $downloadedArtifacts | Where-Object { $_.Name -like 'x*-symbols.zip'} | ForEach-Object {
+          $destFolder = New-Item -Path "$expandedRoot/$($_.BaseName)/" -ItemType Directory -Verbose
+          Expand-Archive -Path $_.FullName -DestinationPath $destFolder -Force
+
+          Get-ChildItem -Path $destFolder -Recurse -Filter '*.pdb' | ForEach-Object {
+            $runtimeFolder = New-Item -Path "$symbolsRoot/$($destFolder.BaseName)/" -ItemType Directory -Verbose
+            Copy-Item -Path $_.FullName -Destination $runtimeFolder -Verbose
+          }
+        }
+
+        Write-Verbose -Verbose "Enumerating $symbolsRoot"
+        Get-ChildItem -Path $symbolsRoot -Recurse
+
+        $vstsCommandString = "vso[task.setvariable variable=SymbolsPath]$symbolsRoot"
+        Write-Verbose -Message "$vstsCommandString" -Verbose
+        Write-Host -Object "##$vstsCommandString"
+      displayName: Expand and capture symbols folders
+
+    - task: PublishSymbols@2
+      inputs:
+        symbolsFolder: '$(SymbolsPath)'
+        searchPattern: '**/*.pdb'
+        indexSources: false
+        publishSymbols: true
+        symbolServerType: teamServices
+        detailedLog: true
 
 - stage: compliance
   displayName: Compliance
