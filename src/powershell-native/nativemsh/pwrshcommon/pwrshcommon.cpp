@@ -898,7 +898,7 @@ namespace NativeMsh
         "System.Xml.XmlSerializer",
         "System.Xml.XPath",
         "System.Xml.XPath.XDocument",
-        "WindowsBase",
+        "WindowsBase"
     };
 
     // Define the function pointer for the CLR entry point
