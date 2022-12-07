@@ -13,15 +13,6 @@ steps:
     targetPath: "$(System.ArtifactsDirectory)/signed"
   displayName: Download signed windows native packages
 
-- powershell: |
-    $null = New-Item $(PackageRoot) -ItemType Directory -Force -Verbose
-    if(-not (Test-Path '$(System.ArtifactsDirectory)/release' ))
-    {
-      New-Item -ItemType Directory -Path '$(System.ArtifactsDirectory)/release' -Force
-    }
-    Invoke-WebRequest -Uri '$(PSRPBlobUrl)' -OutFile $(System.ArtifactsDirectory)/release/psrp.zip -Verbose
-  displayName: 'Download PSRP package'
-
 - powershell: 'Get-ChildItem $(System.ArtifactsDirectory)/release'
   displayName: 'Capture downloaded zips'
 
@@ -80,9 +71,8 @@ steps:
    $LinuxARM64ZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-arm64-symbols.zip'
    $LinuxAlpineZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'linux-musl-x64-symbols.zip'
    $macOSZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'osx-symbols.zip'
-   $psrpZipPath = Join-Path "$(System.ArtifactsDirectory)/release" 'psrp.zip'
 
-   Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARMZipPath $WindowsARMZipPath  -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath -psrpZipPath $psrpZipPath
+   Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARMZipPath $WindowsARMZipPath  -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath
 
   displayName: 'Collate NuGet package structure'
 
