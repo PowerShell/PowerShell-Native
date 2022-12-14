@@ -39,6 +39,13 @@ unsigned int PowerShellCoreClrWorker::LaunchClr(
 {
     // Allocate a console so that the codepage is setup correctly
     AllocConsole();
+    HWND console = GetConsoleWindow();
+    if (console != NULL)
+    {
+        // Hide the console window
+        ShowWindow(console, SW_HIDE);
+    }
+
     return commonLib->LaunchCoreCLR(hostWrapper, hostEnvironment, friendlyName);
 }
 
