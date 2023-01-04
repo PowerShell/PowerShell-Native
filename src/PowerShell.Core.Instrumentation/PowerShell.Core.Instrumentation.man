@@ -2184,7 +2184,19 @@
               value="0x6017"
               version="1"
               />
-        </events>
+          <event
+                channel="C_ANALYTIC"
+                keywords="WDACQuery"
+                level="win:Verbose"
+                message="$(string.PS_PROVIDER.event.E_A_WDACQuery.message)"
+                opcode="Method"
+                symbol="WDACQuery"
+                task="WDAC"
+                template="T_WDACQuery"
+                value="0x4002"
+                version="1"
+              />
+          </events>
         <channels>
           <!--There are two channels defined for Windows PowerShell instrumentation
               event provider
@@ -2407,6 +2419,12 @@
               symbol="T_ISEOperation"
               value="120"
               />
+          <task
+              message="$(string.PS_PROVIDER.task.T_WDACQuery.message)"
+              name="WDAC"
+              symbol="T_WDAC"
+              value="131"
+              />
         </tasks>
         <opcodes>
           <opcode
@@ -2566,6 +2584,12 @@
               message="$(string.PS_PROVIDER.keyword.K_PSWORKFLOW.message)"
               name="PSWorkflow"
               symbol="K_PSWORKFLOW"
+              />
+          <keyword
+              mask="0x800"
+              message="$(string.PS_PROVIDER.keyword.K_WDACQuery.message)"
+              name="WDACQuery"
+              symbol="K_WDACQuery"
               />
         </keywords>
         <maps>
@@ -4024,6 +4048,24 @@
                 name="FileName"
                 />
           </template>
+          <template tid="T_WDACQuery">
+            <data
+                inType="win:UnicodeString"
+                name="QueryName"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="FileName"
+                />
+            <data
+                inType="win:Int32"
+                name="QuerySuccess"
+                />
+            <data
+                inType="win:Int32"
+                name="QuerySResult"
+                />
+           </template>
         </templates>
       </provider>
     </events>
@@ -5628,6 +5670,18 @@
         <string
             id="PS_PROVIDER.event.E_O_REMOTE_NAMEDPIPE_DISCONNECT.message"
             value="Windows PowerShell IPC disconnect on process: %1 in AppDomain: %2 for User: %3."
+            />
+        <string
+            id="PS_PROVIDER.event.E_A_WDACQuery.message"
+            value="WDAC Query. %n %t Query: %1 %n %t File: %2 %n %t SuccessCode: %3 %n %t ResultCode: %4"
+            />
+        <string
+            id="PS_PROVIDER.keyword.K_WDACQuery.message"
+            value="WDAC Query"
+            />
+        <string
+            id="PS_PROVIDER.task.T_WDACQuery.message"
+            value="WDAC Query"
             />
       </stringTable>
     </resources>
