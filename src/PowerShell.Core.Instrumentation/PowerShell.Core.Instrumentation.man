@@ -2184,7 +2184,7 @@
               value="0x6017"
               version="1"
               />
-            <event
+          <event
                 channel="C_ANALYTIC"
                 keywords="AmsiState"
                 level="win:Verbose"
@@ -2196,6 +2196,19 @@
                 value="0x4001"
                 version="1"
               />
+          <event
+                channel="C_ANALYTIC"
+                keywords="WDACQuery"
+                level="win:Verbose"
+                message="$(string.PS_PROVIDER.event.E_A_WDACQuery.message)"
+                opcode="Method"
+                symbol="WDACQuery"
+                task="WDAC"
+                template="T_WDACQuery"
+                value="0x4002"
+                version="1"
+              />
+          </events>
         </events>
         <channels>
           <!--There are two channels defined for Windows PowerShell instrumentation
@@ -2419,11 +2432,17 @@
               symbol="T_ISEOperation"
               value="120"
               />
-            <task
+          <task
                 message="$(string.PS_PROVIDER.task.T_AmsiState.message)"
                 name="Amsi"
                 symbol="T_Amsi"
                 value="130"
+                />
+          <task
+              message="$(string.PS_PROVIDER.task.T_WDACQuery.message)"
+              name="WDAC"
+              symbol="T_WDAC"
+              value="131"
               />
         </tasks>
         <opcodes>
@@ -2585,11 +2604,17 @@
               name="PSWorkflow"
               symbol="K_PSWORKFLOW"
               />
-            <keyword
+          <keyword
                 mask="0x400"
                 message="$(string.PS_PROVIDER.keyword.K_AmsiState.message)"
                 name="AmsiState"
                 symbol="K_AmsiState"
+                />
+          <keyword
+              mask="0x800"
+              message="$(string.PS_PROVIDER.keyword.K_WDACQuery.message)"
+              name="WDACQuery"
+              symbol="K_WDACQuery"
               />
         </keywords>
         <maps>
@@ -4048,16 +4073,34 @@
                 name="FileName"
                 />
           </template>
-            <template tid="T_AmsiState">
-                <data
-                    inType="win:UnicodeString"
-                    name="Action"
+          <template tid="T_AmsiState">
+              <data
+                  inType="win:UnicodeString"
+                  name="Action"
+                  />
+              <data
+                  inType="win:UnicodeString"
+                  name="AmsiContext"
+                  />
+          </template>
+          <template tid="T_WDACQuery">
+            <data
+                inType="win:UnicodeString"
+                name="QueryName"
                 />
-                <data
-                    inType="win:UnicodeString"
-                    name="AmsiContext"
+            <data
+                inType="win:UnicodeString"
+                name="FileName"
                 />
-            </template>
+            <data
+                inType="win:Int32"
+                name="QuerySuccess"
+                />
+            <data
+                inType="win:Int32"
+                name="QuerySResult"
+                />
+           </template>
         </templates>
       </provider>
     </events>
@@ -5674,6 +5717,18 @@
         <string
             id="PS_PROVIDER.event.E_O_REMOTE_NAMEDPIPE_DISCONNECT.message"
             value="Windows PowerShell IPC disconnect on process: %1 in AppDomain: %2 for User: %3."
+            />
+        <string
+            id="PS_PROVIDER.event.E_A_WDACQuery.message"
+            value="WDAC Query. %n %t Query: %1 %n %t File: %2 %n %t SuccessCode: %3 %n %t ResultCode: %4"
+            />
+        <string
+            id="PS_PROVIDER.keyword.K_WDACQuery.message"
+            value="WDAC Query"
+            />
+        <string
+            id="PS_PROVIDER.task.T_WDACQuery.message"
+            value="WDAC Query"
             />
       </stringTable>
     </resources>
