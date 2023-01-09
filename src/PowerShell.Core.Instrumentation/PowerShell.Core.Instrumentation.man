@@ -2209,7 +2209,6 @@
                 version="1"
               />
           </events>
-        </events>
         <channels>
           <!--There are two channels defined for Windows PowerShell instrumentation
               event provider
