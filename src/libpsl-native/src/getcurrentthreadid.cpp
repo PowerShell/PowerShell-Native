@@ -8,6 +8,10 @@
 #include <sys/syscall.h>
 #include <pthread.h>
 
+#if __FreeBSD__
+#include <pthread_np.h>
+#endif
+
 pid_t GetCurrentThreadId()
 {
     pid_t tid = 0;
@@ -17,6 +21,9 @@ pid_t GetCurrentThreadId()
     uint64_t tid64;
     pthread_threadid_np(NULL, &tid64);
     tid = (pid_t)tid64;
+#elif defined(__FreeBSD__)
+    tid = pthread_getthreadid_np();
+    return (int)tid;
 #endif
     return tid;
 }
