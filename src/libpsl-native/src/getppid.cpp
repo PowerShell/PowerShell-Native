@@ -31,7 +31,7 @@
 //!
 pid_t GetPPid(pid_t pid)
 {
-
+#if defined (__APPLE__) && defined(__MACH__) || defined(__FreeBSD__)
     const pid_t PIDUnknown = UINT_MAX;
     struct kinfo_proc info;
     size_t length = sizeof(struct kinfo_proc);
@@ -44,6 +44,7 @@ pid_t GetPPid(pid_t pid)
     return info.kp_eproc.e_ppid;
 #elif defined(__FreeBSD__)
     return info.ki_ppid;
+#endif
 #else
 
     return UINT_MAX;
