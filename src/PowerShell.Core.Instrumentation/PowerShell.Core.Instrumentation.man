@@ -2208,6 +2208,18 @@
                 value="0x4002"
                 version="1"
               />
+          <event
+                channel="C_OPERATIONAL"
+                keywords="WDACAudit"
+                level="win:Verbose"
+                message = "$(string.PS_PROVIDER.event.E_A_WDACAudit.message)"
+                opcode="Method"
+                symbol="WDACAudit"
+                task="WDACAudit"
+                template="T_WDACAudit"
+                value="0x4003"
+                version="1"
+              />
           </events>
         <channels>
           <!--There are two channels defined for Windows PowerShell instrumentation
@@ -2432,16 +2444,22 @@
               value="120"
               />
           <task
-                message="$(string.PS_PROVIDER.task.T_AmsiState.message)"
-                name="Amsi"
-                symbol="T_Amsi"
-                value="130"
-                />
+              message="$(string.PS_PROVIDER.task.T_AmsiState.message)"
+              name="Amsi"
+              symbol="T_Amsi"
+              value="130"
+              />
           <task
               message="$(string.PS_PROVIDER.task.T_WDACQuery.message)"
               name="WDAC"
               symbol="T_WDAC"
               value="131"
+              />
+          <task
+              message="$(string.PS_PROVIDER.task.T_WDACAudit.message)"
+              name="WDACAudit"
+              symbol="T_WDACAudit"
+              value="132"
               />
         </tasks>
         <opcodes>
@@ -2604,16 +2622,22 @@
               symbol="K_PSWORKFLOW"
               />
           <keyword
-                mask="0x400"
-                message="$(string.PS_PROVIDER.keyword.K_AmsiState.message)"
-                name="AmsiState"
-                symbol="K_AmsiState"
-                />
+              mask="0x400"
+              message="$(string.PS_PROVIDER.keyword.K_AmsiState.message)"
+              name="AmsiState"
+              symbol="K_AmsiState"
+              />
           <keyword
               mask="0x800"
               message="$(string.PS_PROVIDER.keyword.K_WDACQuery.message)"
               name="WDACQuery"
               symbol="K_WDACQuery"
+              />
+          <keyword
+              mask="0x1000"
+              message="$(string.PS_PROVIDER.keyword.K_WDACAudit.message)"
+              name="WDACAudit"
+              symbol="K_WDACAudit"
               />
         </keywords>
         <maps>
@@ -4073,14 +4097,14 @@
                 />
           </template>
           <template tid="T_AmsiState">
-              <data
-                  inType="win:UnicodeString"
-                  name="Action"
-                  />
-              <data
-                  inType="win:UnicodeString"
-                  name="AmsiContext"
-                  />
+            <data
+                inType="win:UnicodeString"
+                name="Action"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="AmsiContext"
+                />
           </template>
           <template tid="T_WDACQuery">
             <data
@@ -4099,7 +4123,21 @@
                 inType="win:Int32"
                 name="QuerySResult"
                 />
-           </template>
+          </template>
+          <template tid="T_WDACAudit">
+            <data
+                inType="win:UnicodeString"
+                name="Title"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="Message"
+                />
+            <data
+                inType="win:UnicodeString"
+                name="FullyQualifiedId"
+                />
+          </template>
         </templates>
       </provider>
     </events>
@@ -5728,6 +5766,18 @@
         <string
             id="PS_PROVIDER.task.T_WDACQuery.message"
             value="WDAC Query"
+            />
+        <string
+            id="PS_PROVIDER.event.E_A_WDACAudit.message"
+            value="WDAC Audit. %n %t Title: %1 %n %t Message: %2 %n %t FullyQualifiedId: %3"
+            />
+        <string
+            id="PS_PROVIDER.keyword.K_WDACAudit.message"
+            value="WDAC Audit"
+            />
+        <string
+            id="PS_PROVIDER.task.T_WDACAudit.message"
+            value="WDAC Audit"
             />
       </stringTable>
     </resources>
