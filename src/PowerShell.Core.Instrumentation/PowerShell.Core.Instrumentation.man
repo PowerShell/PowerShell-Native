@@ -2209,7 +2209,7 @@
                 version="1"
               />
           <event
-                channel="C_OPERATIONAL"
+                channel="C_ANALYTIC"
                 keywords="WDACAudit"
                 level="win:Verbose"
                 message = "$(string.PS_PROVIDER.event.E_A_WDACAudit.message)"
