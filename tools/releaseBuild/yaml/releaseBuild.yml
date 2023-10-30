@@ -7,7 +7,8 @@ variables:
     value: '$(System.ArtifactsDirectory)/NuGetRelease'
   - name: PackageRoot
     value: '$(System.ArtifactsDirectory)/Packages'
-  - group: PSNativeAPIScan
+  - group: ApiScan
+  - group: ApiScanMeta
   - group: SymbolPublish
   - group: Azure Blob variable group
 
