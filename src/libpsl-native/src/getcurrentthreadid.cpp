@@ -23,7 +23,6 @@ pid_t GetCurrentThreadId()
     tid = (pid_t)tid64;
 #elif defined(__FreeBSD__)
     tid = pthread_getthreadid_np();
-    return (int)tid;
 #endif
     return tid;
 }
