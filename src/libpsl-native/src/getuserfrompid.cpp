@@ -21,6 +21,7 @@
 
 #if __FreeBSD__
 #include <sys/user.h>
+#include <sys/sysctl.h>
 #endif
 
 char* GetUserFromPid(pid_t pid)
