@@ -53,7 +53,9 @@ jobs:
       name: Capture Environment
 
     - run: |
-        tools/releaseBuild/vstsBuild.ps1 -Name 'centos.7' -Verbose
+        Import-Module ./build.psm1
+        Start-PSBootstrap
+        Start-BuildNativeUnixBinaries
       name: Build
 
     - name: Perform CodeQL Analysis
