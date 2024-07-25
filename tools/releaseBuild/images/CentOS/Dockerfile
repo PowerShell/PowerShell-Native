@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/powershell:centos-7
+FROM mcr.microsoft.com/powershell:ubi-8
 
 LABEL maintainer="PowerShell Team <powershellteam@hotmail.com>"
 
