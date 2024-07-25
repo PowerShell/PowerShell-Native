@@ -53,7 +53,7 @@ jobs:
       name: Capture Environment
 
     - run: |
-        Import-Module build.psm1
+        Import-Module ./build.psm1
         Start-PSBootstrap
         Start-BuildNativeUnixBinaries
       name: Build
