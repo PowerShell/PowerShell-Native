@@ -136,13 +136,15 @@ function Get-EnvironmentInformation
         $environment += @{'IsUbuntu16' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '16.04'}
         $environment += @{'IsUbuntu17' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '17.10'}
         $environment += @{'IsUbuntu18' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '18.04'}
+        $environment += @{'IsUbuntu22' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '22.04'}
         $environment += @{'IsCentOS' = $LinuxInfo.ID -match 'centos' -and $LinuxInfo.VERSION_ID -match '7'}
         $environment += @{'IsFedora' = $LinuxInfo.ID -match 'fedora' -and $LinuxInfo.VERSION_ID -ge 24}
+        $environment += @{'IsRedHat' = $LinuxInfo.ID -match 'rhel'}
         $environment += @{'IsOpenSUSE' = $LinuxInfo.ID -match 'opensuse'}
         $environment += @{'IsSLES' = $LinuxInfo.ID -match 'sles'}
         $environment += @{'IsOpenSUSE13' = $Environmenst.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '13'}
         $environment += @{'IsOpenSUSE42.1' = $Environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '42.1'}
-        $environment += @{'IsRedHatFamily' = $Environment.IsCentOS -or $Environment.IsFedora}
+        $environment += @{'IsRedHatFamily' = $Environment.IsCentOS -or $Environment.IsFedora -or $Environment.IsRedHat}
         $environment += @{'IsSUSEFamily' = $Environment.IsSLES -or $Environment.IsOpenSUSE}
         $environment += @{'IsAlpine' = $LinuxInfo.ID -match 'alpine'}
 
@@ -1891,7 +1893,7 @@ function Install-Dotnet {
 }
 
 function Get-RedHatPackageManager {
-    if ($Environment.IsCentOS) {
+    if ($Environment.IsCentOS -or $Environment.IsRedHat) {
         "yum install -y -q"
     } elseif ($Environment.IsFedora) {
         "dnf install -y -q"
@@ -1978,13 +1980,13 @@ function Start-PSBootstrap {
                 }
             } elseif ($Environment.IsRedHatFamily) {
                 # Build tools
-                $Deps += "which", "curl", "gcc-c++", "cmake", "make"
+                $Deps += "which", "curl", "wget"
 
                 # .NET Core required runtime libraries
-                $Deps += "libicu", "libunwind"
+                $Deps += "libicu", "openssl-libs"
 
                 # Packaging tools
-                if ($Package) { $Deps += "ruby-devel", "rpm-build", "groff", 'libffi-devel' }
+                if ($Package) { $Deps += "ruby-devel", "rpm-build", "groff", 'libffi-devel', "gcc-c++" }
 
                 $PackageManager = Get-RedHatPackageManager
 
