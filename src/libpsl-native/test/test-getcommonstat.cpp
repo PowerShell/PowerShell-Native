@@ -41,7 +41,7 @@ TEST(GetCommonStat, GetOwnerIdOfRoot)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %u /", "r");
 #else
      p = popen("/usr/bin/stat -c %u /", "r");
@@ -58,7 +58,7 @@ TEST(GetCommonStat, GetGroupId)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %g /", "r");
 #else
      p = popen("/usr/bin/stat -c %g /", "r");
@@ -75,7 +75,7 @@ TEST(GetCommonStat, GetInodeNumber)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %i /", "r");
 #else
      p = popen("/usr/bin/stat -c %i /", "r");
@@ -93,7 +93,7 @@ TEST(GetCommonStat, GetMode)
     FILE *p;
     CommonStat cs;
     unsigned int mode = -1;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
     p = popen("/usr/bin/stat -f %p /", "r");
     int result = fscanf(p, "%o", &mode);
 #else
@@ -110,7 +110,7 @@ TEST(GetCommonStat, GetSize)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %z /", "r");
 #else
      p = popen("/usr/bin/stat -c %s /", "r");
@@ -127,7 +127,7 @@ TEST(GetCommonStat, GetBlockSize)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %k /", "r");
 #else
      p = popen("/usr/bin/stat -c %o /", "r");
@@ -144,7 +144,7 @@ TEST(GetCommonStat, GetBlockCount)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %b /", "r");
 #else
      p = popen("/usr/bin/stat -c %b /", "r");
@@ -161,7 +161,7 @@ TEST(GetCommonStat, GetLinkCount)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %l /", "r");
 #else
      p = popen("/usr/bin/stat -c %h /", "r");
@@ -178,7 +178,7 @@ TEST(GetCommonStat, GetDeviceId)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %d /", "r");
 #else
      p = popen("/usr/bin/stat -c %d /", "r");
@@ -195,7 +195,7 @@ TEST(GetCommonStat, GetATime)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %a /", "r");
 #else
      p = popen("/usr/bin/stat -c %X /", "r");
@@ -212,7 +212,7 @@ TEST(GetCommonStat, GetMTime)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %m /", "r");
 #else
      p = popen("/usr/bin/stat -c %Y /", "r");
@@ -229,7 +229,7 @@ TEST(GetCommonStat, GetCTime)
 {
     FILE *p;
     CommonStat cs;
-#if defined (__APPLE__)
+#if defined (__APPLE__) || defined(__FreeBSD__)
      p = popen("/usr/bin/stat -f %c /", "r");
 #else
      p = popen("/usr/bin/stat -c %Z /", "r");
