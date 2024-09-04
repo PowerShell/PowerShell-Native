@@ -11,7 +11,7 @@
 #include <sstream>
 #include <errno.h>
 
-#if __APPLE__
+#if __APPLE__ || __FreeBSD__
 #include <sys/sysctl.h>
 #elif HAVE_SYSCONF
 // do nothing
