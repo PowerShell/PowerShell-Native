@@ -6,7 +6,7 @@ variables:
   - name: LinuxContainerImage
     value: onebranch.azurecr.io/linux/ubuntu-2004:latest
   - name: WindowsContainerImage
-    value: onebranch.azurecr.io/windows/ltsc2019/vse2022:latest
+    value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
 
 resources:
   repositories:
@@ -20,20 +20,29 @@ extends:
 
   parameters:
     featureFlags:
-      WindowsHostVersion: 1ESWindows2022
+      WindowsHostVersion:
+        Disk: Large
+        Version: 2022
+        Network: KS1
     cloudvault:
       enabled: false
     globalSdl:
-      tsa:
-        enabled: false # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
-      credscan:
-        enabled: true # enable credscan to run on the pipeline
-      binskim:
-        break: false # always break the build on binskim issues in addition to TSA upload
-      policheck:
-        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
-      cg:
-        enabled: true # enable code governance to run on the pipeline
+      sbom:
+        enabled: true
+        packageName: Microsoft.DSC
+      codeql:
+        compiled:
+          enabled: true
+      asyncSdl: # https://aka.ms/obpipelines/asyncsdl
+        enabled: true
+        forStages: [Build]
+        credscan:
+          enabled: true
+          scanFolder:  $(Build.SourcesDirectory)\DSC
+        binskim:
+          enabled: true
+        apiscan:
+          enabled: false
       armory:
         enabled: false
 
