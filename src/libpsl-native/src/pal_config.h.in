@@ -1,0 +1,4 @@
+#pragma once
+
+#cmakedefine01 HAVE_SYS_SYSCTL_H
+#cmakedefine01 HAVE_SYSCONF

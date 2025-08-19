@@ -1,0 +1,240 @@
+trigger: none
+
+variables:
+  - name: BuildConfiguration
+    value: 'Release'
+  - name: NuGetPackagePath
+    value: '$(System.ArtifactsDirectory)/NuGetRelease'
+  - name: PackageRoot
+    value: '$(System.ArtifactsDirectory)/Packages'
+  - group: ApiScan
+  - group: ApiScanMeta
+  - group: SymbolPublish
+  - group: Azure Blob variable group
+
+resources:
+  repositories:
+  - repository: ComplianceRepo
+    type: github
+    endpoint: ComplianceGHRepo
+    name: PowerShell/compliance
+
+stages:
+- stage: Build
+  displayName: Build Native Binaries
+  dependsOn: []
+  jobs:
+  - job: BuildWin
+    pool:
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
+    displayName: Windows
+    strategy:
+      matrix:
+        x64:
+          ARCHITECTURE: x64
+        x86:
+          ARCHITECTURE: x86
+        x64ARM:
+          ARCHITECTURE: x64_arm
+        x64ARM64:
+          ARCHITECTURE: x64_arm64
+    steps:
+    - template: windows-build.yml
+
+  - job: SignWin
+    pool:
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
+
+    displayName: Sign Windows
+    variables:
+    - group: ESRP
+    dependsOn: BuildWin
+    strategy:
+      matrix:
+        x64:
+          ARCHITECTURE: x64
+        x86:
+          ARCHITECTURE: x86
+        x64ARM:
+          ARCHITECTURE: x64_arm
+        x64ARM64:
+          ARCHITECTURE: x64_arm64
+    steps:
+    - template: windows-sign.yml
+
+  - job: BuildLinux
+    displayName: Linux
+    pool:
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMSUbuntu20.04-Secure
+    strategy:
+        matrix:
+          UbuntuArm:
+            LINUX_BUILDNAME: 'ubuntu.16.04-arm'
+          CentOS:
+            LINUX_BUILDNAME: 'centos.7'
+          Alpine:
+            LINUX_BUILDNAME: 'alpine'
+          UbuntuArm64:
+            LINUX_BUILDNAME: 'ubuntu.16.04-arm64'
+    steps:
+    - template: linux.yml
+
+  - job: BuildMac
+    displayName: Build Native Binaries on macOS
+    pool:
+      vmImage: macOS-Latest
+    steps:
+    - template: mac.yml
+
+  - job: BuildNuGetPkg
+    displayName: Build NuGet Package
+    dependsOn:
+    - SignWin
+    - BuildLinux
+    - BuildMac
+    pool:
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
+    variables:
+    - group: ESRP
+
+    steps:
+    - template: nuget.yml
+
+- stage: PublishSymbol
+  displayName: Publish pwrshplugin symbols
+  dependsOn: Build
+  jobs:
+  - job: Symbols_Job
+    pool:
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
+    steps:
+    - download: current
+      artifact: release
+
+    - pwsh: |
+        Write-Verbose -Verbose "Enumerating $(Pipeline.Workspace)/release"
+        $downloadedArtifacts = Get-ChildItem -Recurse "$(Pipeline.Workspace)/release"
+        $downloadedArtifacts
+
+        $expandedRoot = New-Item -Path "$(Pipeline.Workspace)/expanded" -ItemType Directory -Verbose
+        $symbolsRoot = New-Item -Path "$(Pipeline.Workspace)/symbols" -ItemType Directory -Verbose
+
+        $downloadedArtifacts | Where-Object { $_.Name -like 'x*-symbols.zip'} | ForEach-Object {
+          $destFolder = New-Item -Path "$expandedRoot/$($_.BaseName)/" -ItemType Directory -Verbose
+          Expand-Archive -Path $_.FullName -DestinationPath $destFolder -Force
+
+          Get-ChildItem -Path $destFolder -Recurse -Filter '*.pdb' | ForEach-Object {
+            $runtimeFolder = New-Item -Path "$symbolsRoot/$($destFolder.BaseName)/" -ItemType Directory -Verbose
+            Copy-Item -Path $_.FullName -Destination $runtimeFolder -Verbose
+          }
+        }
+
+        Write-Verbose -Verbose "Enumerating $symbolsRoot"
+        Get-ChildItem -Path $symbolsRoot -Recurse
+
+        $vstsCommandString = "vso[task.setvariable variable=SymbolsPath]$symbolsRoot"
+        Write-Verbose -Message "$vstsCommandString" -Verbose
+        Write-Host -Object "##$vstsCommandString"
+      displayName: Expand and capture symbols folders
+
+    - task: PublishSymbols@2
+      inputs:
+        symbolsFolder: '$(SymbolsPath)'
+        searchPattern: '**/*.pdb'
+        indexSources: false
+        publishSymbols: true
+        symbolServerType: teamServices
+        detailedLog: true
+
+- stage: compliance
+  displayName: Compliance
+  dependsOn: Build
+  jobs:
+  - job: Compliance_Job
+    pool:
+      name: PowerShell1ES
+      demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
+    steps:
+    - checkout: self
+      clean: true
+    - checkout: ComplianceRepo
+      clean: true
+
+    - download: current
+      artifact: release
+
+    - download: current
+      artifact: signed
+
+    - template: setVersion.yml
+
+    - pwsh: |
+        Get-ChildItem -Path 'ENV:'
+      displayName: Capture environment
+
+    - powershell: 'Get-ChildItem $(Pipeline.Workspace)/release'
+      displayName: 'Capture downloaded zips'
+
+    - powershell: |
+        $extractedRoot = New-Item $(Pipeline.Workspace)/uncompressed -ItemType Directory -Force -Verbose
+        Get-ChildItem $(Pipeline.Workspace)/release/*.zip | ForEach-Object {
+            $baseName = $_.BaseName
+            if($baseName -match 'x64_arm') {
+                Write-Verbose "Skipping expanding file $_.Name" -Verbose
+            }
+            else {
+                $folderPath = Join-Path $extractedRoot $baseName
+                Expand-Archive $_.FullName -DestinationPath $folderPath -Force
+            }
+        }
+        Write-Host "Extracted files:"
+        Get-ChildItem -Recurse $extractedRoot -File
+      displayName: 'Extract All Zips'
+
+    - pwsh: |
+        Write-Verbose -Verbose "$(PackageVersion)"
+      displayName: 'Write the package version'
+
+    - template: assembly-module-compliance.yml@ComplianceRepo
+      parameters:
+        # binskim
+        AnalyzeTarget: '$(Pipeline.Workspace)/uncompressed/*.dll'
+        AnalyzeSymPath: 'SRV*'
+        # component-governance
+        sourceScanPath: '$(Build.SourcesDirectory)/powershell-native'
+        # credscan
+        suppressionsFile: ''
+        # TermCheck
+        optionsRulesDBPath: ''
+        optionsFTPath: ''
+        # tsa-upload
+        codeBaseName: 'PowerShellNative'
+        # selections
+        softwareName: 'PowerShellNative'
+        softwareNameFolder: '$(Pipeline.Workspace)/uncompressed'
+        softwareVersion: '$(PackageVersion)'
+        connectionString: RunAs=App;AppId=$(APIScanClient);TenantId=$(APIScanTenant);AppKey=$(APIScanSecret)
+        APIScan: true # set to false when not using Windows APIs.
+
+- template: publish.yml
+  parameters:
+    stageName: AzArtifactsFeed
+    environmentName: PSNativeAzArtifactApproval
+    feedCredential: AzArtifactsFeed
+
+- template: publish.yml
+  parameters:
+    stageName: NuGet
+    environmentName: PSNativeNuGetApproval
+    feedCredential: PowerShellNuGetOrgPush

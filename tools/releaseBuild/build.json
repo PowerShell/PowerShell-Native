@@ -1,0 +1,126 @@
+{
+    "Windows": [
+        {
+            "Name": "win-x64-symbols",
+            "RepoDestinationPath": "C:\\PowerShellNative",
+            "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x64 -Configuration Release -Symbols",
+            "BuildDockerOptions": [
+                "-m",
+                "3968m"
+            ],
+            "DockerFile": ".\\tools\\releaseBuild\\Images\\Windows\\DockerFile",
+            "AdditionalContextFiles": [
+                ".\\tools\\releaseBuild\\PowerShellNative.ps1"
+            ],
+            "DockerImageName": "ps-winsrvcore",
+            "BinaryBucket": "release",
+            "ArtifactsExpected": 1,
+            "VariableForExtractedBinariesPath": "Symbols_x64",
+            "EnableFeature": [ "ArtifactAsFolder" ]
+        },
+        {
+            "Name": "win-x86-symbols",
+            "RepoDestinationPath": "C:\\PowerShellNative",
+            "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x86 -Configuration Release -Symbols",
+            "BuildDockerOptions": [
+                "-m",
+                "3968m"
+            ],
+            "DockerFile": ".\\tools\\releaseBuild\\Images\\Windows\\DockerFile",
+            "AdditionalContextFiles": [
+                ".\\tools\\releaseBuild\\PowerShellNative.ps1"
+            ],
+            "DockerImageName": "ps-winsrvcore",
+            "BinaryBucket": "release",
+            "ArtifactsExpected": 1,
+            "VariableForExtractedBinariesPath": "Symbols_x86",
+            "EnableFeature": [ "ArtifactAsFolder" ]
+        },
+        {
+            "Name": "win-x64_arm-symbols",
+            "RepoDestinationPath": "C:\\PowerShellNative",
+            "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x64_arm -Configuration Release -Symbols",
+            "BuildDockerOptions": [
+                "-m",
+                "3968m"
+            ],
+            "DockerFile": ".\\tools\\releaseBuild\\Images\\Windows\\DockerFile",
+            "AdditionalContextFiles": [
+                ".\\tools\\releaseBuild\\PowerShellNative.ps1"
+            ],
+            "DockerImageName": "ps-winsrvcore",
+            "BinaryBucket": "release",
+            "ArtifactsExpected": 1,
+            "VariableForExtractedBinariesPath": "Symbols_x64_arm",
+            "EnableFeature": [ "ArtifactAsFolder" ]
+        },
+        {
+            "Name": "win-x64_arm64-symbols",
+            "RepoDestinationPath": "C:\\PowerShellNative",
+            "BuildCommand": "C:\\powershellnative\\tools\\releasebuild\\PowerShellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch x64_arm64 -Configuration Release -Symbols",
+            "BuildDockerOptions": [
+                "-m",
+                "3968m"
+            ],
+            "DockerFile": ".\\tools\\releaseBuild\\Images\\Windows\\DockerFile",
+            "AdditionalContextFiles": [
+                ".\\tools\\releaseBuild\\PowerShellNative.ps1"
+            ],
+            "DockerImageName": "ps-winsrvcore",
+            "BinaryBucket": "release",
+            "ArtifactsExpected": 1,
+            "VariableForExtractedBinariesPath": "Symbols_x64_arm64",
+            "EnableFeature": [ "ArtifactAsFolder" ]
+        }
+    ],
+    "Linux": [
+        {
+            "Name": "ubuntu.16.04-arm",
+            "RepoDestinationPath": "/PowerShellNative",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-arm -Configuration Release",
+            "AdditionalContextFiles": [
+                "./tools/releaseBuild/PowershellNative.ps1"
+            ],
+            "DockerFile": "./tools/releaseBuild/images/Ubuntu16.04/Dockerfile",
+            "DockerImageName": "ps-ubunutu-16-04",
+            "BinaryBucket": "release",
+            "EnableFeature": [ "ArtifactAsFolder" ]
+        },
+        {
+            "Name": "ubuntu.16.04-arm64",
+            "RepoDestinationPath": "/PowerShellNative",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-arm64 -Configuration Release",
+            "AdditionalContextFiles": [
+                "./tools/releaseBuild/PowershellNative.ps1"
+            ],
+            "DockerFile": "./tools/releaseBuild/images/Ubuntu16.04/Dockerfile",
+            "DockerImageName": "ps-ubunutu-16-04",
+            "BinaryBucket": "release",
+            "EnableFeature": [ "ArtifactAsFolder" ]
+        },
+        {
+            "Name": "centos.7",
+            "RepoDestinationPath": "/PowerShellNative",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-x64 -Configuration Release",
+            "AdditionalContextFiles": [
+                "./tools/releaseBuild/PowershellNative.ps1"
+            ],
+            "DockerFile": "./tools/releaseBuild/images/CentOS/Dockerfile",
+            "DockerImageName": "ps-centos-7",
+            "BinaryBucket": "release",
+            "EnableFeature": [ "ArtifactAsFolder" ]
+        },
+        {
+            "Name": "alpine",
+            "RepoDestinationPath": "/PowerShellNative",
+            "BuildCommand": "/PowerShellNative/tools/releaseBuild/PowershellNative.ps1 -RepoRoot _RepoDestinationPath_ -TargetLocation _DockerVolume_ -Arch linux-musl-x64 -Configuration Release",
+            "AdditionalContextFiles": [
+                "./tools/releaseBuild/PowershellNative.ps1"
+            ],
+            "DockerFile": "./tools/releaseBuild/images/Alpine/Dockerfile",
+            "DockerImageName": "ps-alpine",
+            "BinaryBucket": "release",
+            "EnableFeature": [ "ArtifactAsFolder" ]
+        }
+    ]
+}

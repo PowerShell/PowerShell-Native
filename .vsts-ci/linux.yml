@@ -1,0 +1,32 @@
+name: PR-$(System.PullRequest.PullRequestNumber)-$(Date:yyyyMMdd)$(Rev:.rr)
+
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  # Avoid expensive initialization of dotnet cli, see: http://donovanbrown.com/post/Stop-wasting-time-during-NET-Core-builds
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+resources:
+  - repo: self
+    clean: true
+jobs:
+- job: Build
+  pool:
+    vmImage: ubuntu-latest
+  displayName: Linux
+  strategy:
+    matrix:
+      Linux ARM Native:
+        buildName: ubuntu.16.04-arm
+      Linux ARM64 Native:
+        buildName: ubuntu.16.04-arm64
+      Linux Native:
+        buildName: centos.7
+      Linux Alpine:
+        buildName: alpine
+
+  steps:
+  - powershell: |
+      tools/releaseBuild/vstsBuild.ps1 -Name $(buildName) -Verbose
+    displayName: Start build - $(buildName)
+    condition: succeeded()

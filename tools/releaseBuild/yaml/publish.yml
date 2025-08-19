@@ -1,0 +1,40 @@
+parameters:
+  stageName: ''
+  environmentName: ''
+  feedCredential: ''
+
+stages:
+- stage: ${{ parameters.stageName }}
+  displayName: Release PowerShell-Native to '${{ parameters.stageName }}'
+  condition: and(succeeded('Build'), eq(variables['Build.Reason'], 'Manual'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
+
+  jobs:
+  - deployment: Publish_${{ parameters.stageName }}
+    displayName: Release to Feed
+    pool:
+      vmImage: windows-latest
+
+    environment: ${{ parameters.environmentName }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: finalResults
+
+          - powershell: |
+              Get-ChildItem -Recurse "$(Pipeline.Workspace)/finalResults"
+            displayName: Capture downloaded artifact
+
+          - powershell: |
+              Copy-Item "$(Pipeline.Workspace)/finalResults/Microsoft.PowerShell.Native.*.nupkg" -Destination "$(Build.ArtifactStagingDirectory)" -Force
+              Get-ChildItem "$(Build.ArtifactStagingDirectory)/Microsoft.PowerShell.Native.*.nupkg"
+            displayName: 'Copy and Capture NuGet package'
+
+          - task: NuGetCommand@2
+            displayName: 'NuGet push'
+            inputs:
+              command: push
+              packagesToPush: '$(Build.ArtifactStagingDirectory)/Microsoft.PowerShell.Native.*.nupkg'
+              nuGetFeedType: external
+              publishFeedCredentials: ${{ parameters.feedCredential }}

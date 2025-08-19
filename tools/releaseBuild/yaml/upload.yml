@@ -1,0 +1,46 @@
+parameters:
+  fileName: ''
+  sourcePath: ''
+
+steps:
+
+- powershell: |
+    [System.Net.ServicePointManager]::SecurityProtocol =
+        [System.Net.ServicePointManager]::SecurityProtocol -bor
+        [System.Security.Authentication.SslProtocols]::Tls12 -bor
+        [System.Security.Authentication.SslProtocols]::Tls11
+
+    Get-PackageProvider -Name NuGet -ForceBootstrap
+    Install-Module PowerShellGet -RequiredVersion 2.2.5 -SkipPublisherCheck -Force
+  displayName: Update PowerShell Get
+
+- powershell: |
+      $modules = 'Az.Accounts', 'Az.Storage', 'Az.Resources'
+      foreach($module in $modules) {
+        if(!(get-module $module -listavailable)) {
+          Write-Verbose "installing $module..." -verbose
+          Install-Module $module -force -AllowClobber
+        } else {
+          #Write-Verbose "updating $module..." -verbose
+          #Update-Module $module -verbose
+        }
+      }
+  displayName: Install PowerShell modules
+
+- powershell: |
+    $azureRMModule = Get-Module -Name AzureRM -ListAvailable -ErrorAction SilentlyContinue
+    if ($azureRMModule) {
+      Uninstall-AzureRm
+    }
+  displayName: Uninstall Uninstall-AzureRm
+  continueOnError: true
+
+- task: AzureFileCopy@4
+  displayName: 'Upload ${{ parameters.fileName }} to azure blob'
+  inputs:
+    SourcePath: '${{ parameters.sourcePath }}'
+    azureSubscription: '$(AzureFileCopySubscription)'
+    Destination: AzureBlob
+    storage: '$(StorageAccount)'
+    ContainerName: 'PowerShell-Native-Symbols'
+    BlobPrefix: '$(Build.SourceBranchName)'

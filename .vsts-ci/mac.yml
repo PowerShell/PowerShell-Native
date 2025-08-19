@@ -1,0 +1,27 @@
+name: PR-$(System.PullRequest.PullRequestNumber)-$(Date:yyyyMMdd)$(Rev:.rr)
+
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  # Avoid expensive initialization of dotnet cli, see: http://donovanbrown.com/post/Stop-wasting-time-during-NET-Core-builds
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+resources:
+  - repo: self
+    clean: true
+
+jobs:
+- job: Build
+
+  pool:
+    vmImage: macOs-latest
+
+  steps:
+  - powershell: |
+      tools/releaseBuild/PowershellNative.ps1 -Arch osx -Configuration Release -RepoRoot $(Build.SourcesDirectory) -TargetLocation "$(System.ArtifactsDirectory)/Packages" -Verbose
+    displayName: Start build
+    condition: succeeded()
+  - powershell: |
+      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)/Packages/osx-symbols.zip"
+    displayName: Upload artifacts
+    condition: succeeded()

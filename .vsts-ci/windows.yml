@@ -1,0 +1,47 @@
+name: PR-$(System.PullRequest.PullRequestNumber)-$(Date:yyyyMMdd)$(Rev:.rr)
+
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  # Avoid expensive initialization of dotnet cli, see: http://donovanbrown.com/post/Stop-wasting-time-during-NET-Core-builds
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+resources:
+  - repo: self
+    clean: true
+
+jobs:
+- job: Build
+
+  pool:
+    name: PS-PowerShell-x64
+    demands:
+      - ImageOverride -equals PSMMS2019-PS-Native-Secure
+
+  strategy:
+    matrix:
+      Windows x86:
+        buildName: x86
+      Windows x64:
+        buildName: x64
+      Windows x64_arm:
+        buildName: x64_arm
+      Windows x64_arm64:
+        buildName: x64_arm64
+
+  steps:
+  - powershell: |
+      $vsPath = ${Env:ProgramFiles(x86)} + '\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin'
+      Write-Host "##vso[task.prependpath]$vsPath"
+    displayName: Set Visual Studio Path
+    condition: succeeded()
+  - powershell: |
+      $cmakeBinPath = "$env:ProgramFiles\CMake\bin\"
+      if(Test-Path $cmakeBinPath) { $env:Path = "$cmakeBinPath;$env:PATH" } else { throw "CMake not installed under $cmakeBinPath" }
+      $(Build.SourcesDirectory)\tools\releaseBuild\PowerShellNative.ps1 -RepoRoot $(Build.SourcesDirectory) -TargetLocation "$(System.ArtifactsDirectory)\Packages" -Arch $(buildName) -Configuration Release -Symbols
+    displayName: Start build - $(buildName)
+    condition: succeeded()
+  - powershell: |
+      Write-Host "##vso[artifact.upload containerfolder=artifacts;artifactname=artifacts]$(System.ArtifactsDirectory)\Packages\$(buildName)-symbols.zip"
+    displayName: Upload artifacts
+    condition: succeeded()
