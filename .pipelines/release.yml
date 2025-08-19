@@ -43,7 +43,7 @@ resources:
     # https://learn.microsoft.com/en-us/azure/devops/pipelines/process/resources?view=azure-devops&tabs=example#define-a-pipelines-resource
 
 extends:  # Governed template expands from here which defines over all pipeline orchestration with OneBranch security, Compliance & Governance enabled
-  template: v2/OneBranch.Official.CrossPlat.yml@templates  # The Official template may only be used by Production-classified pipelines
+  template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates  # The Official template may only be used by Production-classified pipelines
   # See examples and documentation at the top of this file for guidance on building out this OneBranch pipeline
 
   parameters:
