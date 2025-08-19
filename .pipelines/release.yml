@@ -33,7 +33,7 @@ resources:
   - repository: templates
     type: git
     name: OneBranch.Pipelines/GovernedTemplates
-    ref: refs/heads/azure-pipelines
+    ref: refs/heads/main
     # https://learn.microsoft.com/en-us/azure/devops/pipelines/process/resources?view=azure-devops&tabs=example#define-a-pipelines-resource
 
 extends:  # Governed template expands from here which defines over all pipeline orchestration with OneBranch security, Compliance & Governance enabled
