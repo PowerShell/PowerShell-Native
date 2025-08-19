@@ -33,11 +33,44 @@ resources:
   - repository: templates
     type: git
     name: OneBranch.Pipelines/GovernedTemplates
-    ref: refs/heads/main
+    ref: refs/heads/azure-pipelines
     # https://learn.microsoft.com/en-us/azure/devops/pipelines/process/resources?view=azure-devops&tabs=example#define-a-pipelines-resource
-  pipelines:
-  - pipeline: pipelineAlias1  # This is an identifier used to reference the source build pipeline. If you want to download an artifact from the source build pipeline, use this value for the templateContext 'pipeline' input
-    source: self  # Replace this with the name of the build yaml pipeline in ADO that will be consumed in this Release yaml pipeline
+
 extends:  # Governed template expands from here which defines over all pipeline orchestration with OneBranch security, Compliance & Governance enabled
   template: v2/OneBranch.Official.CrossPlat.yml@templates  # The Official template may only be used by Production-classified pipelines
   # See examples and documentation at the top of this file for guidance on building out this OneBranch pipeline
+
+  extends:
+    template: v2/OneBranch.Official.CrossPlat.yml@templates  # The Official template may only be used by Production-classified pipelines
+    parameters:
+    featureFlags:
+      WindowsHostVersion: 1ESWindows2022
+    cloudvault:
+      enabled: false
+    globalSdl:
+      tsa:
+        enabled: false # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
+      credscan:
+        suppressionsFile: $(Build.SourcesDirectory)\.config\CredScanSuppressions.json
+      binskim:
+        break: false # always break the build on binskim issues in addition to TSA upload
+        analyzeTargetGlob: -:file|*/*/*/*/*/*/*/*/Microsoft.VisualStudio.QualityTools.UnitTesting.Silverlight.dll;-:file|*/*/*/*/*/*/*/*/*/*/*/*/*/Microsoft.Cis.Monitoring.Query.dll
+      policheck:
+        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
+      # baseline:
+      #   baselineFile: $(Build.SourcesDirectory)\.gdn\global.gdnbaselines
+      cg:
+        failOnAlert: false
+      armory:
+        severity: note
+        break: false
+
+    stages:
+    - stage: Build
+      jobs:
+      - job: Build
+        pool:
+          type: windows
+        steps:
+        - script: echo Building...
+          displayName: 'Build Step'
