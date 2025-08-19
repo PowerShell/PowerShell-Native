@@ -41,27 +41,27 @@ extends:  # Governed template expands from here which defines over all pipeline 
   # See examples and documentation at the top of this file for guidance on building out this OneBranch pipeline
 
   parameters:
-  featureFlags:
-    WindowsHostVersion: 1ESWindows2022
-  cloudvault:
-    enabled: false
-  globalSdl:
-    tsa:
-      enabled: false # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
-    credscan:
-      suppressionsFile: $(Build.SourcesDirectory)\.config\CredScanSuppressions.json
-    binskim:
-      break: false # always break the build on binskim issues in addition to TSA upload
-      analyzeTargetGlob: -:file|*/*/*/*/*/*/*/*/Microsoft.VisualStudio.QualityTools.UnitTesting.Silverlight.dll;-:file|*/*/*/*/*/*/*/*/*/*/*/*/*/Microsoft.Cis.Monitoring.Query.dll
-    policheck:
-      break: true # always break the build on policheck issues. You can disable it by setting to 'false'
-    # baseline:
-    #   baselineFile: $(Build.SourcesDirectory)\.gdn\global.gdnbaselines
-    cg:
-      failOnAlert: false
-    armory:
-      severity: note
-      break: false
+    featureFlags:
+      WindowsHostVersion: 1ESWindows2022
+    cloudvault:
+      enabled: false
+    globalSdl:
+      tsa:
+        enabled: false # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
+      credscan:
+        suppressionsFile: $(Build.SourcesDirectory)\.config\CredScanSuppressions.json
+      binskim:
+        break: false # always break the build on binskim issues in addition to TSA upload
+        analyzeTargetGlob: -:file|*/*/*/*/*/*/*/*/Microsoft.VisualStudio.QualityTools.UnitTesting.Silverlight.dll;-:file|*/*/*/*/*/*/*/*/*/*/*/*/*/Microsoft.Cis.Monitoring.Query.dll
+      policheck:
+        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
+      # baseline:
+      #   baselineFile: $(Build.SourcesDirectory)\.gdn\global.gdnbaselines
+      cg:
+        failOnAlert: false
+      armory:
+        severity: note
+        break: false
 
     stages:
     - stage: Build
