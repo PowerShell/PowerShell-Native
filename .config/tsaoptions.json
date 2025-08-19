@@ -1,0 +1,10 @@
+{
+    "instanceUrl":  "https://msazure.visualstudio.com",
+    "TSADocumentation": "https://aka.ms/OBTSA",
+    "projectName":  "One",
+    "areaPath":  "One\\<Example>\\<Team>\\<AreaPath>",
+    "notificationAliases": ["slee"],
+    "ppe":  "false",
+    "template":  "TFSMSAzure",
+    "codebaseName":  "TFSMSAzure_powershell-native"
+}
