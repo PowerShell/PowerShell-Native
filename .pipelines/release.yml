@@ -1,38 +1,12 @@
-#################################################################################
-#                               OneBranch Pipelines                             #
-# Documentation:  https://aka.ms/onebranchrelease                               #
-# Yaml Schema:    https://aka.ms/obpipelines/yaml/schema                        #
-# Support:        https://aka.ms/onebranchsupport                               #
-#################################################################################
-
-# This is the OneBranch Release YAML Starter Pipeline.
-# For general guidance on OneBranch Release YAML, visit https://aka.ms/onebranchrelease
-#
-# There are 3 different options for customers to choose from depending on their release scenario:
-#########################################################################################
-# 1. *********** EV2 Azure Release: ***********
-# OneBranch EV2 Managed SDP release should be used to deploy within Azure. This is the standard and recommended path for all C+AI teams.
-# Visit https://aka.ms/releaseyamlforev2 for guidance and examples
-#
-##########################################################################################
-# 2. *********** Non-Azure Release: ***********
-# Examples of applicable scenarios include: publishing packages, publishing to VSTS marketplace, publishing to 3P app stores, ESRP Release, GitHub Release etc.
-# Note: Any release operation to do with Azure subscriptions like service deployments, uploading data to storage accounts, etc. cannot use this pathway.
-# Visit https://aka.ms/releaseyamlfornonazure for guidance and examples
-#
-##########################################################################################
-# 3. *********** Non-EV2 Microsoft-Internal Release: (Only permitted as a stop-gap for internal service teams)*************
-# OneBranch NonEV2 Release can only be used by teams unable to use any other release method.
-# NonEV2 releases can only be done by teams whose product doesn't release outside of Microsoft.
-# Only services meeting all the following criteria can use NonEV2 release as a stop-gap:
-# Service has "External Facing" metadata in service tree set to false (indicating that the customers for this service are internal to Microsoft)
-# Visit https://aka.ms/releaseyamlfornonev2 for guidance and examples
-
 trigger: none
 
 variables:
   - name: ob_outputDirectory
     value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+  - name: LinuxContainerImage
+    value: onebranch.azurecr.io/linux/ubuntu-2004:latest
+  - name: WindowsContainerImage
+    value: onebranch.azurecr.io/windows/ltsc2019/vse2022:latest
 
 resources:
   repositories:
@@ -40,11 +14,9 @@ resources:
     type: git
     name: OneBranch.Pipelines/GovernedTemplates
     ref: refs/heads/main
-    # https://learn.microsoft.com/en-us/azure/devops/pipelines/process/resources?view=azure-devops&tabs=example#define-a-pipelines-resource
 
-extends:  # Governed template expands from here which defines over all pipeline orchestration with OneBranch security, Compliance & Governance enabled
+extends:
   template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates  # The Official template may only be used by Production-classified pipelines
-  # See examples and documentation at the top of this file for guidance on building out this OneBranch pipeline
 
   parameters:
     featureFlags:
