@@ -28,7 +28,18 @@
 # Service has "External Facing" metadata in service tree set to false (indicating that the customers for this service are internal to Microsoft)
 # Visit https://aka.ms/releaseyamlfornonev2 for guidance and examples
 
+trigger: none
+
 resources:
+  pipelines:
+    - pipeline: PSNativeBuildPipeline
+      source: 'PowerShell-Native-Official'
+      trigger:
+        branches:
+          include:
+            - main
+            - releases/*
+
   repositories:
   - repository: templates
     type: git
@@ -52,7 +63,6 @@ extends:  # Governed template expands from here which defines over all pipeline 
         suppressionsFile: $(Build.SourcesDirectory)\.config\CredScanSuppressions.json
       binskim:
         break: false # always break the build on binskim issues in addition to TSA upload
-        analyzeTargetGlob: -:file|*/*/*/*/*/*/*/*/Microsoft.VisualStudio.QualityTools.UnitTesting.Silverlight.dll;-:file|*/*/*/*/*/*/*/*/*/*/*/*/*/Microsoft.Cis.Monitoring.Query.dll
       policheck:
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
       # baseline:
