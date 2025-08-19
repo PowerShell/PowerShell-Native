@@ -68,7 +68,7 @@ extends:  # Governed template expands from here which defines over all pipeline 
     stages:
     - stage: Build
       jobs:
-      - job: Build Windows x64
+      - job: BuildWindowsx64
         pool:
           type: windows
 
