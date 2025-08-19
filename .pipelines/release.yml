@@ -35,15 +35,6 @@ variables:
     value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
 
 resources:
-  pipelines:
-    - pipeline: PSNativeBuildPipeline
-      source: 'PowerShell-Native-Official'
-      trigger:
-        branches:
-          include:
-            - main
-            - releases/*
-
   repositories:
   - repository: templates
     type: git
