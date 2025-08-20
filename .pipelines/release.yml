@@ -24,26 +24,24 @@ extends:
         Disk: Large
         Version: 2022
         Network: KS1
+      incrementalSDLBinaryAnalysis: true
     cloudvault:
       enabled: false
     globalSdl:
       sbom:
         enabled: true
-        packageName: Microsoft.DSC
+        packageName: Microsoft.PowerShell.Native
       codeql:
         compiled:
           enabled: true
-      asyncSdl: # https://aka.ms/obpipelines/asyncsdl
-        enabled: true
-        forStages: [Build]
-        credscan:
-          enabled: true
-          scanFolder:  $(Build.SourcesDirectory)\DSC
-        binskim:
-          enabled: true
-        apiscan:
-          enabled: false
       armory:
+        enabled: false
+      credscan:
+        enabled: true
+        scanFolder:  $(Build.SourcesDirectory)
+      binskim:
+        enabled: true
+      apiscan:
         enabled: false
 
     stages:
