@@ -68,5 +68,10 @@ extends:
             Start-BuildNativeWindowsBinaries -Configuration 'Release' -Arch x64 -Clean
             Write-Verbose "Completed Start-BuildNativeWindowsBinaries" -Verbose
             $buildOutputPath = Join-Path $repoRoot "src/powershell-win-core"
+
+            if (-not (Test-Path $buildOutputPath)) {
+                New-Item -ItemType Directory -Path $buildOutputPath -Force -Verbose
+            }
+
             Compress-Archive -Path "$buildOutputPath/*.dll" -DestinationPath "$(ob_outputDirectory)/win-x64-symbols.zip" -Verbose
           displayName: 'Build'
