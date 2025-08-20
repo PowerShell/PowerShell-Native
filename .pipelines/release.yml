@@ -59,6 +59,10 @@ extends:
 
         steps:
         - pwsh: |
+            Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
+          displayName: Capture environment variables
+
+        - pwsh: |
             $repoRoot = '$(Build.SourcesDirectory)'
             Import-Module $repoRoot\build.psm1 -Force
             Start-PSBootstrap -BuildWindowsNative
