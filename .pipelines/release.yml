@@ -47,7 +47,7 @@ extends:
     stages:
     - stage: Build
       jobs:
-      - job: BuildWindowsx64
+      - job: BuildWin-$(ARCHITECTURE)
         pool:
           type: windows
         displayName: Windows
