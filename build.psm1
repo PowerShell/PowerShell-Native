@@ -288,18 +288,21 @@ function Start-BuildNativeWindowsBinaries {
         # setup cmakeGenerator
         $cmakeGeneratorPlatform = ""
         if ($Arch -eq 'x86') {
-            $cmakeGenerator = 'Visual Studio 15 2017'
+            $cmakeGenerator = 'Visual Studio 17 2022'
             $cmakeArch = 'x86'
+            $cmakeGeneratorPlatform = "-A Win32"
         } elseif ($Arch -eq 'x64_arm') {
-            $cmakeGenerator = 'Visual Studio 15 2017 ARM'
+            $cmakeGenerator = 'Visual Studio 17 2022 ARM'
             $cmakeArch = 'arm'
+            $cmakeGeneratorPlatform = "-A ARM"
         } elseif ($Arch -eq 'x64_arm64') {
-            $cmakeGenerator = 'Visual Studio 15 2017'
+            $cmakeGenerator = 'Visual Studio 17 2022'
             $cmakeArch = 'arm64'
             $cmakeGeneratorPlatform = "-A ARM64"
         } else {
             $cmakeGenerator = 'Visual Studio 17 2022 Win64'
             $cmakeArch = 'x64'
+            $cmakeGeneratorPlatform = "-A x64"
         }
 
         # Compile native resources
