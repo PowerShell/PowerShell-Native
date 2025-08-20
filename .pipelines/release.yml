@@ -47,7 +47,7 @@ extends:
     stages:
     - stage: Build
       jobs:
-      - job: BuildWin-x64
+      - job: BuildWin_x64
         pool:
           type: windows
         displayName: Windows
@@ -78,7 +78,7 @@ extends:
             Compress-Archive -Path "$buildOutputPath/*.dll","$buildOutputPath/*.pdb" -DestinationPath "$(ob_outputDirectory)/win-$(ARCHITECTURE)-symbols.zip" -Verbose -Force
           displayName: 'Build'
 
-      - job: BuildWin-x86
+      - job: BuildWin_x86
         pool:
           type: windows
         displayName: Windows
@@ -109,7 +109,7 @@ extends:
             Compress-Archive -Path "$buildOutputPath/*.dll","$buildOutputPath/*.pdb" -DestinationPath "$(ob_outputDirectory)/win-$(ARCHITECTURE)-symbols.zip" -Verbose -Force
           displayName: 'Build'
 
-      - job: BuildWin-x64_arm
+      - job: BuildWin_x64_arm
         pool:
           type: windows
         displayName: Windows
@@ -140,7 +140,7 @@ extends:
             Compress-Archive -Path "$buildOutputPath/*.dll","$buildOutputPath/*.pdb" -DestinationPath "$(ob_outputDirectory)/win-$(ARCHITECTURE)-symbols.zip" -Verbose -Force
           displayName: 'Build'
 
-      - job: BuildWin-x64_arm64
+      - job: BuildWin_x64_arm64
         pool:
           type: windows
         displayName: Windows
