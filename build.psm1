@@ -220,7 +220,7 @@ function Start-BuildNativeWindowsBinaries {
     }
     Write-Verbose -Verbose "VCPath: $vcPath"
 
-    $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022" -Filter "VC" -Directory -Recurse).FullName
+    $alternateVCPath = (Get-ChildItem "${env:ProgramFiles}\Microsoft Visual Studio\2022" -Filter "VC" -Directory -Recurse).FullName
     Write-Verbose -Verbose "alternateVCPath: $alternateVCPath"
 
     $atlBaseFound = $false
