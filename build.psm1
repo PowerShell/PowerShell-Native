@@ -298,7 +298,7 @@ function Start-BuildNativeWindowsBinaries {
             $cmakeArch = 'arm64'
             $cmakeGeneratorPlatform = "-A ARM64"
         } else {
-            $cmakeGenerator = 'Visual Studio 15 2017 Win64'
+            $cmakeGenerator = 'Visual Studio 17 2022 Win64'
             $cmakeArch = 'x64'
         }
 
