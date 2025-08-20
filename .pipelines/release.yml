@@ -47,16 +47,14 @@ extends:
     stages:
     - stage: WinBuildAndSign
       jobs:
-      - template: templates/build-sign-windows.yml@self
+      - template: .pipelines/templates/build-sign-windows.yml@self
         parameters:
           ARCHITECTURE: 'x64'
 
-      - template: templates/build-sign-windows.yml@self
+      - template: .pipelines/templates/build-sign-windows.yml@self
         parameters:
           ARCHITECTURE: 'x86'
 
-      - template: templates/build-sign-windows.yml@self
+      - template: .pipelines/templates/build-sign-windows.yml@self
         parameters:
           ARCHITECTURE: 'x64_arm64'
-
-
