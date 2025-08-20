@@ -69,8 +69,8 @@ extends:
             Write-Verbose "Completed Start-BuildNativeWindowsBinaries" -Verbose
             $buildOutputPath = Join-Path $repoRoot "src/powershell-win-core"
 
-            if (-not (Test-Path $buildOutputPath)) {
-                New-Item -ItemType Directory -Path $buildOutputPath -Force -Verbose
+            if (-not (Test-Path $(ob_outputDirectory))) {
+                New-Item -ItemType Directory -Path $(ob_outputDirectory) -Force -Verbose
             }
 
             Compress-Archive -Path "$buildOutputPath/*.dll" -DestinationPath "$(ob_outputDirectory)/win-x64-symbols.zip" -Verbose
