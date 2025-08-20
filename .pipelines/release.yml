@@ -84,5 +84,5 @@ extends:
                 New-Item -ItemType Directory -Path $(ob_outputDirectory) -Force -Verbose
             }
 
-            Compress-Archive -Path "$buildOutputPath/*.dll","$buildOutputPath/*.pdb" -DestinationPath "$(ob_outputDirectory)/win-$(ARCHITECTURE)-symbols.zip" -Verbose
+            Compress-Archive -Path "$buildOutputPath/*.dll","$buildOutputPath/*.pdb" -DestinationPath "$(ob_outputDirectory)/win-$(ARCHITECTURE)-symbols.zip" -Verbose -Force
           displayName: 'Build'
