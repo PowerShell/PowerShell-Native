@@ -1927,6 +1927,8 @@ function Get-RedHatPackageManager {
         "yum install -y -q"
     } elseif ($environment.IsFedora -or (Get-Command -Name dnf -CommandType Application -ErrorAction SilentlyContinue)) {
         "dnf install -y -q"
+    } elseif ($environment.IsMariner -or (Get-Command -Name tdnf -CommandType Application -ErrorAction SilentlyContinue)) {
+        "tdnf install -y"
     } else {
         throw "Error determining package manager for this distribution."
     }
