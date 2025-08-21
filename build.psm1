@@ -172,8 +172,7 @@ function Get-EnvironmentInformation
             $environment.IsUbuntu -or
             $environment.IsRedHatFamily -or
             $environment.IsSUSEFamily -or
-            $environment.IsAlpine -or
-            $environment.IsMariner)
+            $environment.IsAlpine)
         ) {
             if ($SkipLinuxDistroCheck) {
                 Write-Warning "The current OS : $($LinuxInfo.ID) is not supported for building PowerShell."
