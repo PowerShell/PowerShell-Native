@@ -1923,7 +1923,7 @@ function Install-Dotnet {
 }
 
 function Get-RedHatPackageManager {
-    if ($Environment.IsCentOS -or $Environment.IsRedHat) {
+    if ($Environment.IsCentOS -or $Environment.IsRedHat ) {
         "yum install -y -q"
     } elseif ($Environment.IsFedora) {
         "dnf install -y -q"
@@ -2008,7 +2008,7 @@ function Start-PSBootstrap {
                     # change the apt frontend back to the original
                     $env:DEBIAN_FRONTEND=$originalDebianFrontEnd
                 }
-            } elseif ($Environment.IsRedHatFamily) {
+            } elseif ($Environment.IsRedHatFamily -or $Environment.IsMariner) {
                 # Build tools
                 $Deps += "which", "curl", "wget"
 
