@@ -7,7 +7,7 @@ jobs:
 - job: Build_Sign_${{ parameters.ARCHITECTURE }}
   pool:
     type: windows
-  displayName: Windows
+  displayName: Windows_${{ parameters.ARCHITECTURE }}
   variables:
     - name: ob_outputDirectory
       value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
@@ -33,7 +33,7 @@ jobs:
             New-Item -ItemType Directory -Path $(ob_outputDirectory) -Force -Verbose
         }
 
-        Copy-Item -Path "$buildOutputPath/*.dll","$buildOutputPath/*.pdb" -DestinationPath "$(ob_outputDirectory)" -Force
+        Copy-Item -Path "$buildOutputPath/*.dll","$buildOutputPath/*.pdb" -Destination "$(ob_outputDirectory)" -Force
       displayName: 'Build'
 
     - task: onebranch.pipeline.signing@1
@@ -42,7 +42,6 @@ jobs:
         command: 'sign'
         signing_profile: external_distribution
         files_to_sign: |
-          **\*.exe;
           **\*.dll;
         search_root: $(ob_outputDirectory)
 

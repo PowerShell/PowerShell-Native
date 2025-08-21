@@ -58,3 +58,21 @@ extends:
       - template: .pipelines/templates/build-sign-windows.yml@self
         parameters:
           ARCHITECTURE: 'x64_arm64'
+
+    - stage: LinuxBuildAndSign
+      jobs:
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-x64'
+
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-arm'
+
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-arm64'
+
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-musl-x64'
