@@ -4,7 +4,7 @@ variables:
   - name: ob_outputDirectory
     value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
   - name: LinuxContainerImage
-    value: onebranch.azurecr.io/linux/ubuntu-2004:latest
+    value: mcr.microsoft.com/onebranch/azurelinux/build:3.0
   - name: WindowsContainerImage
     value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
 
@@ -46,6 +46,7 @@ extends:
 
     stages:
     - stage: WinBuildAndSign
+      displayName: Windows Build and Sign
       jobs:
       - template: .pipelines/templates/build-sign-windows.yml@self
         parameters:
@@ -59,7 +60,8 @@ extends:
         parameters:
           ARCHITECTURE: 'x64_arm64'
 
-    - stage: LinuxBuildAndSign
+    - stage: LinuxBuild
+      displayName: Linux Build
       jobs:
       - template: .pipelines/templates/build-linux.yml@self
         parameters:
