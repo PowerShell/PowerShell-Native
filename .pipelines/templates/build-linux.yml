@@ -2,9 +2,12 @@ parameters:
   - name: ARCHITECTURE
     type: string
     default: 'x64'
+  - name: Name
+    type: string
+    default: 'Build_Linux_x64'
 
 jobs:
-- job: Build_${{ parameters.ARCHITECTURE }}
+- job: ${{ parameters.Name }}
   pool:
     type: linux
   displayName: Linux_${{ parameters.ARCHITECTURE }}
