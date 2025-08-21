@@ -407,7 +407,7 @@ function Start-BuildNativeUnixBinaries {
         return
     }
 
-    if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not $Environment.IsUbuntu) {
+    if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not ($Environment.IsUbuntu -or $Environment.IsMariner)) {
         throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
     }
 
@@ -791,7 +791,7 @@ function Start-PSBuild {
         [string]$ReleaseTag
     )
 
-    if (($Runtime -eq "linux-arm" -or $Runtime -eq "linux-arm64") -and -not $Environment.IsUbuntu) {
+    if (($Runtime -eq "linux-arm" -or $Runtime -eq "linux-arm64") -and -not ($Environment.IsUbuntu -or $Environment.IsMariner)) {
         throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
     }
 
@@ -1943,7 +1943,7 @@ function Start-PSBootstrap {
                 Pop-Location
             }
 
-            if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not $Environment.IsUbuntu) {
+            if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not ($Environment.IsUbuntu -or $Environment.IsMariner)) {
                 Write-Error "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
                 return
             }
