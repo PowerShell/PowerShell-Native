@@ -125,27 +125,38 @@ function Get-EnvironmentInformation
     }
 
     if ($Environment.IsLinux) {
+        $environment += @{ 'OSArchitecture' = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture }
         $LinuxInfo = Get-Content /etc/os-release -Raw | ConvertFrom-StringData
+        $lsb_release = Get-Command lsb_release -Type Application -ErrorAction Ignore | Select-Object -First 1
+        if ($lsb_release) {
+            $LinuxID = & $lsb_release -is
+        }
+        else {
+            $LinuxID = ""
+        }
 
         $environment += @{'LinuxInfo' = $LinuxInfo}
-        $environment += @{'IsDebian' = $LinuxInfo.ID -match 'debian'}
-        $environment += @{'IsDebian8' = $Environment.IsDebian -and $LinuxInfo.VERSION_ID -match '8'}
-        $environment += @{'IsDebian9' = $Environment.IsDebian -and $LinuxInfo.VERSION_ID -match '9'}
-        $environment += @{'IsUbuntu' = $LinuxInfo.ID -match 'ubuntu'}
-        $environment += @{'IsUbuntu14' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '14.04'}
-        $environment += @{'IsUbuntu16' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '16.04'}
-        $environment += @{'IsUbuntu17' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '17.10'}
-        $environment += @{'IsUbuntu18' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '18.04'}
-        $environment += @{'IsUbuntu22' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '22.04'}
+        $environment += @{'IsDebian' = $LinuxInfo.ID -match 'debian' -or $LinuxInfo.ID -match 'kali'}
+        $environment += @{'IsDebian9' = $environment.IsDebian -and $LinuxInfo.VERSION_ID -match '9'}
+        $environment += @{'IsDebian10' = $environment.IsDebian -and $LinuxInfo.VERSION_ID -match '10'}
+        $environment += @{'IsDebian11' = $environment.IsDebian -and $LinuxInfo.PRETTY_NAME -match 'bullseye'}
+        $environment += @{'IsUbuntu' = $LinuxInfo.ID -match 'ubuntu' -or $LinuxID -match 'Ubuntu'}
+        $environment += @{'IsUbuntu16' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '16.04'}
+        $environment += @{'IsUbuntu18' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '18.04'}
+        $environment += @{'IsUbuntu20' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '20.04'}
+        $environment += @{'IsUbuntu22' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '22.04'}
+        $environment += @{'IsUbuntu24' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '24.04'}
         $environment += @{'IsCentOS' = $LinuxInfo.ID -match 'centos' -and $LinuxInfo.VERSION_ID -match '7'}
         $environment += @{'IsFedora' = $LinuxInfo.ID -match 'fedora' -and $LinuxInfo.VERSION_ID -ge 24}
-        $environment += @{'IsRedHat' = $LinuxInfo.ID -match 'rhel'}
         $environment += @{'IsOpenSUSE' = $LinuxInfo.ID -match 'opensuse'}
         $environment += @{'IsSLES' = $LinuxInfo.ID -match 'sles'}
-        $environment += @{'IsOpenSUSE13' = $Environmenst.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '13'}
-        $environment += @{'IsOpenSUSE42.1' = $Environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '42.1'}
-        $environment += @{'IsRedHatFamily' = $Environment.IsCentOS -or $Environment.IsFedora -or $Environment.IsRedHat}
-        $environment += @{'IsSUSEFamily' = $Environment.IsSLES -or $Environment.IsOpenSUSE}
+        $environment += @{'IsRedHat' = $LinuxInfo.ID -match 'rhel'}
+        $environment += @{'IsRedHat7' = $environment.IsRedHat -and $LinuxInfo.VERSION_ID -match '7' }
+        $environment += @{'IsOpenSUSE13' = $environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '13'}
+        $environment += @{'IsOpenSUSE42.1' = $environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '42.1'}
+        $environment += @{'IsDebianFamily' = $environment.IsDebian -or $environment.IsUbuntu}
+        $environment += @{'IsRedHatFamily' = $environment.IsCentOS -or $environment.IsFedora -or $environment.IsRedHat}
+        $environment += @{'IsSUSEFamily' = $environment.IsSLES -or $environment.IsOpenSUSE}
         $environment += @{'IsAlpine' = $LinuxInfo.ID -match 'alpine'}
         $environment += @{'IsMariner' = $LinuxInfo.ID -match 'mariner'}
 
@@ -154,6 +165,21 @@ function Get-EnvironmentInformation
         if ($environment.IsFedora -and (Test-Path ENV:\LD_LIBRARY_PATH)) {
             Remove-Item -Force ENV:\LD_LIBRARY_PATH
             Get-ChildItem ENV:
+        }
+
+        if( -not(
+            $environment.IsDebian -or
+            $environment.IsUbuntu -or
+            $environment.IsRedHatFamily -or
+            $environment.IsSUSEFamily -or
+            $environment.IsAlpine -or
+            $environment.IsMariner)
+        ) {
+            if ($SkipLinuxDistroCheck) {
+                Write-Warning "The current OS : $($LinuxInfo.ID) is not supported for building PowerShell."
+            } else {
+                throw "The current OS : $($LinuxInfo.ID) is not supported for building PowerShell. Import this module with '-ArgumentList `$true' to bypass this check."
+            }
         }
     }
 
@@ -408,7 +434,7 @@ function Start-BuildNativeUnixBinaries {
     }
 
     if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not ($Environment.IsUbuntu -or $Environment.IsMariner)) {
-        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
+        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment: Environment IsMariner: $($Environment.IsMariner) IsUbuntu: $($Environment.IsUbuntu)"
     }
 
     # Verify we have all tools in place to do the build
@@ -792,7 +818,7 @@ function Start-PSBuild {
     )
 
     if (($Runtime -eq "linux-arm" -or $Runtime -eq "linux-arm64") -and -not ($Environment.IsUbuntu -or $Environment.IsMariner)) {
-        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
+        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment: Environment IsMariner: $($Environment.IsMariner) IsUbuntu: $($Environment.IsUbuntu)"
     }
 
     if ("win-arm","win-arm64" -contains $Runtime -and -not $Environment.IsWindows) {
@@ -1944,7 +1970,7 @@ function Start-PSBootstrap {
             }
 
             if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not ($Environment.IsUbuntu -or $Environment.IsMariner)) {
-                Write-Error "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
+                Write-Error "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment: Environment IsMariner: $($Environment.IsMariner) IsUbuntu: $($Environment.IsUbuntu)"
                 return
             }
 
