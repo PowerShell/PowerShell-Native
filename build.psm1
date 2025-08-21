@@ -1923,9 +1923,9 @@ function Install-Dotnet {
 }
 
 function Get-RedHatPackageManager {
-    if ($Environment.IsCentOS -or $Environment.IsRedHat ) {
+    if ($environment.IsCentOS -or (Get-Command -Name yum -CommandType Application -ErrorAction SilentlyContinue)) {
         "yum install -y -q"
-    } elseif ($Environment.IsFedora) {
+    } elseif ($environment.IsFedora -or (Get-Command -Name dnf -CommandType Application -ErrorAction SilentlyContinue)) {
         "dnf install -y -q"
     } else {
         throw "Error determining package manager for this distribution."
