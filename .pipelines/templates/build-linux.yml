@@ -5,11 +5,15 @@ parameters:
   - name: Name
     type: string
     default: 'Build_Linux_x64'
+  - name: hostArchitecture
+    type: string
+    default: 'amd64'
 
 jobs:
 - job: ${{ parameters.Name }}
   pool:
     type: linux
+    hostArchitecture: ${{ parameters.hostArchitecture }}
   displayName: Linux_${{ parameters.ARCHITECTURE }}
   variables:
     - name: ob_outputDirectory
@@ -18,6 +22,8 @@ jobs:
       value: true
     - name: ARCHITECTURE
       value: ${{ parameters.ARCHITECTURE }}
+    - name: DOTNET_SYSTEM_GLOBALIZATION_INVARIANT
+      value: 1
   steps:
     - pwsh: |
         Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
