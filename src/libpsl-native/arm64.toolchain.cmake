@@ -1,9 +1,9 @@
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
-set(CMAKE_CXX_COMPILER gcc-c++-aarch64-linux-gnu -fstack-protector-strong -fpie -D_FORTIFY_SOURCE=2)
+set(CMAKE_CXX_COMPILER g++ -fstack-protector-strong -fpie -D_FORTIFY_SOURCE=2)
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,relro,-z,now")
-set(CMAKE_C_COMPILER gcc-aarch64-linux-gnu)
+set(CMAKE_C_COMPILER gcc)
 
 add_compile_options(-g)
 
