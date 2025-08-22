@@ -86,3 +86,9 @@ extends:
           ARCHITECTURE: 'linux-musl-x64'
           Name: 'Build_Linux_musl_x64'
           hostArchitecture: 'amd64'
+
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'osx'
+          Name: 'Build_osx'
+          hostArchitecture: 'amd64'
