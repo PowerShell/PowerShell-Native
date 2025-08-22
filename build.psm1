@@ -450,7 +450,7 @@ function Start-BuildNativeUnixBinaries {
         }
     } elseif ($BuildLinuxArm) {
         ##foreach ($Dependency in 'aarch64-linux-gnu-gcc', 'aarch64-linux-gnu-g++') {
-        foreach ($Dependency in 'gcc', 'g++', 'cmake', 'make', 'gcc-arm-linux-gnu') {
+        foreach ($Dependency in 'arm-linux-gnueabihf-gcc', 'arm-linux-gnueabihf-g++', 'cmake', 'make') {
             $precheck = $precheck -and (precheck $Dependency "Build dependency '$Dependency' not found. Run 'Start-PSBootstrap'.")
         }
     }
