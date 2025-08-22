@@ -5,9 +5,9 @@ set(CMAKE_CXX_COMPILER g++ -fstack-protector-strong -fpie -D_FORTIFY_SOURCE=2)
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,relro,-z,now")
 set(CMAKE_C_COMPILER gcc)
 
-# add_compile_options(-target armv7-linux-gnueabihf)
-add_compile_options(-mthumb)
-add_compile_options(-mfpu=vfpv3)
+add_compile_options(-target armv7-linux-gnueabihf)
+# add_compile_options(-mthumb)
+# add_compile_options(-mfpu=vfpv3)
 add_compile_options(-g)
 
 set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${CROSS_LINK_FLAGS}" CACHE STRING "" FORCE)
