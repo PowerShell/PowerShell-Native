@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.1.0)
+cmake_minimum_required(VERSION 3.5)
 project(PSL-NATIVE)
 
 # Can't use add_compile_options with 2.8.11
