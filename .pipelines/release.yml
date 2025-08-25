@@ -25,6 +25,7 @@ extends:
         Version: 2022
         Network: KS1
       incrementalSDLBinaryAnalysis: true
+      needExceptionForUbuntuUsage: true
     cloudvault:
       enabled: false
     globalSdl:
@@ -41,6 +42,7 @@ extends:
         scanFolder:  $(Build.SourcesDirectory)
       binskim:
         enabled: true
+        exactToolVersion: 4.4.2
       apiscan:
         enabled: false
 
@@ -71,12 +73,6 @@ extends:
 
       - template: .pipelines/templates/build-linux.yml@self
         parameters:
-          ARCHITECTURE: 'linux-arm'
-          Name: 'Build_Linux_arm'
-          hostArchitecture: 'arm64'
-
-      - template: .pipelines/templates/build-linux.yml@self
-        parameters:
           ARCHITECTURE: 'linux-arm64'
           Name: 'Build_Linux_arm64'
           hostArchitecture: 'arm64'
@@ -92,3 +88,16 @@ extends:
           ARCHITECTURE: 'osx'
           Name: 'Build_osx'
           hostArchitecture: 'amd64'
+
+    - stage: LinuxBuildARM
+      displayName: Linux ARM Build
+      variables:
+      - name: LinuxContainerImage
+        value: onebranch.azurecr.io/linux/ubuntu-2204:latest
+
+      jobs:
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-arm'
+          Name: 'Build_Linux_arm'
+          hostArchitecture: 'adm64'
