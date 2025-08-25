@@ -2084,7 +2084,7 @@ function Start-PSBootstrap {
                 Start-NativeExecution { brew install $Deps } -IgnoreExitcode
 
                 # Install patched version of curl
-                Start-NativeExecution { brew install curl --with-openssl --with-gssapi } -IgnoreExitcode
+                Start-NativeExecution { brew install curl } -IgnoreExitcode
             } elseif ($Environment.IsAlpine) {
                 $Deps += "build-base", "gcc", "abuild", "binutils", "git", "python3", "bash", "cmake"
 
