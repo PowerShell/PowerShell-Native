@@ -77,25 +77,21 @@ extends:
         parameters:
           ARCHITECTURE: 'linux-x64'
           Name: 'Build_Linux_x64'
-          hostArchitecture: 'amd64'
 
       - template: .pipelines/templates/build-linux.yml@self
         parameters:
           ARCHITECTURE: 'linux-arm64'
           Name: 'Build_Linux_arm64'
-          hostArchitecture: 'arm64'
 
       - template: .pipelines/templates/build-linux.yml@self
         parameters:
           ARCHITECTURE: 'linux-musl-x64'
           Name: 'Build_Linux_musl_x64'
-          hostArchitecture: 'amd64'
 
       - template: .pipelines/templates/build-linux.yml@self
         parameters:
           ARCHITECTURE: 'osx'
           Name: 'Build_osx'
-          hostArchitecture: 'amd64'
 
     - stage: LinuxBuildARM
       displayName: Linux ARM Build
@@ -108,4 +104,3 @@ extends:
         parameters:
           ARCHITECTURE: 'linux-arm'
           Name: 'Build_Linux_arm'
-          hostArchitecture: 'adm64'
