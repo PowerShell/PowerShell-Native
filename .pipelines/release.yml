@@ -1,5 +1,10 @@
 trigger: none
 
+parameters:
+  - name: OfficialBuild
+    type: boolean
+    default: false
+
 variables:
   - name: ob_outputDirectory
     value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
@@ -7,6 +12,8 @@ variables:
     value: mcr.microsoft.com/onebranch/azurelinux/build:3.0
   - name: WindowsContainerImage
     value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
+  - name: templateFile
+    value: ${{ iif(parameters.OfficialBuild, 'v2/OneBranch.Official.CrossPlat.yml@onebranchTemplates', 'v2/OneBranch.NonOfficial.CrossPlat.yml@onebranchTemplates')}}
 
 resources:
   repositories:
@@ -45,6 +52,7 @@ extends:
         exactToolVersion: 4.4.2
       apiscan:
         enabled: false
+      tsaOptionsFile: .config\tsaoptions.json
 
     stages:
     - stage: WinBuildAndSign

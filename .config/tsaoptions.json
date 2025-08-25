@@ -2,8 +2,13 @@
     "instanceUrl":  "https://msazure.visualstudio.com",
     "TSADocumentation": "https://aka.ms/OBTSA",
     "projectName":  "One",
-    "areaPath":  "One\\<Example>\\<Team>\\<AreaPath>",
-    "notificationAliases": ["slee"],
+    "areaPath":  "One\\MGMT\\Compute\\Powershell\\Powershell\\PowerShell Core\\pwsh",
+    "notificationAliases": [
+        "adityap@microsoft.com",
+        "dongbow@microsoft.com",
+        "pmeinecke@microsoft.com",
+        "tplunk@microsoft.com"
+    ],
     "ppe":  "false",
     "template":  "TFSMSAzure",
     "codebaseName":  "TFSMSAzure_powershell-native"
