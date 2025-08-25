@@ -39,7 +39,7 @@ jobs:
         $repoRoot = '$(Build.SourcesDirectory)'
         Import-Module $repoRoot\build.psm1 -Force
 
-        if ($Arch -eq 'linux-x64' -or $Arch -eq 'linux-musl-x64') {
+        if ($Arch -eq 'linux-x64' -or $Arch -eq 'linux-musl-x64' -or $Arch -eq 'osx') {
           Start-PSBootstrap
           Write-Verbose "Starting Start-Start-BuildNativeUnixBinaries" -Verbose
           Start-BuildNativeUnixBinaries
