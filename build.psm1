@@ -537,10 +537,6 @@ function Start-BuildPowerShellNativePackage
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Leaf})]
-        [string] $WindowsARMZipPath,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateScript({Test-Path $_ -PathType Leaf})]
         [string] $WindowsARM64ZipPath,
 
         [Parameter(Mandatory = $true)]
@@ -575,7 +571,6 @@ function Start-BuildPowerShellNativePackage
 
     $BinFolderX64 = Join-Path $tempExtractionPath "x64"
     $BinFolderX86 = Join-Path $tempExtractionPath "x86"
-    $BinFolderARM = Join-Path $tempExtractionPath "ARM"
     $BinFolderARM64 = Join-Path $tempExtractionPath "ARM64"
     $BinFolderLinux = Join-Path $tempExtractionPath "Linux"
     $BinFolderLinuxARM = Join-Path $tempExtractionPath "LinuxARM"
@@ -585,7 +580,6 @@ function Start-BuildPowerShellNativePackage
 
     Expand-Archive -Path $WindowsX64ZipPath -DestinationPath $BinFolderX64 -Force
     Expand-Archive -Path $WindowsX86ZipPath -DestinationPath $BinFolderX86 -Force
-    Expand-Archive -Path $WindowsARMZipPath -DestinationPath $BinFolderARM -Force
     Expand-Archive -Path $WindowsARM64ZipPath -DestinationPath $BinFolderARM64 -Force
     Expand-Archive -Path $LinuxZipPath -DestinationPath $BinFolderLinux -Force
     Expand-Archive -Path $LinuxAlpineZipPath -DestinationPath $BinFolderLinuxAlpine -Force
@@ -593,7 +587,7 @@ function Start-BuildPowerShellNativePackage
     Expand-Archive -Path $LinuxARM64ZipPath -DestinationPath $BinFolderLinuxARM64 -Force
     Expand-Archive -Path $macOSZipPath -DestinationPath $BinFolderMacOS -Force
 
-    PlaceWindowsNativeBinaries -PackageRoot $PackageRoot -BinFolderX64 $BinFolderX64 -BinFolderX86 $BinFolderX86 -BinFolderARM $BinFolderARM -BinFolderARM64 $BinFolderARM64
+    PlaceWindowsNativeBinaries -PackageRoot $PackageRoot -BinFolderX64 $BinFolderX64 -BinFolderX86 $BinFolderX86 -BinFolderARM64 $BinFolderARM64
 
     PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderLinuxARM64 $BinFolderLinuxARM64 -BinFolderOSX $BinFolderMacOS -BinFolderLinuxAlpine $BinFolderLinuxAlpine
 
@@ -720,21 +714,15 @@ function PlaceWindowsNativeBinaries
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Container})]
-        $BinFolderARM,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateScript({Test-Path $_ -PathType Container})]
         $BinFolderARM64
     )
 
     $RuntimePathX64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-x64/native') -Force
     $RuntimePathX86 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-x86/native') -Force
-    $RuntimePathARM = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-arm/native') -Force
     $RuntimePathARM64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-arm64/native') -Force
 
     Copy-Item "$BinFolderX64\*" -Destination $RuntimePathX64 -Verbose -Exclude '*.pdb'
     Copy-Item "$BinFolderX86\*" -Destination $RuntimePathX86 -Verbose -Exclude '*.pdb'
-    Copy-Item "$BinFolderARM\*" -Destination $RuntimePathARM -Verbose -Exclude '*.pdb'
     Copy-Item "$BinFolderARM64\*" -Destination $RuntimePathARM64 -Verbose -Exclude '*.pdb'
 }
 

@@ -9,7 +9,54 @@ jobs:
     - name: ob_signing_setup_enabled
       value: true
   steps:
-    - download: current
-      artifact: '$(ob_outputDirectory)'
+  - pwsh: |
+      if (-not (Test-Path -Path "$(ob_outputDirectory)")) {
+          New-Item -ItemType Directory -Path "$(ob_outputDirectory)" | Out-Null
+      }
+    displayName: 'Create output directory'
 
+  - download: current
 
+  - task: NuGetToolInstaller@0
+    displayName: 'Install NuGet 5.3.1'
+    inputs:
+      versionSpec: 5.3.1
+
+  - template: tools/releaseBuild/yaml/setVersion.yml@self
+
+  - pwsh: |
+      Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
+    displayName: Capture environment variables
+
+  - pwsh: |
+      $platforms = @("drop_LinuxBuild_Build_Linux_arm64",
+                     "drop_LinuxBuild_Build_Linux_musl_x64",
+                     "drop_LinuxBuild_Build_Linux_x64",
+                     "drop_LinuxBuild_Build_Linux_arm",
+                     "drop_WinBuildAndSign_Build_Sign_x64",
+                     "drop_WinBuildAndSign_Build_Sign_x86",
+                     "drop_WinBuildAndSign_Build_Sign_x64_arm64",
+                     "drop_osx"
+                     )
+
+      $WindowsX64ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x64.zip"
+      $WindowsX86ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x86.zip"
+      $WindowsARMZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_arm.zip"
+      $WindowsARM64ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_arm64.zip"
+      $LinuxZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux.zip"
+      $LinuxARMZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_arm.zip"
+      $LinuxARM64ZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_arm64.zip"
+      $LinuxAlpineZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_alpine.zip"
+      $macOSZipPath = "$(ob_outputDirectory)/drop_osx.zip"
+
+      $platforms | ForEach-Object {
+          $platform = $_
+          $compressedFile = "$(ob_outputDirectory)/$platform.zip"
+          Compress-Archive -Path "$(ob_outputDirectory)/$platform/*" -DestinationPath $compressedFile -Force
+      }
+
+      Import-Module $(Build.SourcesDirectory)/build.psm1 -Force
+      $PackageRoot = New-Item -ItemType Directory -Path  $(ob_outputDirectory)\NugetPackage
+      Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath
+
+    displayName: 'Build NuPkg'

@@ -73,6 +73,10 @@ jobs:
         }
 
         Copy-Item -Path "$buildOutputPath/libpsl-native.*" -Destination "$(ob_outputDirectory)" -Force
+
+        if ($Arch -eq 'osx') {
+          Write-Host "##vso[artifact.upload containerfolder=drop_osx;artifactname=drop_osx]$(ob_outputDirectory)"
+        }
       displayName: 'Build'
 
 
