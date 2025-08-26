@@ -495,7 +495,7 @@ function Start-BuildNativeUnixBinaries {
             Start-NativeExecution { make -j }
         }
         elseif ($IsMacOS) {
-            Start-NativeExecution { cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_TOOLCHAIN_FILE="./macos.toolchain.cmake" . }
+            Start-NativeExecution { cmake -DCMAKE_POLICY_VERSION_MINIMUM='3.5' -DCMAKE_TOOLCHAIN_FILE="./macos.toolchain.cmake" . }
             Start-NativeExecution { make -j }
             Start-NativeExecution { ctest --verbose }
         }
