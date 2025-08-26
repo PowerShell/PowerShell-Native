@@ -1,0 +1,32 @@
+steps:
+- pwsh: |
+    $Branch = $env:BUILD_SOURCEBRANCH
+    $branchOnly = $Branch -replace '^refs/heads/';
+    $branchOnly = $branchOnly -replace '[_\-]'
+
+    Write-Verbose -Verbose "Branch == $Branch"
+    Write-Verbose -Verbose "BranchOnly == $branchOnly"
+
+    $packageVersion = if($env:PACKAGE_VERSION -eq 'fromBranch' -or !$env:PACKAGE_VERSION)
+    {
+      if($Branch -match '^.*(release[-/])')
+      {
+        Write-verbose "release branch:" -verbose
+        $Branch -replace '^.*(release[-/]v)'
+      }
+      else
+      {
+        Write-Verbose -Verbose "Branch is not a release branch. Defaulting to 99.99.99"
+        "99.99.99"
+      }
+    }
+    else {
+      Write-Verbose -Verbose "PACKAGE_VERSION is not equal to 'fromBranch'"
+      "99.99.99"
+    }
+
+    $vstsCommandString = "vso[task.setvariable variable=PackageVersion]$packageVersion"
+    Write-Verbose -Message "setting $Variable to $packageVersion" -Verbose
+    Write-Host -Object "##$vstsCommandString"
+
+  displayName: Set version variable
