@@ -5,6 +5,9 @@ parameters:
   - name: Name
     type: string
     default: 'Build_Linux_x64'
+  - name: hostArchitecture
+    type: string
+    default: 'amd64'
 
 jobs:
 - job: ${{ parameters.Name }}
@@ -14,6 +17,8 @@ jobs:
       isCustom: true
       name: Azure Pipelines
       vmImage: 'macOS-latest'
+    ${{ else eq(parameters.hostArchitecture, 'arm64') }}:
+      hostArchitecture: 'arm64'
   displayName: Linux_${{ parameters.ARCHITECTURE }}
   variables:
     - name: ob_outputDirectory

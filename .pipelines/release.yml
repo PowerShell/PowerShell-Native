@@ -82,6 +82,7 @@ extends:
         parameters:
           ARCHITECTURE: 'linux-arm64'
           Name: 'Build_Linux_arm64'
+          hostArchitecture: 'arm64'
 
       - template: .pipelines/templates/build-linux.yml@self
         parameters:
