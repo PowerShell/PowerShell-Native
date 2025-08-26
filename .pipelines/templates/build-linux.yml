@@ -17,7 +17,7 @@ jobs:
       isCustom: true
       name: Azure Pipelines
       vmImage: 'macOS-latest'
-    ${{ else eq(parameters.hostArchitecture, 'arm64') }}:
+    ${{ else if eq(parameters.hostArchitecture, 'arm64') }}:
       hostArchitecture: 'arm64'
   displayName: Linux_${{ parameters.ARCHITECTURE }}
   variables:
