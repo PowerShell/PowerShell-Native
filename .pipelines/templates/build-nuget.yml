@@ -1,0 +1,15 @@
+jobs:
+- job: Build_Nuget
+  pool:
+    type: windows
+  displayName: Build NuGet
+  variables:
+    - name: ob_outputDirectory
+      value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+    - name: ob_signing_setup_enabled
+      value: true
+  steps:
+    - download: current
+      artifact: '$(ob_outputDirectory)'
+
+

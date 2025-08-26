@@ -105,3 +105,9 @@ extends:
         parameters:
           ARCHITECTURE: 'linux-arm'
           Name: 'Build_Linux_arm'
+
+    - stage: Build_Nuget
+      dependsOn: [WinBuildAndSign, LinuxBuild, LinuxBuildARM]
+      displayName: Build NuGet
+      jobs:
+      - template: .pipelines/templates/build-nuget.yml@self
