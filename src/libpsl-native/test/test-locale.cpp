@@ -19,5 +19,9 @@ TEST_F(LocaleTest, Success)
     setlocale(LC_ALL, "");
     ASSERT_FALSE(nl_langinfo(CODESET) == NULL);
     // originally test expected UTF-8. should this change?
+    #if defined (__APPLE__)
+    ASSERT_STREQ(nl_langinfo(CODESET), "UTF-8");
+    #else
     ASSERT_STREQ(nl_langinfo(CODESET), "ANSI_X3.4-1968");
+    #endif
 }
