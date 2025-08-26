@@ -29,6 +29,9 @@ jobs:
       value: ${{ parameters.ARCHITECTURE }}
     - name: DOTNET_SYSTEM_GLOBALIZATION_INVARIANT
       value: 1
+    - ${{ if eq(parameters.ARCHITECTURE, 'linux-arm64') }}:
+      - name: ob_sdl_binskim_enabled
+        value: false
   steps:
     - pwsh: |
         Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
