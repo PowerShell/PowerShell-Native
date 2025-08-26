@@ -22,7 +22,7 @@ jobs:
     inputs:
       versionSpec: 5.3.1
 
-  - template: tools/releaseBuild/yaml/setVersion.yml@self
+  - template: $(Build.SourcesDirectory)/tools/releaseBuild/yaml/setVersion.yml@self
 
   - pwsh: |
       Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
