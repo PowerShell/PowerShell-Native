@@ -76,6 +76,15 @@ jobs:
       $vstsCommandString = "vso[task.setvariable variable=SymbolsPath]$symbolsRoot"
       Write-Verbose -Message "$vstsCommandString" -Verbose
       Write-Host -Object "##$vstsCommandString"
+
+      Write-Verbose -Verbose "Build nupkg"
+      New-NugetPackage -PackageRoot $PackageRoot -NuGetOutputPath '$(ob_outputDirectory)\NugetPackage'
+
+      Write-Verbose -Verbose "Cleanup output folder"
+      Get-ChildItem -Path "$(ob_outputDirectory)" -Exclude "NugetPackage", "symbols" | Remove-Item -Recurse -Force -Verbose
+
+      Write-Verbose -Verbose "Enumerating $(ob_outputDirectory)"
+      Get-ChildItem -Path "$(ob_outputDirectory)" -Recurse
     displayName: 'Build NuPkg'
 
   - task: PublishSymbols@2
@@ -86,3 +95,12 @@ jobs:
       publishSymbols: true
       symbolServerType: teamServices
       detailedLog: true
+
+  - task: onebranch.pipeline.signing@1
+    displayName: Sign files
+    inputs:
+      command: 'sign'
+      cp_code: 'CP-401405'
+      files_to_sign: |
+        **\*.nupkg;
+      search_root: $(ob_outputDirectory)
