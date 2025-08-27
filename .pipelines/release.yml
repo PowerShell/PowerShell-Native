@@ -132,7 +132,7 @@ extends:
         - name: Version
           value: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['PackageVersion'] ]
         - name: ob_release_environment
-          value: Production
+          value: PPE
 
         steps:
         - task: PowerShell@2
