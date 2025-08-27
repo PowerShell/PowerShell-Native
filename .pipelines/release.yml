@@ -120,13 +120,8 @@ extends:
       variables:
         - name: Version
           value: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['PackageVersion'] ]
-        - ${{ if eq(parameters.OfficialBuild, 'true') }}:
-          - name: ob_release_environment
-            value: PPE
-        - ${{ if eq(parameters.OfficialBuild, 'false')  }}:
-          - name: ob_release_environment
-            value: Test
-
+        - name: ob_release_environment
+          value: PPE
       jobs:
       - job: NuGetPublish
         displayName: Publish to NuGet
