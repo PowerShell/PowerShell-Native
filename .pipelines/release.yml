@@ -127,9 +127,8 @@ extends:
             - input: pipelineArtifact
               artifactName: drop_Build_Nuget_Build_Nuget
         variables:
-        - template: ./variable/release-shared.yml@self
-          parameters:
-            VERSION: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['PackageVersion'] ]
+        - name: Version
+          value: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['PackageVersion'] ]
 
         steps:
         - task: PowerShell@2
