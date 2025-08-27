@@ -111,3 +111,52 @@ extends:
       displayName: Build NuGet
       jobs:
       - template: .pipelines/templates/build-nuget.yml@self
+
+    - stage: Release_NuGet
+      displayName: Release NuGet
+      dependsOn: [Build_Nuget]
+      jobs:
+      - job: NuGetPublish
+        displayName: Publish to NuGet
+        condition: succeeded()
+        pool:
+          type: release
+          os: windows
+        templateContext:
+          inputs:
+            - input: pipelineArtifact
+              artifactName: drop_Build_Nuget_Build_Nuget
+        variables:
+        - template: ./variable/release-shared.yml@self
+          parameters:
+            VERSION: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['PackageVersion'] ]
+
+        steps:
+        - task: PowerShell@2
+          inputs:
+            targetType: inline
+            script: |
+              Write-Verbose -Verbose "Version: $(Version)"
+              Get-ChildItem Env: | Out-String -width 9999 -Stream | write-Verbose -Verbose
+          displayName: 'Capture Environment Variables'
+
+        - task: PowerShell@2
+          inputs:
+            targetType: inline
+            script: |
+              $null = New-Item -ItemType Directory -Path "$(Pipeline.Workspace)/release"
+              Copy-Item "$(Pipeline.Workspace)/drop_Build_Nuget_Build_Nuget/*.nupkg" -Destination "$(Pipeline.Workspace)/release" -Force -Verbose
+              Write-Verbose -Verbose "The .nupkgs below will be pushed:"
+              Get-ChildItem "$(Pipeline.Workspace)/release" -recurse
+          displayName: Download and capture nupkgs
+          condition: and(eq('${{ parameters.OfficialBuild }}', 'true'), succeeded())
+
+        # - task: NuGetCommand@2
+        #   displayName: 'NuGet push'
+        #   condition: and(eq('${{ parameters.OfficialBuild }}', 'true'), succeeded())
+        #   inputs:
+        #     command: push
+        #     packagesToPush: '$(Pipeline.Workspace)/release/*.nupkg'
+        #     nuGetFeedType: external
+        #     publishFeedCredentials: PowerShellNuGetOrgPush
+

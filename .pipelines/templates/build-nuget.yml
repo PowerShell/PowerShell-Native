@@ -68,7 +68,7 @@ jobs:
       }
 
       Import-Module $(Build.SourcesDirectory)/build.psm1 -Force
-      $PackageRoot = New-Item -ItemType Directory -Path  $(ob_outputDirectory)\NugetPackage
+      $PackageRoot = New-Item -ItemType Directory -Path  $(ob_outputDirectory)\NugetPackageSrc
       Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath
 
       Write-Verbose -Verbose "Enumerating $symbolsRoot"
@@ -96,8 +96,9 @@ jobs:
 
       Get-ChildItem -Path "$(SymbolsPath)" -Recurse | ForEach-Object {
           $file = $_
-          Write-Host "##vso[artifact.upload artifactname=NuGetPackages;]$($file.FullName)"
+          Write-Verbose -Message "Found symbol file: $($file.FullName)" -Verbose
       }
+    displayName: 'Capture Packages'
 
   - task: PublishSymbols@2
     inputs:
