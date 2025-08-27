@@ -117,6 +117,16 @@ extends:
     - stage: Release_NuGet
       displayName: Release NuGet
       dependsOn: [Build_Nuget]
+      variables:
+        - name: Version
+          value: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['PackageVersion'] ]
+        - ${{ if eq(parameters.OfficialBuild, 'true') }}:
+          - name: ob_release_environment
+            value: PPE
+        - ${{ if eq(parameters.OfficialBuild, 'false')  }}:
+          - name: ob_release_environment
+            value: Test
+
       jobs:
       - job: NuGetPublish
         displayName: Publish to NuGet
@@ -128,16 +138,6 @@ extends:
           inputs:
             - input: pipelineArtifact
               artifactName: drop_Build_Nuget_Build_Nuget
-        variables:
-        - name: Version
-          value: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['PackageVersion'] ]
-        - ${{ if eq(parameters.OfficialBuild, 'true') }}:
-          - name: ob_release_environment
-            value: PPE
-        - ${{ if eq(parameters.OfficialBuild, 'false')  }}:
-          - name: ob_release_environment
-            value: Test
-
         steps:
         - task: PowerShell@2
           inputs:
