@@ -119,7 +119,7 @@ extends:
       dependsOn: [Build_Nuget]
       variables:
         - name: Version
-          value: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['Output.PackageVersion'] ]
+          value: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['SetVersion.PackageVersion'] ]
         - name: ob_release_environment
           value: PPE
       jobs:
@@ -139,7 +139,7 @@ extends:
             targetType: inline
             script: |
               Write-Verbose -Verbose "Version: $(Version)"
-              Get-ChildItem Env: | Out-String -width 9999 -Stream | write-Verbose -Verbose
+              Get-ChildItem Env: | write-Verbose -Verbose
           displayName: 'Capture Environment Variables'
 
         - task: PowerShell@2

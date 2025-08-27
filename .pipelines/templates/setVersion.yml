@@ -34,3 +34,4 @@ steps:
     Write-Host -Object "##$vstsCommandString"
 
   displayName: Set version variable
+  name: SetVersion
