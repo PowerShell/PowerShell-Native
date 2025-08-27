@@ -61,6 +61,7 @@ jobs:
           $compressedFile = "$(ob_outputDirectory)/$platform.zip"
           Compress-Archive -Path "$(Pipeline.Workspace)/$platform/*" -DestinationPath $compressedFile -Force
           $DestPath = Join-Path $symbolsRoot $platform
+          New-Item -Path $DestPath -ItemType Directory -Force | Out-Null
           Get-ChildItem -Path "$(Pipeline.Workspace)/$platform/*.pdb" -Recurse | ForEach-Object {
               Copy-Item -Path $_.FullName -Destination $DestPath -Force -Verbose
           }
@@ -86,6 +87,17 @@ jobs:
       Write-Verbose -Verbose "Enumerating $(ob_outputDirectory)"
       Get-ChildItem -Path "$(ob_outputDirectory)" -Recurse
     displayName: 'Build NuPkg'
+
+  - pwsh: |
+      Get-ChildItem -Path "$(ob_outputDirectory)\NugetPackage" -Recurse | ForEach-Object {
+          $file = $_
+          Write-Verbose -Message "Found NuGet package: $($file.FullName)" -Verbose
+      }
+
+      Get-ChildItem -Path "$(SymbolsPath)" -Recurse | ForEach-Object {
+          $file = $_
+          Write-Host "##vso[artifact.upload artifactname=NuGetPackages;]$($file.FullName)"
+      }
 
   - task: PublishSymbols@2
     inputs:
