@@ -26,6 +26,8 @@ extends:
   template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates  # The Official template may only be used by Production-classified pipelines
 
   parameters:
+    release:
+      category: NonAzure
     featureFlags:
       WindowsHostVersion:
         Disk: Large
@@ -129,6 +131,8 @@ extends:
         variables:
         - name: Version
           value: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['PackageVersion'] ]
+        - name: ob_release_environment
+          value: Production
 
         steps:
         - task: PowerShell@2
