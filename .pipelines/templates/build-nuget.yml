@@ -47,20 +47,42 @@ jobs:
       $WindowsX86ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x86.zip"
       $WindowsARMZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_arm.zip"
       $WindowsARM64ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x64_arm64.zip"
-      $LinuxZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux.zip"
+      $LinuxZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_x64.zip"
       $LinuxARMZipPath = "$(ob_outputDirectory)/drop_LinuxBuildARM_Build_Linux_arm.zip"
       $LinuxARM64ZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_arm64.zip"
-      $LinuxAlpineZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_alpine.zip"
+      $LinuxAlpineZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_musl_x64.zip"
       $macOSZipPath = "$(ob_outputDirectory)/drop_osx.zip"
+
+      $symbolsRoot = "$(ob_outputDirectory)/symbols"
+      New-Item -ItemType Directory -Path $symbolsRoot -Force | Out-Null
 
       $platforms | ForEach-Object {
           $platform = $_
           $compressedFile = "$(ob_outputDirectory)/$platform.zip"
           Compress-Archive -Path "$(Pipeline.Workspace)/$platform/*" -DestinationPath $compressedFile -Force
+          $DestPath = Join-Path $symbolsRoot $platform
+          Get-ChildItem -Path "$(Pipeline.Workspace)/$platform/*.pdb" -Recurse | ForEach-Object {
+              Copy-Item -Path $_.FullName -Destination $DestPath -Force -Verbose
+          }
       }
 
       Import-Module $(Build.SourcesDirectory)/build.psm1 -Force
       $PackageRoot = New-Item -ItemType Directory -Path  $(ob_outputDirectory)\NugetPackage
       Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath
 
+      Write-Verbose -Verbose "Enumerating $symbolsRoot"
+      Get-ChildItem -Path $symbolsRoot -Recurse
+
+      $vstsCommandString = "vso[task.setvariable variable=SymbolsPath]$symbolsRoot"
+      Write-Verbose -Message "$vstsCommandString" -Verbose
+      Write-Host -Object "##$vstsCommandString"
     displayName: 'Build NuPkg'
+
+  - task: PublishSymbols@2
+    inputs:
+      symbolsFolder: '$(SymbolsPath)'
+      searchPattern: '**/*.pdb'
+      indexSources: false
+      publishSymbols: true
+      symbolServerType: teamServices
+      detailedLog: true
