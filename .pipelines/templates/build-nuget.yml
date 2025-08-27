@@ -46,7 +46,7 @@ jobs:
       $WindowsX64ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x64.zip"
       $WindowsX86ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x86.zip"
       $WindowsARMZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_arm.zip"
-      $WindowsARM64ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_arm64.zip"
+      $WindowsARM64ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x64_arm64.zip"
       $LinuxZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux.zip"
       $LinuxARMZipPath = "$(ob_outputDirectory)/drop_LinuxBuildARM_Build_Linux_arm.zip"
       $LinuxARM64ZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_arm64.zip"
