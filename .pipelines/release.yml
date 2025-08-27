@@ -121,7 +121,7 @@ extends:
         - name: Version
           value: $[ stageDependencies.Build_Nuget.Build_Nuget.outputs['SetVersion.PackageVersion'] ]
         - name: ob_release_environment
-          value: PPE
+          value: ${{ iif ( parameters.OfficialBuild, 'Production', 'Test' ) }}
       jobs:
       - job: NuGetPublish
         displayName: Publish to NuGet
@@ -151,7 +151,6 @@ extends:
               Write-Verbose -Verbose "The .nupkgs below will be pushed:"
               Get-ChildItem "$(Pipeline.Workspace)/release" -recurse
           displayName: Download and capture nupkgs
-          condition: and(eq('${{ parameters.OfficialBuild }}', 'true'), succeeded())
 
         # - task: NuGetCommand@2
         #   displayName: 'NuGet push'
