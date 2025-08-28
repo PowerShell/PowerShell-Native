@@ -326,26 +326,39 @@ function Start-BuildNativeWindowsBinaries {
     try {
         Push-Location "$PSScriptRoot\src\powershell-native"
 
-        # setup cmakeGenerator
-        $cmakeGeneratorPlatform = ""
-        if ($Arch -eq 'x86') {
-            $cmakeGenerator = 'Visual Studio 17 2022'
-            $cmakeArch = 'x86'
-            $cmakeGeneratorPlatform = "-A Win32"
-        } elseif ($Arch -eq 'x64_arm') {
-            $cmakeGenerator = 'Visual Studio 17 2022'
-            $cmakeArch = 'arm'
-            $cmakeGeneratorPlatform = "-A ARM"
-        } elseif ($Arch -eq 'x64_arm64') {
-            $cmakeGenerator = 'Visual Studio 17 2022'
-            $cmakeArch = 'arm64'
-            $cmakeGeneratorPlatform = "-A ARM64"
-        } else {
-            $cmakeGenerator = 'Visual Studio 17 2022'
-            $cmakeArch = 'x64'
-            $cmakeGeneratorPlatform = "-A x64"
+        if ($vcPath -notlike '*14.0*') {
+            # setup cmakeGenerator
+            $cmakeGeneratorPlatform = ""
+            if ($Arch -eq 'x86') {
+                $cmakeGenerator = 'Visual Studio 17 2022'
+                $cmakeArch = 'x86'
+                $cmakeGeneratorPlatform = "-A Win32"
+            } elseif ($Arch -eq 'x64_arm64') {
+                $cmakeGenerator = 'Visual Studio 17 2022'
+                $cmakeArch = 'arm64'
+                $cmakeGeneratorPlatform = "-A ARM64"
+            } else {
+                $cmakeGenerator = 'Visual Studio 17 2022'
+                $cmakeArch = 'x64'
+                $cmakeGeneratorPlatform = "-A x64"
+            }
         }
-
+        else {
+            # setup cmakeGenerator
+            $cmakeGeneratorPlatform = ""
+            if ($Arch -eq 'x86') {
+                $cmakeGenerator = 'Visual Studio 15 2017'
+                $cmakeArch = 'x86'
+            } elseif ($Arch -eq 'x64_arm64') {
+                $cmakeGenerator = 'Visual Studio 15 2017'
+                $cmakeArch = 'arm64'
+                $cmakeGeneratorPlatform = "-A ARM64"
+            } else {
+                $cmakeGenerator = 'Visual Studio 15 2017 Win64'
+                $cmakeArch = 'x64'
+                $cmakeGeneratorPlatform = "-A x64"
+            }
+        }
         # Compile native resources
         $currentLocation = Get-Location
         $savedPath = $env:PATH
