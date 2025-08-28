@@ -1,5 +1,5 @@
 jobs:
-- job: Build_Nuget
+- job: Build_Nuget_Job
   pool:
     type: windows
   displayName: Build NuGet

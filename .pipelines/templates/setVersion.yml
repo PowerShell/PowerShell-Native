@@ -25,7 +25,7 @@ steps:
       "99.99.99"
     }
 
-    $vstsCommandString = "vso[task.setvariable variable=Output.PackageVersion;isOutput=true]$packageVersion"
+    $vstsCommandString = "vso[task.setvariable variable=NuGetPackageVersion;isOutput=true]$packageVersion"
     Write-Verbose -Message "setting $Variable to $packageVersion" -Verbose
     Write-Host -Object "##$vstsCommandString"
 
