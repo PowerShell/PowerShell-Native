@@ -295,13 +295,15 @@ function Start-BuildNativeWindowsBinaries {
         Write-Verbose -Verbose "checking 2017 path"
         $vcvarsallbatPathVS2017 = ( Get-ChildItem $alternateVCPath -Filter vcvarsall.bat -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName)
         Write-Vebose -Verbose "vcvarsallbatPathVS2017: $vcvarsallbatPathVS2017"
+
+        if(Test-Path $vcvarsallbatPathVS2017)
+        {
+            # prefer VS2017 path
+            $vcvarsallbatPath = $vcvarsallbatPathVS2017
+        }
     }
 
-    if(Test-Path $vcvarsallbatPathVS2017)
-    {
-        # prefer VS2017 path
-        $vcvarsallbatPath = $vcvarsallbatPathVS2017
-    }
+    Write-Verbose -Verbose "Checking if we found vcvarsall.bat"
 
     if ([string]::IsNullOrEmpty($vcvarsallbatPath) -or (Test-Path -Path $vcvarsallbatPath) -eq $false) {
         throw "Could not find Visual Studio vcvarsall.bat at $vcvarsallbatPath. Please ensure the optional feature 'Common Tools for Visual C++' is installed."
