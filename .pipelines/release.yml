@@ -38,6 +38,9 @@ extends:
     cloudvault:
       enabled: false
     globalSdl:
+      tsa:
+        useDynamicRouting: true
+        enabled: true
       sbom:
         enabled: true
         packageName: Microsoft.PowerShell.Native

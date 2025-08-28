@@ -288,7 +288,7 @@ function Start-BuildNativeWindowsBinaries {
 
     # vcvarsall.bat is used to setup environment variables
     $vcvarsallbatPath = "$vcPath\vcvarsall.bat"
-    $vcvarsallbatPathVS2017 = ( Get-ChildItem $alternateVCPath -Filter vcvarsall.bat -Recurse -File | Select-Object -First 1).FullName
+    $vcvarsallbatPathVS2017 = ( Get-ChildItem $alternateVCPath -Filter vcvarsall.bat -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName)
 
     if(Test-Path $vcvarsallbatPathVS2017)
     {
