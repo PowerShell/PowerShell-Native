@@ -292,6 +292,7 @@ function Start-BuildNativeWindowsBinaries {
 
     if ($alternateVCPath)
     {
+        Write-Verbose -Verbose "checking 2017 path"
         $vcvarsallbatPathVS2017 = ( Get-ChildItem $alternateVCPath -Filter vcvarsall.bat -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName)
         Write-Vebose -Verbose "vcvarsallbatPathVS2017: $vcvarsallbatPathVS2017"
     }
