@@ -146,8 +146,13 @@ extends:
           inputs:
             targetType: inline
             script: |
-              $null = New-Item -ItemType Directory -Path "$(Pipeline.Workspace)\release"
-              Copy-Item "$(Pipeline.Workspace)\Microsoft.PowerShell.*.nupkg" -Destination "$(Pipeline.Workspace)\release" -Recurse -Force -Verbose
+              $DestPath = New-Item -ItemType Directory -Path "$(Pipeline.Workspace)\release"
+              $nupkgFile = Get-ChildItem "$(Pipeline.Workspace)\Microsoft.PowerShell.Native.*.nupkg" -Recurse
+              if (-not $nupkgFile) {
+                  throw "No nupkg files found in '$(Pipeline.Workspace)'"
+              }
+
+              Copy-Item $nupkgFile -Destination $DestPath -Recurse -Force -Verbose
               Write-Verbose -Verbose "The .nupkgs below will be pushed:"
               Get-ChildItem "$(Pipeline.Workspace)/release" -recurse
           displayName: Download and capture nupkgs
