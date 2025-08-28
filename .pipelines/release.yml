@@ -147,7 +147,7 @@ extends:
             targetType: inline
             script: |
               $null = New-Item -ItemType Directory -Path "$(Pipeline.Workspace)\release"
-              Copy-Item "$(Pipeline.Workspace)\*.nupkg" -Destination "$(Pipeline.Workspace)\release" -Force -Verbose
+              Copy-Item "$(Pipeline.Workspace)\Microsoft.PowerShell.*.nupkg" -Destination "$(Pipeline.Workspace)\release" -Recurse -Force -Verbose
               Write-Verbose -Verbose "The .nupkgs below will be pushed:"
               Get-ChildItem "$(Pipeline.Workspace)/release" -recurse
           displayName: Download and capture nupkgs
