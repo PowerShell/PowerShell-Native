@@ -157,12 +157,12 @@ extends:
               Get-ChildItem "$(Pipeline.Workspace)/release" -recurse
           displayName: Download and capture nupkgs
 
-        # - task: NuGetCommand@2
-        #   displayName: 'NuGet push'
-        #   condition: and(eq('${{ parameters.OfficialBuild }}', 'true'), succeeded())
-        #   inputs:
-        #     command: push
-        #     packagesToPush: '$(Pipeline.Workspace)/release/*.nupkg'
-        #     nuGetFeedType: external
-        #     publishFeedCredentials: PowerShellNuGetOrgPush
+        - task: NuGetCommand@2
+          displayName: 'NuGet push'
+          condition: and(eq('${{ parameters.OfficialBuild }}', 'true'), succeeded())
+          inputs:
+            command: push
+            packagesToPush: '$(Pipeline.Workspace)\release\*.nupkg'
+            nuGetFeedType: external
+            publishFeedCredentials: PowerShellNuGetOrgPush
 
