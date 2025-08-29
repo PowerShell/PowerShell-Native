@@ -13,7 +13,7 @@ variables:
   - name: WindowsContainerImage
     value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
   - name: templateFile
-    value: ${{ iif(parameters.OfficialBuild, 'v2/OneBranch.Official.CrossPlat.yml@onebranchTemplates', 'v2/OneBranch.NonOfficial.CrossPlat.yml@onebranchTemplates')}}
+    value: ${{ iif ( parameters.OfficialBuild, 'v2/OneBranch.Official.CrossPlat.yml@templates', 'v2/OneBranch.NonOfficial.CrossPlat.yml@templates' ) }}
 
 resources:
   repositories:
