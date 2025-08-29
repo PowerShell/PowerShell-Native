@@ -45,6 +45,7 @@ extends:
         enabled: true
         packageName: Microsoft.PowerShell.Native
       codeql:
+        tsaEnabled: true
         compiled:
           enabled: true
       armory:

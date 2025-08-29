@@ -1,14 +1,11 @@
 {
-    "instanceUrl":  "https://msazure.visualstudio.com",
-    "TSADocumentation": "https://aka.ms/OBTSA",
-    "projectName":  "One",
+    "hasDynamicRouting": true,
+    "areaPath": "OS",
     "notificationAliases": [
         "adityap@microsoft.com",
         "dongbow@microsoft.com",
         "pmeinecke@microsoft.com",
         "tplunk@microsoft.com"
     ],
-    "ppe":  "false",
-    "template":  "TFSMSAzure",
     "codebaseName":  "TFSMSAzure_powershell-native"
 }
