@@ -247,10 +247,10 @@ function Start-BuildNativeWindowsBinaries {
     }
     Write-Verbose -Verbose "VCPath: $vcPath"
 
-    $alternateVCPath = (Get-ChildItem "${env:ProgramFiles}\Microsoft Visual Studio\2022" -Filter "VC" -Directory -Recurse -ErrorAction SilentlyContinue) | Select-Object -First 1 -ExpandProperty FullName
+    $alternateVCPath = (Get-ChildItem "${env:ProgramFiles}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse -ErrorAction SilentlyContinue) | Select-Object -First 1 -ExpandProperty FullName
 
     if (-not $alternateVCPath) {
-        $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022" -Filter "VC" -Directory -Recurse -ErrorAction SilentlyContinue) | Select-Object -First 1 -ExpandProperty FullName
+        $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse -ErrorAction SilentlyContinue) | Select-Object -First 1 -ExpandProperty FullName
     }
 
     Write-Verbose -Verbose "alternateVCPath: $alternateVCPath"
@@ -356,7 +356,6 @@ function Start-BuildNativeWindowsBinaries {
             } else {
                 $cmakeGenerator = 'Visual Studio 15 2017 Win64'
                 $cmakeArch = 'x64'
-                $cmakeGeneratorPlatform = "-A x64"
             }
         }
         # Compile native resources
