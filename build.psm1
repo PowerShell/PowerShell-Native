@@ -253,6 +253,10 @@ function Start-BuildNativeWindowsBinaries {
         $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse -ErrorAction SilentlyContinue) | Select-Object -First 1 -ExpandProperty FullName
     }
 
+    if (-not $alternateVCPath) {
+        $alternateVCPath = (Get-ChildItem "${env:ProgramFiles}\Microsoft Visual Studio\2022" -Filter "VC" -Directory -Recurse -ErrorAction SilentlyContinue) | Select-Object -First 1 -ExpandProperty FullName
+    }
+
     Write-Verbose -Verbose "alternateVCPath: $alternateVCPath"
 
     $atlBaseFound = $false
@@ -294,7 +298,7 @@ function Start-BuildNativeWindowsBinaries {
     {
         Write-Verbose -Verbose "checking 2017 path"
         $vcvarsallbatPathVS2017 = ( Get-ChildItem $alternateVCPath -Filter vcvarsall.bat -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName)
-        Write-Vebose -Verbose "vcvarsallbatPathVS2017: $vcvarsallbatPathVS2017"
+        Write-Verbose -Verbose "vcvarsallbatPathVS2017: $vcvarsallbatPathVS2017"
 
         if(Test-Path $vcvarsallbatPathVS2017)
         {
