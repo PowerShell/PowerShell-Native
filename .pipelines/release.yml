@@ -23,7 +23,7 @@ resources:
     ref: refs/heads/main
 
 extends:
-  template: $(templateFile)  # The Official template may only be used by Production-classified pipelines
+  template: ${{ variables.templateFile }}  # The Official template may only be used by Production-classified pipelines
 
   parameters:
     release:
