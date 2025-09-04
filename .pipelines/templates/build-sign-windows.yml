@@ -15,6 +15,8 @@ jobs:
       value: true
     - name: ARCHITECTURE
       value: ${{ parameters.ARCHITECTURE }}
+    - name: OBP_SIGNING_SETUP_TIMEOUT_IN_SECONDS
+      value: 300
   steps:
     - pwsh: |
         Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
@@ -62,3 +64,4 @@ jobs:
         files_to_sign: |
           **\*.dll;
         search_root: $(ob_outputDirectory)
+      retryCountOnTaskFailure: 3
