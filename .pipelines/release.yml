@@ -38,6 +38,9 @@ extends:
     cloudvault:
       enabled: false
     globalSdl:
+      isNativeCode: true
+      prefast:
+        enabled: true
       tsa:
         useDynamicRouting: true
         enabled: true

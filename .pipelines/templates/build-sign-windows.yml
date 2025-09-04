@@ -62,5 +62,3 @@ jobs:
         files_to_sign: |
           **\*.dll;
         search_root: $(ob_outputDirectory)
-
-
