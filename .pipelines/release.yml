@@ -35,7 +35,6 @@ extends:
         Network: KS1
       incrementalSDLBinaryAnalysis: true
       needExceptionForUbuntuUsage: true
-      disableNetworkIsolation: true
     cloudvault:
       enabled: false
     globalSdl:
