@@ -4,6 +4,9 @@ parameters:
   - name: OfficialBuild
     type: boolean
     default: false
+  - name: disableNetworkIsolation
+    type: boolean
+    default: false
 
 variables:
   - name: ob_outputDirectory
@@ -35,6 +38,7 @@ extends:
         Network: KS1
       incrementalSDLBinaryAnalysis: true
       needExceptionForUbuntuUsage: true
+      disableNetworkIsolation: $${ parameters.disableNetworkIsolation }
     cloudvault:
       enabled: false
     globalSdl:
