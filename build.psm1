@@ -125,34 +125,61 @@ function Get-EnvironmentInformation
     }
 
     if ($Environment.IsLinux) {
+        $environment += @{ 'OSArchitecture' = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture }
         $LinuxInfo = Get-Content /etc/os-release -Raw | ConvertFrom-StringData
+        $lsb_release = Get-Command lsb_release -Type Application -ErrorAction Ignore | Select-Object -First 1
+        if ($lsb_release) {
+            $LinuxID = & $lsb_release -is
+        }
+        else {
+            $LinuxID = ""
+        }
 
         $environment += @{'LinuxInfo' = $LinuxInfo}
-        $environment += @{'IsDebian' = $LinuxInfo.ID -match 'debian'}
-        $environment += @{'IsDebian8' = $Environment.IsDebian -and $LinuxInfo.VERSION_ID -match '8'}
-        $environment += @{'IsDebian9' = $Environment.IsDebian -and $LinuxInfo.VERSION_ID -match '9'}
-        $environment += @{'IsUbuntu' = $LinuxInfo.ID -match 'ubuntu'}
-        $environment += @{'IsUbuntu14' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '14.04'}
-        $environment += @{'IsUbuntu16' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '16.04'}
-        $environment += @{'IsUbuntu17' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '17.10'}
-        $environment += @{'IsUbuntu18' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '18.04'}
-        $environment += @{'IsUbuntu22' = $Environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '22.04'}
+        $environment += @{'IsDebian' = $LinuxInfo.ID -match 'debian' -or $LinuxInfo.ID -match 'kali'}
+        $environment += @{'IsDebian9' = $environment.IsDebian -and $LinuxInfo.VERSION_ID -match '9'}
+        $environment += @{'IsDebian10' = $environment.IsDebian -and $LinuxInfo.VERSION_ID -match '10'}
+        $environment += @{'IsDebian11' = $environment.IsDebian -and $LinuxInfo.PRETTY_NAME -match 'bullseye'}
+        $environment += @{'IsUbuntu' = $LinuxInfo.ID -match 'ubuntu' -or $LinuxID -match 'Ubuntu'}
+        $environment += @{'IsUbuntu16' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '16.04'}
+        $environment += @{'IsUbuntu18' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '18.04'}
+        $environment += @{'IsUbuntu20' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '20.04'}
+        $environment += @{'IsUbuntu22' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '22.04'}
+        $environment += @{'IsUbuntu24' = $environment.IsUbuntu -and $LinuxInfo.VERSION_ID -match '24.04'}
         $environment += @{'IsCentOS' = $LinuxInfo.ID -match 'centos' -and $LinuxInfo.VERSION_ID -match '7'}
         $environment += @{'IsFedora' = $LinuxInfo.ID -match 'fedora' -and $LinuxInfo.VERSION_ID -ge 24}
-        $environment += @{'IsRedHat' = $LinuxInfo.ID -match 'rhel'}
         $environment += @{'IsOpenSUSE' = $LinuxInfo.ID -match 'opensuse'}
         $environment += @{'IsSLES' = $LinuxInfo.ID -match 'sles'}
-        $environment += @{'IsOpenSUSE13' = $Environmenst.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '13'}
-        $environment += @{'IsOpenSUSE42.1' = $Environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '42.1'}
-        $environment += @{'IsRedHatFamily' = $Environment.IsCentOS -or $Environment.IsFedora -or $Environment.IsRedHat}
-        $environment += @{'IsSUSEFamily' = $Environment.IsSLES -or $Environment.IsOpenSUSE}
+        $environment += @{'IsRedHat' = $LinuxInfo.ID -match 'rhel'}
+        $environment += @{'IsRedHat7' = $environment.IsRedHat -and $LinuxInfo.VERSION_ID -match '7' }
+        $environment += @{'IsOpenSUSE13' = $environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '13'}
+        $environment += @{'IsOpenSUSE42.1' = $environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '42.1'}
+        $environment += @{'IsDebianFamily' = $environment.IsDebian -or $environment.IsUbuntu}
+        $environment += @{'IsRedHatFamily' = $environment.IsCentOS -or $environment.IsFedora -or $environment.IsRedHat}
+        $environment += @{'IsSUSEFamily' = $environment.IsSLES -or $environment.IsOpenSUSE}
         $environment += @{'IsAlpine' = $LinuxInfo.ID -match 'alpine'}
+        $environment += @{'IsMariner' = $LinuxInfo.ID -match 'mariner' -or $LinuxInfo.ID -match 'azurelinux'}
 
         # Workaround for temporary LD_LIBRARY_PATH hack for Fedora 24
         # https://github.com/PowerShell/PowerShell/issues/2511
         if ($environment.IsFedora -and (Test-Path ENV:\LD_LIBRARY_PATH)) {
             Remove-Item -Force ENV:\LD_LIBRARY_PATH
             Get-ChildItem ENV:
+        }
+
+        if( -not(
+            $environment.IsDebian -or
+            $environment.IsUbuntu -or
+            $environment.IsRedHatFamily -or
+            $environment.IsSUSEFamily -or
+            $environment.IsAlpine -or
+            $environment.IsMariner)
+        ) {
+            if ($SkipLinuxDistroCheck) {
+                Write-Warning "The current OS : $($LinuxInfo.ID) is not supported for building PowerShell."
+            } else {
+                throw "The current OS : $($LinuxInfo.ID) is not supported for building PowerShell. Import this module with '-ArgumentList `$true' to bypass this check."
+            }
         }
     }
 
@@ -220,7 +247,16 @@ function Start-BuildNativeWindowsBinaries {
     }
     Write-Verbose -Verbose "VCPath: $vcPath"
 
-    $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse).FullName
+    $alternateVCPath = (Get-ChildItem "${env:ProgramFiles}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse -ErrorAction SilentlyContinue) | Select-Object -First 1 -ExpandProperty FullName
+
+    if (-not $alternateVCPath) {
+        $alternateVCPath = (Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017" -Filter "VC" -Directory -Recurse -ErrorAction SilentlyContinue) | Select-Object -First 1 -ExpandProperty FullName
+    }
+
+    if (-not $alternateVCPath) {
+        $alternateVCPath = (Get-ChildItem "${env:ProgramFiles}\Microsoft Visual Studio\2022" -Filter "VC" -Directory -Recurse -ErrorAction SilentlyContinue) | Select-Object -First 1 -ExpandProperty FullName
+    }
+
     Write-Verbose -Verbose "alternateVCPath: $alternateVCPath"
 
     $atlBaseFound = $false
@@ -256,13 +292,22 @@ function Start-BuildNativeWindowsBinaries {
 
     # vcvarsall.bat is used to setup environment variables
     $vcvarsallbatPath = "$vcPath\vcvarsall.bat"
-    $vcvarsallbatPathVS2017 = ( Get-ChildItem $alternateVCPath -Filter vcvarsall.bat -Recurse -File | Select-Object -First 1).FullName
+    Write-Verbose -Verbose "vcvarsallbatPath: $vcvarsallbatPath"
 
-    if(Test-Path $vcvarsallbatPathVS2017)
+    if ($alternateVCPath)
     {
-        # prefer VS2017 path
-        $vcvarsallbatPath = $vcvarsallbatPathVS2017
+        Write-Verbose -Verbose "checking 2017 path"
+        $vcvarsallbatPathVS2017 = ( Get-ChildItem $alternateVCPath -Filter vcvarsall.bat -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName)
+        Write-Verbose -Verbose "vcvarsallbatPathVS2017: $vcvarsallbatPathVS2017"
+
+        if(Test-Path $vcvarsallbatPathVS2017)
+        {
+            # prefer VS2017 path
+            $vcvarsallbatPath = $vcvarsallbatPathVS2017
+        }
     }
+
+    Write-Verbose -Verbose "Checking if we found vcvarsall.bat"
 
     if ([string]::IsNullOrEmpty($vcvarsallbatPath) -or (Test-Path -Path $vcvarsallbatPath) -eq $false) {
         throw "Could not find Visual Studio vcvarsall.bat at $vcvarsallbatPath. Please ensure the optional feature 'Common Tools for Visual C++' is installed."
@@ -285,23 +330,38 @@ function Start-BuildNativeWindowsBinaries {
     try {
         Push-Location "$PSScriptRoot\src\powershell-native"
 
-        # setup cmakeGenerator
-        $cmakeGeneratorPlatform = ""
-        if ($Arch -eq 'x86') {
-            $cmakeGenerator = 'Visual Studio 15 2017'
-            $cmakeArch = 'x86'
-        } elseif ($Arch -eq 'x64_arm') {
-            $cmakeGenerator = 'Visual Studio 15 2017 ARM'
-            $cmakeArch = 'arm'
-        } elseif ($Arch -eq 'x64_arm64') {
-            $cmakeGenerator = 'Visual Studio 15 2017'
-            $cmakeArch = 'arm64'
-            $cmakeGeneratorPlatform = "-A ARM64"
-        } else {
-            $cmakeGenerator = 'Visual Studio 15 2017 Win64'
-            $cmakeArch = 'x64'
+        if ($vcPath -notlike '*14.0*') {
+            # setup cmakeGenerator
+            $cmakeGeneratorPlatform = ""
+            if ($Arch -eq 'x86') {
+                $cmakeGenerator = 'Visual Studio 17 2022'
+                $cmakeArch = 'x86'
+                $cmakeGeneratorPlatform = "-A Win32"
+            } elseif ($Arch -eq 'x64_arm64') {
+                $cmakeGenerator = 'Visual Studio 17 2022'
+                $cmakeArch = 'arm64'
+                $cmakeGeneratorPlatform = "-A ARM64"
+            } else {
+                $cmakeGenerator = 'Visual Studio 17 2022'
+                $cmakeArch = 'x64'
+                $cmakeGeneratorPlatform = "-A x64"
+            }
         }
-
+        else {
+            # setup cmakeGenerator
+            $cmakeGeneratorPlatform = ""
+            if ($Arch -eq 'x86') {
+                $cmakeGenerator = 'Visual Studio 15 2017'
+                $cmakeArch = 'x86'
+            } elseif ($Arch -eq 'x64_arm64') {
+                $cmakeGenerator = 'Visual Studio 15 2017'
+                $cmakeArch = 'arm64'
+                $cmakeGeneratorPlatform = "-A ARM64"
+            } else {
+                $cmakeGenerator = 'Visual Studio 15 2017 Win64'
+                $cmakeArch = 'x64'
+            }
+        }
         # Compile native resources
         $currentLocation = Get-Location
         $savedPath = $env:PATH
@@ -403,8 +463,8 @@ function Start-BuildNativeUnixBinaries {
         return
     }
 
-    if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not $Environment.IsUbuntu) {
-        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
+    if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not ($Environment.IsUbuntu -or $Environment.IsMariner)) {
+        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment: Environment IsMariner: $($Environment.IsMariner) IsUbuntu: $($Environment.IsUbuntu)"
     }
 
     # Verify we have all tools in place to do the build
@@ -413,12 +473,12 @@ function Start-BuildNativeUnixBinaries {
         $precheck = $precheck -and (precheck $Dependency "Build dependency '$Dependency' not found. Run 'Start-PSBootstrap'.")
     }
 
-    if ($BuildLinuxArm) {
-        foreach ($Dependency in 'arm-linux-gnueabihf-gcc', 'arm-linux-gnueabihf-g++') {
+    if ($BuildLinuxArm64) {
+        foreach ($Dependency in 'cmake', 'make', 'g++') {
             $precheck = $precheck -and (precheck $Dependency "Build dependency '$Dependency' not found. Run 'Start-PSBootstrap'.")
         }
-    } elseif ($BuildLinuxArm64) {
-        foreach ($Dependency in 'aarch64-linux-gnu-gcc', 'aarch64-linux-gnu-g++') {
+    } elseif ($BuildLinuxArm) {
+        foreach ($Dependency in 'arm-linux-gnueabihf-gcc', 'arm-linux-gnueabihf-g++') {
             $precheck = $precheck -and (precheck $Dependency "Build dependency '$Dependency' not found. Run 'Start-PSBootstrap'.")
         }
     }
@@ -465,7 +525,7 @@ function Start-BuildNativeUnixBinaries {
             Start-NativeExecution { make -j }
         }
         elseif ($IsMacOS) {
-            Start-NativeExecution { cmake -DCMAKE_TOOLCHAIN_FILE="./macos.toolchain.cmake" . }
+            Start-NativeExecution { cmake -DCMAKE_POLICY_VERSION_MINIMUM='3.5' -DCMAKE_TOOLCHAIN_FILE="./macos.toolchain.cmake" . }
             Start-NativeExecution { make -j }
             Start-NativeExecution { ctest --verbose }
         }
@@ -507,10 +567,6 @@ function Start-BuildPowerShellNativePackage
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Leaf})]
-        [string] $WindowsARMZipPath,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateScript({Test-Path $_ -PathType Leaf})]
         [string] $WindowsARM64ZipPath,
 
         [Parameter(Mandatory = $true)]
@@ -545,7 +601,6 @@ function Start-BuildPowerShellNativePackage
 
     $BinFolderX64 = Join-Path $tempExtractionPath "x64"
     $BinFolderX86 = Join-Path $tempExtractionPath "x86"
-    $BinFolderARM = Join-Path $tempExtractionPath "ARM"
     $BinFolderARM64 = Join-Path $tempExtractionPath "ARM64"
     $BinFolderLinux = Join-Path $tempExtractionPath "Linux"
     $BinFolderLinuxARM = Join-Path $tempExtractionPath "LinuxARM"
@@ -555,7 +610,6 @@ function Start-BuildPowerShellNativePackage
 
     Expand-Archive -Path $WindowsX64ZipPath -DestinationPath $BinFolderX64 -Force
     Expand-Archive -Path $WindowsX86ZipPath -DestinationPath $BinFolderX86 -Force
-    Expand-Archive -Path $WindowsARMZipPath -DestinationPath $BinFolderARM -Force
     Expand-Archive -Path $WindowsARM64ZipPath -DestinationPath $BinFolderARM64 -Force
     Expand-Archive -Path $LinuxZipPath -DestinationPath $BinFolderLinux -Force
     Expand-Archive -Path $LinuxAlpineZipPath -DestinationPath $BinFolderLinuxAlpine -Force
@@ -563,7 +617,7 @@ function Start-BuildPowerShellNativePackage
     Expand-Archive -Path $LinuxARM64ZipPath -DestinationPath $BinFolderLinuxARM64 -Force
     Expand-Archive -Path $macOSZipPath -DestinationPath $BinFolderMacOS -Force
 
-    PlaceWindowsNativeBinaries -PackageRoot $PackageRoot -BinFolderX64 $BinFolderX64 -BinFolderX86 $BinFolderX86 -BinFolderARM $BinFolderARM -BinFolderARM64 $BinFolderARM64
+    PlaceWindowsNativeBinaries -PackageRoot $PackageRoot -BinFolderX64 $BinFolderX64 -BinFolderX86 $BinFolderX86 -BinFolderARM64 $BinFolderARM64
 
     PlaceUnixBinaries -PackageRoot $PackageRoot -BinFolderLinux $BinFolderLinux -BinFolderLinuxARM $BinFolderLinuxARM -BinFolderLinuxARM64 $BinFolderLinuxARM64 -BinFolderOSX $BinFolderMacOS -BinFolderLinuxAlpine $BinFolderLinuxAlpine
 
@@ -690,21 +744,15 @@ function PlaceWindowsNativeBinaries
 
         [Parameter(Mandatory = $true)]
         [ValidateScript({Test-Path $_ -PathType Container})]
-        $BinFolderARM,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateScript({Test-Path $_ -PathType Container})]
         $BinFolderARM64
     )
 
     $RuntimePathX64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-x64/native') -Force
     $RuntimePathX86 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-x86/native') -Force
-    $RuntimePathARM = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-arm/native') -Force
     $RuntimePathARM64 = New-Item -ItemType Directory -Path (Join-Path $PackageRoot -ChildPath 'runtimes/win-arm64/native') -Force
 
     Copy-Item "$BinFolderX64\*" -Destination $RuntimePathX64 -Verbose -Exclude '*.pdb'
     Copy-Item "$BinFolderX86\*" -Destination $RuntimePathX86 -Verbose -Exclude '*.pdb'
-    Copy-Item "$BinFolderARM\*" -Destination $RuntimePathARM -Verbose -Exclude '*.pdb'
     Copy-Item "$BinFolderARM64\*" -Destination $RuntimePathARM64 -Verbose -Exclude '*.pdb'
 }
 
@@ -787,8 +835,8 @@ function Start-PSBuild {
         [string]$ReleaseTag
     )
 
-    if (($Runtime -eq "linux-arm" -or $Runtime -eq "linux-arm64") -and -not $Environment.IsUbuntu) {
-        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
+    if (($Runtime -eq "linux-arm" -or $Runtime -eq "linux-arm64") -and -not ($Environment.IsUbuntu -or $Environment.IsMariner)) {
+        throw "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment: Environment IsMariner: $($Environment.IsMariner) IsUbuntu: $($Environment.IsUbuntu)"
     }
 
     if ("win-arm","win-arm64" -contains $Runtime -and -not $Environment.IsWindows) {
@@ -1893,10 +1941,12 @@ function Install-Dotnet {
 }
 
 function Get-RedHatPackageManager {
-    if ($Environment.IsCentOS -or $Environment.IsRedHat) {
+    if ($environment.IsCentOS -or (Get-Command -Name yum -CommandType Application -ErrorAction SilentlyContinue)) {
         "yum install -y -q"
-    } elseif ($Environment.IsFedora) {
+    } elseif ($environment.IsFedora -or (Get-Command -Name dnf -CommandType Application -ErrorAction SilentlyContinue)) {
         "dnf install -y -q"
+    } elseif ($environment.IsMariner -or (Get-Command -Name tdnf -CommandType Application -ErrorAction SilentlyContinue)) {
+        "tdnf install -y"
     } else {
         throw "Error determining package manager for this distribution."
     }
@@ -1939,8 +1989,8 @@ function Start-PSBootstrap {
                 Pop-Location
             }
 
-            if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not $Environment.IsUbuntu) {
-                Write-Error "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment"
+            if (($BuildLinuxArm -or $BuildLinuxArm64) -and -not ($Environment.IsUbuntu -or $Environment.IsMariner)) {
+                Write-Error "Cross compiling for linux-arm/linux-arm64 are only supported on Ubuntu environment: Environment IsMariner: $($Environment.IsMariner) IsUbuntu: $($Environment.IsUbuntu)"
                 return
             }
 
@@ -1978,7 +2028,7 @@ function Start-PSBootstrap {
                     # change the apt frontend back to the original
                     $env:DEBIAN_FRONTEND=$originalDebianFrontEnd
                 }
-            } elseif ($Environment.IsRedHatFamily) {
+            } elseif ($Environment.IsRedHatFamily -or $Environment.IsMariner) {
                 # Build tools
                 $Deps += "which", "curl", "wget"
 
@@ -2052,7 +2102,7 @@ function Start-PSBootstrap {
                 Start-NativeExecution { brew install $Deps } -IgnoreExitcode
 
                 # Install patched version of curl
-                Start-NativeExecution { brew install curl --with-openssl --with-gssapi } -IgnoreExitcode
+                Start-NativeExecution { brew install curl } -IgnoreExitcode
             } elseif ($Environment.IsAlpine) {
                 $Deps += "build-base", "gcc", "abuild", "binutils", "git", "python3", "bash", "cmake"
 

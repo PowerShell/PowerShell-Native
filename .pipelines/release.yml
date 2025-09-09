@@ -1,0 +1,181 @@
+trigger: none
+
+parameters:
+  - name: OfficialBuild
+    type: boolean
+    default: false
+  - name: disableNetworkIsolation
+    type: boolean
+    default: false
+
+variables:
+  - name: ob_outputDirectory
+    value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+  - name: LinuxContainerImage
+    value: mcr.microsoft.com/onebranch/azurelinux/build:3.0
+  - name: WindowsContainerImage
+    value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
+  - name: templateFile
+    value: ${{ iif ( parameters.OfficialBuild, 'v2/OneBranch.Official.CrossPlat.yml@templates', 'v2/OneBranch.NonOfficial.CrossPlat.yml@templates' ) }}
+  - name: disableNetworkIsolation
+    value: ${{ parameters.disableNetworkIsolation }}
+
+resources:
+  repositories:
+  - repository: templates
+    type: git
+    name: OneBranch.Pipelines/GovernedTemplates
+    ref: refs/heads/main
+
+extends:
+  template: ${{ variables.templateFile }}  # The Official template may only be used by Production-classified pipelines
+
+  parameters:
+    release:
+      category: NonAzure
+    featureFlags:
+      WindowsHostVersion:
+        Disk: Large
+        Version: 2022
+        Network: KS1
+      incrementalSDLBinaryAnalysis: true
+      needExceptionForUbuntuUsage: true
+      disableNetworkIsolation: ${{ variables.disableNetworkIsolation }}
+    cloudvault:
+      enabled: false
+    globalSdl:
+      isNativeCode: true
+      prefast:
+        enabled: true
+      tsa:
+        useDynamicRouting: true
+        enabled: true
+      sbom:
+        enabled: true
+        packageName: Microsoft.PowerShell.Native
+      codeql:
+        tsaEnabled: true
+        compiled:
+          enabled: true
+      armory:
+        enabled: false
+      credscan:
+        enabled: true
+        scanFolder:  $(Build.SourcesDirectory)
+      binskim:
+        enabled: true
+        exactToolVersion: 4.4.2
+      apiscan:
+        enabled: false
+      tsaOptionsFile: .config\tsaoptions.json
+
+    stages:
+    - stage: WinBuildAndSign
+      displayName: Windows Build and Sign
+      jobs:
+      - template: .pipelines/templates/build-sign-windows.yml@self
+        parameters:
+          ARCHITECTURE: 'x64'
+
+      - template: .pipelines/templates/build-sign-windows.yml@self
+        parameters:
+          ARCHITECTURE: 'x86'
+
+      - template: .pipelines/templates/build-sign-windows.yml@self
+        parameters:
+          ARCHITECTURE: 'x64_arm64'
+
+    - stage: LinuxBuild
+      displayName: Linux Build
+      jobs:
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-x64'
+          Name: 'Build_Linux_x64'
+
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-arm64'
+          Name: 'Build_Linux_arm64'
+          hostArchitecture: 'arm64'
+
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-musl-x64'
+          Name: 'Build_Linux_musl_x64'
+
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'osx'
+          Name: 'Build_osx'
+
+    - stage: LinuxBuildARM
+      displayName: Linux ARM Build
+      variables:
+      - name: LinuxContainerImage
+        value: onebranch.azurecr.io/linux/ubuntu-2204:latest
+
+      jobs:
+      - template: .pipelines/templates/build-linux.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-arm'
+          Name: 'Build_Linux_arm'
+
+    - stage: Build_Nuget
+      dependsOn: [WinBuildAndSign, LinuxBuild, LinuxBuildARM]
+      displayName: Build NuGet
+      jobs:
+      - template: .pipelines/templates/build-nuget.yml@self
+
+    - stage: Release_NuGet
+      displayName: Release NuGet
+      dependsOn: [Build_Nuget]
+      variables:
+        - name: Version
+          value: $[ stageDependencies.Build_Nuget.Build_Nuget_Job.outputs['SetVersion.NugetPackageVersion'] ]
+        - name: ob_release_environment
+          value: ${{ iif ( parameters.OfficialBuild, 'Production', 'Test' ) }}
+      jobs:
+      - job: NuGetPublish
+        displayName: Publish to NuGet
+        condition: succeeded()
+        pool:
+          type: release
+          os: windows
+        templateContext:
+          inputs:
+            - input: pipelineArtifact
+              artifactName: drop_Build_Nuget_Build_Nuget_Job
+        steps:
+        - task: PowerShell@2
+          inputs:
+            targetType: inline
+            script: |
+              Write-Verbose -Verbose "Version: $(Version)"
+              Get-ChildItem Env:\
+          displayName: 'Capture Environment Variables'
+
+        - task: PowerShell@2
+          inputs:
+            targetType: inline
+            script: |
+              $DestPath = New-Item -ItemType Directory -Path "$(Pipeline.Workspace)\release"
+              $nupkgFile = Get-ChildItem "$(Pipeline.Workspace)\Microsoft.PowerShell.Native.*.nupkg" -Recurse
+              if (-not $nupkgFile) {
+                  throw "No nupkg files found in '$(Pipeline.Workspace)'"
+              }
+
+              Copy-Item $nupkgFile -Destination $DestPath -Recurse -Force -Verbose
+              Write-Verbose -Verbose "The .nupkgs below will be pushed:"
+              Get-ChildItem "$(Pipeline.Workspace)/release" -recurse
+          displayName: Download and capture nupkgs
+
+        - task: NuGetCommand@2
+          displayName: 'NuGet push'
+          condition: and(eq('${{ parameters.OfficialBuild }}', 'true'), succeeded())
+          inputs:
+            command: push
+            packagesToPush: '$(Pipeline.Workspace)\release\*.nupkg'
+            nuGetFeedType: external
+            publishFeedCredentials: PowerShellNuGetOrgPush
+

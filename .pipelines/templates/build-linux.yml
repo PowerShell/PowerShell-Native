@@ -1,0 +1,83 @@
+parameters:
+  - name: ARCHITECTURE
+    type: string
+    default: 'x64'
+  - name: Name
+    type: string
+    default: 'Build_Linux_x64'
+  - name: hostArchitecture
+    type: string
+    default: 'amd64'
+
+jobs:
+- job: ${{ parameters.Name }}
+  pool:
+    type: linux
+    ${{ if eq(parameters.ARCHITECTURE, 'osx') }}:
+      isCustom: true
+      name: Azure Pipelines
+      vmImage: 'macOS-latest'
+    ${{ if eq(parameters.hostArchitecture, 'arm64') }}:
+      hostArchitecture: 'arm64'
+  displayName: Linux_${{ parameters.ARCHITECTURE }}
+  variables:
+    - name: ob_outputDirectory
+      value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+    - name: ob_signing_setup_enabled
+      value: true
+    - name: ARCHITECTURE
+      value: ${{ parameters.ARCHITECTURE }}
+    - name: DOTNET_SYSTEM_GLOBALIZATION_INVARIANT
+      value: 1
+    - ${{ if eq(parameters.ARCHITECTURE, 'linux-arm64') }}:
+      - name: ob_sdl_binskim_enabled
+        value: false
+      - name: ob_sdl_credscan_enabled
+        value: false
+  steps:
+    - pwsh: |
+        Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
+      displayName: Capture environment variables
+
+    - pwsh: |
+        $Arch = "$(ARCHITECTURE)"
+        $repoRoot = '$(Build.SourcesDirectory)'
+        Import-Module $repoRoot\build.psm1 -Force
+
+        if ($Arch -eq 'linux-x64' -or $Arch -eq 'linux-musl-x64' -or $Arch -eq 'osx') {
+          Start-PSBootstrap
+          Write-Verbose "Starting Start-Start-BuildNativeUnixBinaries" -Verbose
+          Start-BuildNativeUnixBinaries
+          Write-Verbose "Completed Start-BuildNativeUnixBinaries" -Verbose
+        }
+        elseif ($Arch -eq 'linux-arm64') {
+          Start-PSBootstrap -BuildLinuxArm64
+          Write-Verbose "Starting Start-BuildNativeUnixBinaries" -Verbose
+          Start-BuildNativeUnixBinaries -BuildLinuxArm64
+          Write-Verbose "Completed Start-BuildNativeUnixBinaries" -Verbose
+        }
+        elseif ($Arch -eq 'linux-arm') {
+          Start-PSBootstrap -BuildLinuxArm
+          Write-Verbose "Starting Start-BuildNativeUnixBinaries" -Verbose
+          Start-BuildNativeUnixBinaries -BuildLinuxArm
+          Write-Verbose "Completed Start-BuildNativeUnixBinaries" -Verbose
+        }
+        else {
+          throw "Unsupported architecture: $Arch"
+        }
+
+        $buildOutputPath = Join-Path $RepoRoot "src/powershell-unix"
+
+        if (-not (Test-Path $(ob_outputDirectory))) {
+            New-Item -ItemType Directory -Path $(ob_outputDirectory) -Force -Verbose
+        }
+
+        Copy-Item -Path "$buildOutputPath/libpsl-native.*" -Destination "$(ob_outputDirectory)" -Force
+
+        if ($Arch -eq 'osx') {
+          Write-Host "##vso[artifact.upload containerfolder=drop_osx;artifactname=drop_osx]$(ob_outputDirectory)"
+        }
+      displayName: 'Build'
+
+
+

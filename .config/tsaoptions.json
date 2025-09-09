@@ -1,0 +1,11 @@
+{
+    "hasDynamicRouting": true,
+    "areaPath": "OS",
+    "notificationAliases": [
+        "adityap@microsoft.com",
+        "dongbow@microsoft.com",
+        "pmeinecke@microsoft.com",
+        "tplunk@microsoft.com"
+    ],
+    "codebaseName":  "TFSMSAzure_powershell-native"
+}

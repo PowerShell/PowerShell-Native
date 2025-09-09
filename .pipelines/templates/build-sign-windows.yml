@@ -1,0 +1,67 @@
+parameters:
+  - name: ARCHITECTURE
+    type: string
+    default: 'x64'
+
+jobs:
+- job: Build_Sign_${{ parameters.ARCHITECTURE }}
+  pool:
+    type: windows
+  displayName: Windows_${{ parameters.ARCHITECTURE }}
+  variables:
+    - name: ob_outputDirectory
+      value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+    - name: ob_signing_setup_enabled
+      value: true
+    - name: ARCHITECTURE
+      value: ${{ parameters.ARCHITECTURE }}
+    - name: OBP_SIGNING_SETUP_TIMEOUT_IN_SECONDS
+      value: 300
+  steps:
+    - pwsh: |
+        Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
+      displayName: Capture environment variables
+      env:
+        ob_restore_phase: true # Set ob_restore_phase to run this step before '🔒 Setup Signing' step.
+
+    - task: CodeQL3000Init@0 # Add CodeQL Init task right before your 'Build' step.
+      env:
+        ob_restore_phase: true # Set ob_restore_phase to run this step before '🔒 Setup Signing' step.
+      inputs:
+        Enabled: true
+        # AnalyzeInPipeline: false = upload results
+        # AnalyzeInPipeline: true = do not upload results
+        AnalyzeInPipeline: false
+        Language: cpp
+
+    - pwsh: |
+        $repoRoot = '$(Build.SourcesDirectory)'
+        Import-Module $repoRoot\build.psm1 -Force
+        Start-PSBootstrap -BuildWindowsNative
+        Write-Verbose "Starting Start-BuildNativeWindowsBinaries" -Verbose
+        Start-BuildNativeWindowsBinaries -Configuration 'Release' -Arch $(ARCHITECTURE) -Clean
+        Write-Verbose "Completed Start-BuildNativeWindowsBinaries" -Verbose
+        $buildOutputPath = Join-Path $repoRoot "src/powershell-win-core"
+
+        if (-not (Test-Path $(ob_outputDirectory))) {
+            New-Item -ItemType Directory -Path $(ob_outputDirectory) -Force -Verbose
+        }
+
+        Copy-Item -Path "$buildOutputPath/*.dll","$buildOutputPath/*.pdb" -Destination "$(ob_outputDirectory)" -Force
+      displayName: 'Build'
+      env:
+        ob_restore_phase: true # Set ob_restore_phase to run this step before '🔒 Setup Signing' step.
+
+    - task: CodeQL3000Finalize@0 # Add CodeQL Finalize task right after your 'Build' step.
+      env:
+        ob_restore_phase: true # Set ob_restore_phase to run this step before '🔒 Setup Signing' step.
+
+    - task: onebranch.pipeline.signing@1
+      displayName: Sign files
+      inputs:
+        command: 'sign'
+        signing_profile: external_distribution
+        files_to_sign: |
+          **\*.dll;
+        search_root: $(ob_outputDirectory)
+      retryCountOnTaskFailure: 3

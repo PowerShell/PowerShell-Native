@@ -1,0 +1,119 @@
+jobs:
+- job: Build_Nuget_Job
+  pool:
+    type: windows
+  displayName: Build NuGet
+  variables:
+    - name: ob_outputDirectory
+      value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+    - name: ob_signing_setup_enabled
+      value: true
+  steps:
+  - pwsh: |
+      if (-not (Test-Path -Path "$(ob_outputDirectory)")) {
+          New-Item -ItemType Directory -Path "$(ob_outputDirectory)" | Out-Null
+      }
+    displayName: 'Create output directory'
+
+  - download: current
+
+  - pwsh: |
+      Get-ChildItem -Path $(Pipeline.Workspace)
+    displayName: 'List files in workspace'
+
+  - task: NuGetToolInstaller@0
+    displayName: 'Install NuGet 5.3.1'
+    inputs:
+      versionSpec: 5.3.1
+
+  - template: setVersion.yml@self
+
+  - pwsh: |
+      Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
+    displayName: Capture environment variables
+
+  - pwsh: |
+      $platforms = @("drop_LinuxBuild_Build_Linux_arm64",
+                     "drop_LinuxBuild_Build_Linux_musl_x64",
+                     "drop_LinuxBuild_Build_Linux_x64",
+                     "drop_LinuxBuildARM_Build_Linux_arm",
+                     "drop_WinBuildAndSign_Build_Sign_x64",
+                     "drop_WinBuildAndSign_Build_Sign_x86",
+                     "drop_WinBuildAndSign_Build_Sign_x64_arm64",
+                     "drop_osx"
+                     )
+
+      $WindowsX64ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x64.zip"
+      $WindowsX86ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x86.zip"
+      $WindowsARMZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_arm.zip"
+      $WindowsARM64ZipPath = "$(ob_outputDirectory)/drop_WinBuildAndSign_Build_Sign_x64_arm64.zip"
+      $LinuxZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_x64.zip"
+      $LinuxARMZipPath = "$(ob_outputDirectory)/drop_LinuxBuildARM_Build_Linux_arm.zip"
+      $LinuxARM64ZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_arm64.zip"
+      $LinuxAlpineZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_musl_x64.zip"
+      $macOSZipPath = "$(ob_outputDirectory)/drop_osx.zip"
+
+      $symbolsRoot = "$(ob_outputDirectory)/symbols"
+      New-Item -ItemType Directory -Path $symbolsRoot -Force | Out-Null
+
+      $platforms | ForEach-Object {
+          $platform = $_
+          $compressedFile = "$(ob_outputDirectory)/$platform.zip"
+          Compress-Archive -Path "$(Pipeline.Workspace)/$platform/*" -DestinationPath $compressedFile -Force
+          $DestPath = Join-Path $symbolsRoot $platform
+          New-Item -Path $DestPath -ItemType Directory -Force | Out-Null
+          Get-ChildItem -Path "$(Pipeline.Workspace)/$platform/*.pdb" -Recurse | ForEach-Object {
+              Copy-Item -Path $_.FullName -Destination $DestPath -Force -Verbose
+          }
+      }
+
+      Import-Module $(Build.SourcesDirectory)/build.psm1 -Force
+      $PackageRoot = New-Item -ItemType Directory -Path  $(ob_outputDirectory)\NugetPackageSrc
+      Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath
+
+      Write-Verbose -Verbose "Enumerating $symbolsRoot"
+      Get-ChildItem -Path $symbolsRoot -Recurse
+
+      $vstsCommandString = "vso[task.setvariable variable=SymbolsPath]$symbolsRoot"
+      Write-Verbose -Message "$vstsCommandString" -Verbose
+      Write-Host -Object "##$vstsCommandString"
+
+      Write-Verbose -Verbose "Build nupkg"
+      New-NugetPackage -PackageRoot $PackageRoot -NuGetOutputPath '$(ob_outputDirectory)\NugetPackage'
+
+      Write-Verbose -Verbose "Cleanup output folder"
+      Get-ChildItem -Path "$(ob_outputDirectory)" -Exclude "NugetPackage", "symbols" | Remove-Item -Recurse -Force -Verbose
+
+      Write-Verbose -Verbose "Enumerating $(ob_outputDirectory)"
+      Get-ChildItem -Path "$(ob_outputDirectory)" -Recurse
+    displayName: 'Build NuPkg'
+
+  - pwsh: |
+      Get-ChildItem -Path "$(ob_outputDirectory)\NugetPackage" -Recurse | ForEach-Object {
+          $file = $_
+          Write-Verbose -Message "Found NuGet package: $($file.FullName)" -Verbose
+      }
+
+      Get-ChildItem -Path "$(SymbolsPath)" -Recurse | ForEach-Object {
+          $file = $_
+          Write-Verbose -Message "Found symbol file: $($file.FullName)" -Verbose
+      }
+    displayName: 'Capture Packages'
+
+  - task: PublishSymbols@2
+    inputs:
+      symbolsFolder: '$(SymbolsPath)'
+      searchPattern: '**/*.pdb'
+      indexSources: false
+      publishSymbols: true
+      symbolServerType: teamServices
+      detailedLog: true
+
+  - task: onebranch.pipeline.signing@1
+    displayName: Sign files
+    inputs:
+      command: 'sign'
+      cp_code: 'CP-401405'
+      files_to_sign: |
+        **\*.nupkg;
+      search_root: $(ob_outputDirectory)

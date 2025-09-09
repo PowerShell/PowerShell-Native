@@ -24,8 +24,6 @@ jobs:
         buildName: x86
       Windows x64:
         buildName: x64
-      Windows x64_arm:
-        buildName: x64_arm
       Windows x64_arm64:
         buildName: x64_arm64
 
