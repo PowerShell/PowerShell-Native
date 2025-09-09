@@ -17,6 +17,8 @@ variables:
     value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
   - name: templateFile
     value: ${{ iif ( parameters.OfficialBuild, 'v2/OneBranch.Official.CrossPlat.yml@templates', 'v2/OneBranch.NonOfficial.CrossPlat.yml@templates' ) }}
+  - name: disableNetworkIsolation
+    value: ${{ parameters.disableNetworkIsolation }}
 
 resources:
   repositories:
@@ -38,7 +40,7 @@ extends:
         Network: KS1
       incrementalSDLBinaryAnalysis: true
       needExceptionForUbuntuUsage: true
-      disableNetworkIsolation: $${ parameters.disableNetworkIsolation }
+      disableNetworkIsolation: ${{ variables.disableNetworkIsolation }}
     cloudvault:
       enabled: false
     globalSdl:
