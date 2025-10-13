@@ -85,6 +85,18 @@ extends:
         parameters:
           ARCHITECTURE: 'x64_arm64'
 
+    - stage: LinuxMuslBuild
+      displayName: Linux Musl Build
+      variables:
+      - name: LinuxContainerImage
+        value: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+
+      jobs:
+      - template: .pipelines/templates/build-alpine.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-musl-x64'
+          Name: 'Build_Linux_musl_x64'
+
     - stage: LinuxBuild
       displayName: Linux Build
       jobs:
@@ -98,11 +110,6 @@ extends:
           ARCHITECTURE: 'linux-arm64'
           Name: 'Build_Linux_arm64'
           hostArchitecture: 'arm64'
-
-      - template: .pipelines/templates/build-linux.yml@self
-        parameters:
-          ARCHITECTURE: 'linux-musl-x64'
-          Name: 'Build_Linux_musl_x64'
 
       - template: .pipelines/templates/build-linux.yml@self
         parameters:
@@ -122,7 +129,7 @@ extends:
           Name: 'Build_Linux_arm'
 
     - stage: Build_Nuget
-      dependsOn: [WinBuildAndSign, LinuxBuild, LinuxBuildARM]
+      dependsOn: [WinBuildAndSign, LinuxBuild, LinuxBuildARM, LinuxMuslBuild]
       displayName: Build NuGet
       jobs:
       - template: .pipelines/templates/build-nuget.yml@self

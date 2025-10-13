@@ -541,6 +541,9 @@ function Start-BuildNativeUnixBinaries {
     if (-not (Test-Path $Lib)) {
         throw "Compilation of $Lib failed"
     }
+
+    Write-Verbose -Verbose "Build completed - $Lib"
+    Get-ChildItem $Lib | Out-String -Stream | Write-Verbose -Verbose
 }
 
 <#
