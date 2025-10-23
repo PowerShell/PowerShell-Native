@@ -1,0 +1,133 @@
+parameters:
+  - name: ARCHITECTURE
+    type: string
+    default: 'x64'
+  - name: Name
+    type: string
+    default: 'Build_musl_x64'
+  - name: hostArchitecture
+    type: string
+    default: 'amd64'
+
+jobs:
+- job: PrepareDockerBuild
+  pool:
+    type: linux
+    ${{ if eq(parameters.hostArchitecture, 'arm64') }}:
+      hostArchitecture: 'arm64'
+  displayName: Prepare_Docker_Build
+  variables:
+    - name: ob_outputDirectory
+      value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+    - name: ob_signing_setup_enabled
+      value: true
+    - name: LinuxContainerImage
+      value: mcr.microsoft.com/onebranch/azurelinux/build:3.0
+  steps:
+    - checkout: self
+      clean: true
+
+    - pwsh: |
+        Get-ChildItem Env:\ | Out-String -Stream | Write-Verbose -Verbose
+      displayName: Capture environment variables
+
+    - pwsh: |
+        New-Item -ItemType Directory -Path "$(ob_outputDirectory)" | Out-Null
+      displayName: 'Create output directory'
+
+    - pwsh: |
+        Copy-Item -Path "$(Build.SourcesDirectory)/*" -Destination "$(ob_outputDirectory)" -Force -Verbose -Recurse
+      displayName: 'Copy Dockerfile to output directory'
+
+- job: ${{ parameters.Name }}
+  pool:
+    type: docker
+    os: linux
+    ${{ if eq(parameters.hostArchitecture, 'arm64') }}:
+      hostArchitecture: 'arm64'
+  displayName: Linux_MUSL_${{ parameters.ARCHITECTURE }}
+  dependsOn: PrepareDockerBuild
+  variables:
+    - name: LinuxContainerImage
+      value: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+    - name: ob_outputDirectory
+      value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+    - name: ob_signing_setup_enabled
+      value: true
+    - name: ARCHITECTURE
+      value: ${{ parameters.ARCHITECTURE }}
+    - name: DOTNET_SYSTEM_GLOBALIZATION_INVARIANT
+      value: 1
+    - ${{ if eq(parameters.ARCHITECTURE, 'linux-musl-arm64') }}:
+      - name: ob_sdl_binskim_enabled
+        value: false
+      - name: ob_sdl_credscan_enabled
+        value: false
+  steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download prepared Docker build context'
+      inputs:
+        buildType: 'current'
+        artifactName: 'drop_LinuxMuslBuild_PrepareDockerBuild'
+        targetPath: '$(Build.SourcesDirectory)/dst/drop_LinuxMuslBuild_PrepareDockerBuild'
+
+    - task: onebranch.pipeline.imagebuildinfo@1
+      displayName: 'Build Alpine Image'
+      inputs:
+        repositoryName: 'psnative-alpine'
+        dockerFileRelPath: 'drop_LinuxMuslBuild_PrepareDockerBuild/powershell-native/Dockerfile'
+        dockerFileContextPath: 'drop_LinuxMuslBuild_PrepareDockerBuild/powershell-native'
+        addPipelineData: false
+        saveImageToPath: docker-images/psnative-alpine.tar
+        build_tag: $(Build.BuildId)
+        compress: false
+        enable_isolated_acr_push: false
+        enable_service_tree_acr_path: false
+        enable_network: true
+
+- job: ExtractLibPSL
+  displayName: 'Extract libpsl-native.so'
+  dependsOn: ${{ parameters.Name }}
+  pool:
+    type: linux
+  variables:
+    - name: LinuxContainerImage
+      value: mcr.microsoft.com/onebranch/azurelinux/build:3.0
+    - name: ob_outputDirectory
+      value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+    - name: ob_signing_setup_enabled
+      value: false
+
+  steps:
+    - checkout: self
+      clean: true
+
+    - download: current
+      artifact: drop_LinuxMuslBuild_Build_Linux_musl_x64
+      patterns: docker-images/psnative-alpine.tar
+      displayName: 'Download Docker image artifact'
+
+    - pwsh: |
+        Get-ChildItem $(Pipeline.Workspace)/drop_LinuxMuslBuild_Build_Linux_musl_x64 -Recurse | Out-String -Stream | Write-Verbose -Verbose
+      displayName: Capture downloaded artifacts
+
+    - pwsh: |
+        New-Item -ItemType Directory -Path "$(ob_outputDirectory)" | Out-Null
+        New-Item -ItemType Directory -Path $(Pipeline.Workspace)/temp | Out-Null
+        tar -xvf $(Pipeline.Workspace)/drop_LinuxMuslBuild_Build_Linux_musl_x64/docker-images/psnative-alpine.tar -C $(Pipeline.Workspace)/temp
+        $manifest = Get-Content "$(Pipeline.Workspace)/temp/manifest.json"
+        $manifest | Out-String -Stream | Write-Verbose -Verbose
+
+        $manifestJson = $manifest | ConvertFrom-Json
+        $imageId = $manifestJson[0].Layers[0]
+        $libPSLPath = "$(Pipeline.Workspace)/temp/$imageId"
+
+        Write-Verbose "Extracted layer path: $libPSLPath" -Verbose
+        Get-ChildItem -Path "$libPSLPath" -Recurse | Out-String -Stream | Write-Verbose -Verbose
+
+        tar -xvf $libPSLPath
+
+        Get-ChildItem -Path . | Out-String -Stream | Write-Verbose -Verbose
+
+        Copy-Item -Path ./libpsl-native.so -Destination "$(ob_outputDirectory)/libpsl-native.so" -Force -Verbose
+      displayName: 'Extract libpsl-native.so from image'
