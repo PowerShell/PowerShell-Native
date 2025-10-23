@@ -10,5 +10,3 @@ RUN pwsh -c "Import-Module ./build.psm1; Start-BuildNativeUnixBinaries";
 
 FROM scratch AS export
 COPY --from=build /src/powershell-unix/libpsl-native.so /libpsl-native.so
-
-ENTRYPOINT [ "pwsh" ]
