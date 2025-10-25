@@ -13,13 +13,6 @@ endif()
 
 set(LIBRARY_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/../powershell-unix")
 
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "arm*")
-    message(STATUS "Building for ARM, no tests")
-    add_subdirectory(src)
-else ()
-    # test in BUILD_DIR
-    message(STATUS "Tests enabled")
-    enable_testing()
-    add_subdirectory(src)
-    add_subdirectory(test)
-endif ()
+enable_testing()
+add_subdirectory(src)
+add_subdirectory(test)
