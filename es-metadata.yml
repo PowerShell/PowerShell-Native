@@ -5,4 +5,4 @@ accountableOwners:
 routing:
   defaultAreaPath:
     org: msazure
-    path: One\MGMT\Compute\Powershell\Powershell
+    path: One\MGMT\Compute\Powershell\Powershell\PowerShell Core\pwsh
