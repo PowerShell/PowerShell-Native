@@ -4,7 +4,7 @@ project(PSL-NATIVE)
 # Can't use add_compile_options with 2.8.11
 set(CMAKE_BUILD_TYPE "Release")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror -fstack-protector-strong -fpie -D_FORTIFY_SOURCE=2 -gdwarf-5")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror -fstack-protector-strong -fpie -D_FORTIFY_SOURCE=2 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -gdwarf-5")
 
 if(NOT DEFINED PS_GLIBC_MIN_VERSION)
   set(PS_GLIBC_MIN_VERSION "2.27"
