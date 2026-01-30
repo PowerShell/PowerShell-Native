@@ -92,18 +92,36 @@ extends:
         value: mcr.microsoft.com/dotnet/sdk:10.0-alpine
 
       jobs:
-      - template: .pipelines/templates/build-alpine.yml@self
+      - template: .pipelines/templates/build-docker.yml@self
         parameters:
-          ARCHITECTURE: 'linux-musl-x64'
-          Name: 'Build_Linux_musl_x64'
+          ARCHITECTURE: 'x64'
+          Name: 'Linux_musl_x64'
+          BuildPlatform: 'alpine'
+          StageName: 'LinuxMuslBuild'
+
+
+    - stage: LinuxRockyBuild
+      displayName: Linux Rocky Build
+      variables:
+      - name: LinuxContainerImage
+        value: onebranch.azurecr.io/linux/rockylinux
+
+      jobs:
+      - template: .pipelines/templates/build-docker.yml@self
+        parameters:
+          ARCHITECTURE: 'x64'
+          Name: 'Linux_rocky_x64'
+          LinuxContainerImage: 'onebranch.azurecr.io/linux/rockylinux'
+          BuildPlatform: 'rocky'
+          StageName: 'LinuxRockyBuild'
 
     - stage: LinuxBuild
       displayName: Linux Build
       jobs:
-      - template: .pipelines/templates/build-linux.yml@self
-        parameters:
-          ARCHITECTURE: 'linux-x64'
-          Name: 'Build_Linux_x64'
+      # - template: .pipelines/templates/build-linux.yml@self
+      #   parameters:
+      #     ARCHITECTURE: 'linux-x64'
+      #     Name: 'Build_Linux_x64'
 
       - template: .pipelines/templates/build-linux.yml@self
         parameters:
@@ -129,7 +147,7 @@ extends:
           Name: 'Build_Linux_arm'
 
     - stage: Build_Nuget
-      dependsOn: [WinBuildAndSign, LinuxBuild, LinuxBuildARM, LinuxMuslBuild]
+      dependsOn: [WinBuildAndSign, LinuxBuild, LinuxBuildARM, LinuxMuslBuild, LinuxRockyBuild]
       displayName: Build NuGet
       jobs:
       - template: .pipelines/templates/build-nuget.yml@self

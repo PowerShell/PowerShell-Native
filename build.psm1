@@ -154,8 +154,9 @@ function Get-EnvironmentInformation
         $environment += @{'IsRedHat7' = $environment.IsRedHat -and $LinuxInfo.VERSION_ID -match '7' }
         $environment += @{'IsOpenSUSE13' = $environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '13'}
         $environment += @{'IsOpenSUSE42.1' = $environment.IsOpenSUSE -and $LinuxInfo.VERSION_ID  -match '42.1'}
+        $environment += @{'IsRocky8' = $LinuxInfo.ID -match 'rocky' -and $LinuxInfo.VERSION_ID -match '8'}
         $environment += @{'IsDebianFamily' = $environment.IsDebian -or $environment.IsUbuntu}
-        $environment += @{'IsRedHatFamily' = $environment.IsCentOS -or $environment.IsFedora -or $environment.IsRedHat}
+        $environment += @{'IsRedHatFamily' = $environment.IsCentOS -or $environment.IsFedora -or $environment.IsRedHat -or $environment.IsRocky8}
         $environment += @{'IsSUSEFamily' = $environment.IsSLES -or $environment.IsOpenSUSE}
         $environment += @{'IsAlpine' = $LinuxInfo.ID -match 'alpine'}
         $environment += @{'IsMariner' = $LinuxInfo.ID -match 'mariner' -or $LinuxInfo.ID -match 'azurelinux'}
@@ -530,7 +531,8 @@ function Start-BuildNativeUnixBinaries {
             Start-NativeExecution { ctest --verbose }
         }
         else {
-            Start-NativeExecution { cmake -DCMAKE_BUILD_TYPE=Debug . }
+            Start-NativeExecution { cmake -DCMAKE_POLICY_VERSION_MINIMUM='3.5' -DCMAKE_BUILD_TYPE=Debug . }
+            Get-ChildItem . -Recurse | Out-String -Stream | Write-Verbose -Verbose
             Start-NativeExecution { make -j }
             Start-NativeExecution { ctest --verbose }
         }
@@ -1946,7 +1948,7 @@ function Install-Dotnet {
 function Get-RedHatPackageManager {
     if ($environment.IsCentOS -or (Get-Command -Name yum -CommandType Application -ErrorAction SilentlyContinue)) {
         "yum install -y -q"
-    } elseif ($environment.IsFedora -or (Get-Command -Name dnf -CommandType Application -ErrorAction SilentlyContinue)) {
+    } elseif ($environment.IsFedora -or $environment.IsRocky8 -or (Get-Command -Name dnf -CommandType Application -ErrorAction SilentlyContinue)) {
         "dnf install -y -q"
     } elseif ($environment.IsMariner -or (Get-Command -Name tdnf -CommandType Application -ErrorAction SilentlyContinue)) {
         "tdnf install -y"
@@ -1985,6 +1987,12 @@ function Start-PSBootstrap {
             try {
                 # Update googletest submodule for linux native cmake
                 Push-Location $PSScriptRoot
+
+                if (-not (Test-Path "$PSScriptRoot/.git")) {
+                    Write-Log "Git repository not initialized. Initializing..."
+                    Start-NativeExecution { git init }
+                }
+
                 $Submodule = "$PSScriptRoot/src/libpsl-native/test/googletest"
                 Remove-Item -Path $Submodule -Recurse -Force -ErrorAction SilentlyContinue
                 git submodule --quiet update --init -- $submodule
@@ -2033,13 +2041,13 @@ function Start-PSBootstrap {
                 }
             } elseif ($Environment.IsRedHatFamily -or $Environment.IsMariner) {
                 # Build tools
-                $Deps += "which", "curl", "wget"
+                $Deps += "which", "curl", "wget", "gcc", "gcc-c++", "cmake", "make", "git"
 
                 # .NET Core required runtime libraries
                 $Deps += "libicu", "openssl-libs"
 
                 # Packaging tools
-                if ($Package) { $Deps += "ruby-devel", "rpm-build", "groff", 'libffi-devel', "gcc-c++" }
+                if ($Package) { $Deps += "rpm-build", "gcc-c++" }
 
                 $PackageManager = Get-RedHatPackageManager
 
@@ -2114,21 +2122,22 @@ function Start-PSBootstrap {
                 Start-NativeExecution { apk add $Deps }
             }
 
+            <# Not needed any more #>
             # Install [fpm](https://github.com/jordansissel/fpm) and [ronn](https://github.com/rtomayko/ronn)
-            if ($Package) {
-                try {
-                    # We cannot guess if the user wants to run gem install as root on linux and windows,
-                    # but macOs usually requires sudo
-                    $gemsudo = ''
-                    if($Environment.IsMacOS) {
-                        $gemsudo = $sudo
-                    }
-                    Start-NativeExecution ([ScriptBlock]::Create("$gemsudo gem install fpm -v 1.9.3"))
-                    Start-NativeExecution ([ScriptBlock]::Create("$gemsudo gem install ronn -v 0.7.3"))
-                } catch {
-                    Write-Warning "Installation of fpm and ronn gems failed! Must resolve manually."
-                }
-            }
+            # if ($Package) {
+            #     try {
+            #         # We cannot guess if the user wants to run gem install as root on linux and windows,
+            #         # but macOs usually requires sudo
+            #         $gemsudo = ''
+            #         if($Environment.IsMacOS) {
+            #             $gemsudo = $sudo
+            #         }
+            #         Start-NativeExecution ([ScriptBlock]::Create("$gemsudo gem install fpm -v 1.9.3"))
+            #         Start-NativeExecution ([ScriptBlock]::Create("$gemsudo gem install ronn -v 0.7.3"))
+            #     } catch {
+            #         Write-Warning "Installation of fpm and ronn gems failed! Must resolve manually."
+            #     }
+            # }
         }
 
         # Try to locate dotnet-SDK before installing it

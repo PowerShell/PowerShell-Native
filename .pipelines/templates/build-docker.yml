@@ -8,6 +8,15 @@ parameters:
   - name: hostArchitecture
     type: string
     default: 'amd64'
+  - name: LinuxContainerImage
+    type: string
+    default: 'mcr.microsoft.com/dotnet/sdk:10.0-alpine'
+  - name: BuildPlatform
+    type: string
+    default: 'alpine'
+  - name: StageName
+    type: string
+    default: 'LinuxMuslBuild'
 
 jobs:
 - job: PrepareDockerBuild
@@ -45,11 +54,11 @@ jobs:
     os: linux
     ${{ if eq(parameters.hostArchitecture, 'arm64') }}:
       hostArchitecture: 'arm64'
-  displayName: Linux_MUSL_${{ parameters.ARCHITECTURE }}
+  displayName: Linux_${{ parameters.BuildPlatform}}_${{ parameters.ARCHITECTURE }}
   dependsOn: PrepareDockerBuild
   variables:
     - name: LinuxContainerImage
-      value: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+      value: ${{ parameters.LinuxContainerImage }}
     - name: ob_outputDirectory
       value: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
     - name: ob_signing_setup_enabled
@@ -68,17 +77,17 @@ jobs:
       displayName: 'Download prepared Docker build context'
       inputs:
         buildType: 'current'
-        artifactName: 'drop_LinuxMuslBuild_PrepareDockerBuild'
-        targetPath: '$(Build.SourcesDirectory)/dst/drop_LinuxMuslBuild_PrepareDockerBuild'
+        artifactName: 'drop_${{ parameters.StageName }}_PrepareDockerBuild'
+        targetPath: '$(Build.SourcesDirectory)/dst/drop_${{ parameters.StageName }}_PrepareDockerBuild'
 
     - task: onebranch.pipeline.imagebuildinfo@1
-      displayName: 'Build Alpine Image'
+      displayName: 'Build Image'
       inputs:
-        repositoryName: 'psnative-alpine'
-        dockerFileRelPath: 'drop_LinuxMuslBuild_PrepareDockerBuild/powershell-native/Dockerfile'
-        dockerFileContextPath: 'drop_LinuxMuslBuild_PrepareDockerBuild/powershell-native'
+        repositoryName: 'psnative-${{ parameters.BuildPlatform }}'
+        dockerFileRelPath: 'drop_${{ parameters.StageName }}_PrepareDockerBuild/powershell-native/docker/${{ parameters.BuildPlatform }}/Dockerfile'
+        dockerFileContextPath: 'drop_${{ parameters.StageName }}_PrepareDockerBuild/powershell-native'
         addPipelineData: false
-        saveImageToPath: docker-images/psnative-alpine.tar
+        saveImageToPath: docker-images/psnative-${{ parameters.BuildPlatform }}.tar
         build_tag: $(Build.BuildId)
         compress: false
         enable_isolated_acr_push: false
@@ -103,18 +112,18 @@ jobs:
       clean: true
 
     - download: current
-      artifact: drop_LinuxMuslBuild_Build_Linux_musl_x64
-      patterns: docker-images/psnative-alpine.tar
+      artifact: drop_${{ parameters.StageName }}_${{ parameters.Name }}
+      patterns: docker-images/psnative-${{ parameters.BuildPlatform}}.tar
       displayName: 'Download Docker image artifact'
 
     - pwsh: |
-        Get-ChildItem $(Pipeline.Workspace)/drop_LinuxMuslBuild_Build_Linux_musl_x64 -Recurse | Out-String -Stream | Write-Verbose -Verbose
+        Get-ChildItem $(Pipeline.Workspace)/drop_${{ parameters.StageName }}_${{ parameters.Name }} -Recurse | Out-String -Stream | Write-Verbose -Verbose
       displayName: Capture downloaded artifacts
 
     - pwsh: |
         New-Item -ItemType Directory -Path "$(ob_outputDirectory)" | Out-Null
         New-Item -ItemType Directory -Path $(Pipeline.Workspace)/temp | Out-Null
-        tar -xvf $(Pipeline.Workspace)/drop_LinuxMuslBuild_Build_Linux_musl_x64/docker-images/psnative-alpine.tar -C $(Pipeline.Workspace)/temp
+        tar -xvf $(Pipeline.Workspace)/drop_${{ parameters.StageName }}_${{ parameters.Name }}/docker-images/psnative-${{ parameters.BuildPlatform}}.tar -C $(Pipeline.Workspace)/temp
         $manifest = Get-Content "$(Pipeline.Workspace)/temp/manifest.json"
         $manifest | Out-String -Stream | Write-Verbose -Verbose
 
