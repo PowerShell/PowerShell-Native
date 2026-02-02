@@ -118,11 +118,6 @@ extends:
     - stage: LinuxBuild
       displayName: Linux Build
       jobs:
-      # - template: .pipelines/templates/build-linux.yml@self
-      #   parameters:
-      #     ARCHITECTURE: 'linux-x64'
-      #     Name: 'Build_Linux_x64'
-
       - template: .pipelines/templates/build-linux.yml@self
         parameters:
           ARCHITECTURE: 'linux-arm64'

@@ -2121,23 +2121,6 @@ function Start-PSBootstrap {
                 Start-NativeExecution { apk update }
                 Start-NativeExecution { apk add $Deps }
             }
-
-            <# Not needed any more #>
-            # Install [fpm](https://github.com/jordansissel/fpm) and [ronn](https://github.com/rtomayko/ronn)
-            # if ($Package) {
-            #     try {
-            #         # We cannot guess if the user wants to run gem install as root on linux and windows,
-            #         # but macOs usually requires sudo
-            #         $gemsudo = ''
-            #         if($Environment.IsMacOS) {
-            #             $gemsudo = $sudo
-            #         }
-            #         Start-NativeExecution ([ScriptBlock]::Create("$gemsudo gem install fpm -v 1.9.3"))
-            #         Start-NativeExecution ([ScriptBlock]::Create("$gemsudo gem install ronn -v 0.7.3"))
-            #     } catch {
-            #         Write-Warning "Installation of fpm and ronn gems failed! Must resolve manually."
-            #     }
-            # }
         }
 
         # Try to locate dotnet-SDK before installing it
