@@ -24,6 +24,9 @@ defaults:
   run:
     shell: pwsh
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Windows - ${{ matrix.buildName }}
