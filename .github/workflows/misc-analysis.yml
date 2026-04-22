@@ -1,0 +1,32 @@
+# Converted from .vsts-ci/misc-analysis.yml
+# Note: The original pipeline used a private Azure DevOps compliance template
+# (ci-compliance.yml@ComplianceRepo from PowerShell/compliance). That template
+# is not available as a GitHub Actions workflow. The checkout steps are preserved
+# and the compliance step is noted below for manual replacement.
+name: Misc Analysis
+
+on:
+  push:
+    # Batch merge builds together while a merge build is running
+    branches:
+    - master
+    - release*
+  pull_request:
+    branches:
+    - master
+    - release*
+
+jobs:
+  compliance:
+    name: Compliance Job
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        clean: true
+
+    # The original pipeline ran the ci-compliance.yml template from the
+    # PowerShell/compliance Azure DevOps repository. Replace this step with
+    # the appropriate GitHub Actions compliance checks for your organization.

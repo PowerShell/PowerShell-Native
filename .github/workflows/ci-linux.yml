@@ -1,0 +1,46 @@
+# Converted from .vsts-ci/linux.yml
+name: Linux CI
+
+on:
+  push:
+    branches:
+    - master
+    - release*
+  pull_request:
+    branches:
+    - master
+    - release*
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  # Avoid expensive initialization of dotnet cli, see: http://donovanbrown.com/post/Stop-wasting-time-during-NET-Core-builds
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  build:
+    name: Linux - ${{ matrix.buildName }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        buildName:
+        - ubuntu.16.04-arm
+        - ubuntu.16.04-arm64
+        - centos.7
+        - alpine
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        clean: true
+
+    - name: Start build - ${{ matrix.buildName }}
+      if: success()
+      run: |
+        tools/releaseBuild/vstsBuild.ps1 -Name ${{ matrix.buildName }} -Verbose

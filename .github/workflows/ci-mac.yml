@@ -1,0 +1,44 @@
+# Converted from .vsts-ci/mac.yml
+name: macOS CI
+
+on:
+  push:
+    branches:
+    - master
+    - release*
+  pull_request:
+    branches:
+    - master
+    - release*
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  # Avoid expensive initialization of dotnet cli, see: http://donovanbrown.com/post/Stop-wasting-time-during-NET-Core-builds
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  build:
+    name: Build
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        clean: true
+
+    - name: Start build
+      run: |
+        tools/releaseBuild/PowershellNative.ps1 -Arch osx -Configuration Release -RepoRoot ${{ github.workspace }} -TargetLocation "${{ runner.temp }}/Packages" -Verbose
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: artifacts
+        path: ${{ runner.temp }}/Packages/osx-symbols.zip

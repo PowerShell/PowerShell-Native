@@ -1,0 +1,63 @@
+# Converted from .vsts-ci/windows.yml
+# Note: The original pipeline used a self-hosted Azure DevOps pool (PS-PowerShell-x64)
+# with a custom image (PSMMS2019-PS-Native-Secure). Update the runs-on value
+# to a self-hosted runner label if one is available.
+name: Windows CI
+
+on:
+  push:
+    branches:
+    - master
+    - release*
+  pull_request:
+    branches:
+    - master
+    - release*
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  # Avoid expensive initialization of dotnet cli, see: http://donovanbrown.com/post/Stop-wasting-time-during-NET-Core-builds
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  build:
+    name: Windows - ${{ matrix.buildName }}
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        include:
+        - buildName: x86
+        - buildName: x64
+        - buildName: x64_arm64
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        clean: true
+
+    - name: Set Visual Studio Path
+      if: success()
+      run: |
+        $vsPath = ${Env:ProgramFiles(x86)} + '\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin'
+        "$vsPath" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+    - name: Start build - ${{ matrix.buildName }}
+      if: success()
+      run: |
+        $cmakeBinPath = "$env:ProgramFiles\CMake\bin\"
+        if(Test-Path $cmakeBinPath) { $env:Path = "$cmakeBinPath;$env:PATH" } else { throw "CMake not installed under $cmakeBinPath" }
+        ${{ github.workspace }}\tools\releaseBuild\PowerShellNative.ps1 -RepoRoot ${{ github.workspace }} -TargetLocation "${{ runner.temp }}\Packages" -Arch ${{ matrix.buildName }} -Configuration Release -Symbols
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: artifacts-${{ matrix.buildName }}
+        path: ${{ runner.temp }}\Packages\${{ matrix.buildName }}-symbols.zip
