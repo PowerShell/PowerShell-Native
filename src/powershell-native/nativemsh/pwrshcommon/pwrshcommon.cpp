@@ -856,6 +856,7 @@ namespace NativeMsh
         "System.ServiceModel",
         "System.ServiceModel.Duplex",
         "System.ServiceModel.Http",
+        "System.ServiceModel.NetFramingBase",
         "System.ServiceModel.NetTcp",
         "System.ServiceModel.Primitives",
         "System.ServiceModel.Security",
