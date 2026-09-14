@@ -661,245 +661,52 @@ namespace NativeMsh
         return bReturnResult;
     }
 
-    // The assemblies that are trusted by CoreCLR. These are the CoreCLR implementation
-    // and facade assemblies plus Microsoft.Management.Infrastructure (MI .Net) assemblies.
-    // System.Management.Automation must not be listed here. I should exist on the APP_PATH.
-    //
-    // NOTE: The names must not include the .dll extension because it will be added programmatically.
-    static PCSTR trustedAssemblies[] =
+    // Native and host binaries that must not be included in CoreCLR's trusted platform assembly list.
+    static PCSTR excludedTpaFileNames[] =
     {
-        "getfilesiginforedistwrapper",
-        "Markdig.Signed",
-        "Microsoft.ApplicationInsights",
-        "Microsoft.Bcl.AsyncInterfaces",
-        "Microsoft.CodeAnalysis",
-        "Microsoft.CodeAnalysis.CSharp",
-        "Microsoft.CSharp",
-        "Microsoft.Extensions.ObjectPool",
-        "Microsoft.Management.Infrastructure",
-        "Microsoft.Management.Infrastructure.CimCmdlets",
-        "Microsoft.Management.Infrastructure.Native",
-        "Microsoft.PowerShell.Commands.Diagnostics",
-        "Microsoft.PowerShell.Commands.Management",
-        "Microsoft.PowerShell.Commands.Utility",
-        "Microsoft.PowerShell.ConsoleHost",
-        "Microsoft.PowerShell.CoreCLR.Eventing",
-        "Microsoft.PowerShell.MarkdownRender",
-        "Microsoft.PowerShell.SDK",
-        "Microsoft.PowerShell.Security",
-        "Microsoft.VisualBasic",
-        "Microsoft.VisualBasic.Core",
-        "Microsoft.Win32.Primitives",
-        "Microsoft.Win32.Registry",
-        "Microsoft.Win32.Registry.AccessControl",
-        "Microsoft.Win32.SystemEvents",
-        "Microsoft.WSMan.Management",
-        "Microsoft.WSMan.Runtime",
-        "mscorlib",
-        "Namotion.Reflection",
-        "netstandard",
-        "Newtonsoft.Json",
-        "NJsonSchema",
-        "System",
-        "System.AppContext",
-        "System.Buffers",
-        "System.CodeDom",
-        "System.Collections",
-        "System.Collections.Concurrent",
-        "System.Collections.Immutable",
-        "System.Collections.NonGeneric",
-        "System.Collections.Specialized",
-        "System.ComponentModel",
-        "System.ComponentModel.Annotations",
-        "System.ComponentModel.Composition",
-        "System.ComponentModel.Composition.Registration",
-        "System.ComponentModel.DataAnnotations",
-        "System.ComponentModel.EventBasedAsync",
-        "System.ComponentModel.Primitives",
-        "System.ComponentModel.TypeConverter",
-        "System.Configuration",
-        "System.Configuration.ConfigurationManager",
-        "System.Console",
-        "System.Core",
-        "System.Data",
-        "System.Data.Common",
-        "System.Data.DataSetExtensions",
-        "System.Data.Odbc",
-        "System.Data.OleDb",
-        "System.Data.SqlClient",
-        "System.Diagnostics.Contracts",
-        "System.Diagnostics.Debug",
-        "System.Diagnostics.DiagnosticSource",
-        "System.Diagnostics.EventLog",
-        "System.Diagnostics.EventLog.Messages",
-        "System.Diagnostics.FileVersionInfo",
-        "System.Diagnostics.PerformanceCounter",
-        "System.Diagnostics.Process",
-        "System.Diagnostics.StackTrace",
-        "System.Diagnostics.TextWriterTraceListener",
-        "System.Diagnostics.Tools",
-        "System.Diagnostics.TraceSource",
-        "System.Diagnostics.Tracing",
-        "System.DirectoryServices",
-        "System.DirectoryServices.AccountManagement",
-        "System.DirectoryServices.Protocols",
-        "System.Drawing",
-        "System.Drawing.Common",
-        "System.Drawing.Primitives",
-        "System.Dynamic.Runtime",
-        "System.Formats.Asn1",
-        "System.Formats.Tar",
-        "System.Globalization",
-        "System.Globalization.Calendars",
-        "System.Globalization.Extensions",
-        "System.IO",
-        "System.IO.Compression",
-        "System.IO.Compression.Brotli",
-        "System.IO.Compression.FileSystem",
-        "System.IO.Compression.ZipFile",
-        "System.IO.FileSystem",
-        "System.IO.FileSystem.AccessControl",
-        "System.IO.FileSystem.DriveInfo",
-        "System.IO.FileSystem.Primitives",
-        "System.IO.FileSystem.Watcher",
-        "System.IO.IsolatedStorage",
-        "System.IO.MemoryMappedFiles",
-        "System.IO.Packaging",
-        "System.IO.Pipes",
-        "System.IO.Pipes.AccessControl",
-        "System.IO.Ports",
-        "System.IO.UnmanagedMemoryStream",
-        "System.Linq",
-        "System.Linq.Expressions",
-        "System.Linq.Parallel",
-        "System.Linq.Queryable",
-        "System.Management",
-        "System.Management.Automation",
-        "System.Memory",
-        "System.Net",
-        "System.Net.Http",
-        "System.Net.Http.Json",
-        "System.Net.Http.WinHttpHandler",
-        "System.Net.HttpListener",
-        "System.Net.Mail",
-        "System.Net.NameResolution",
-        "System.Net.NetworkInformation",
-        "System.Net.Ping",
-        "System.Net.Primitives",
-        "System.Net.Quic",
-        "System.Net.Requests",
-        "System.Net.Security",
-        "System.Net.ServicePoint",
-        "System.Net.Sockets",
-        "System.Net.WebClient",
-        "System.Net.WebHeaderCollection",
-        "System.Net.WebProxy",
-        "System.Net.WebSockets",
-        "System.Net.WebSockets.Client",
-        "System.Numerics",
-        "System.Numerics.Vectors",
-        "System.ObjectModel",
-        "System.Private.CoreLib",
-        "System.Private.DataContractSerialization",
-        "System.Private.ServiceModel",
-        "System.Private.Uri",
-        "System.Private.Xml",
-        "System.Private.Xml.Linq",
-        "System.Reflection",
-        "System.Reflection.Context",
-        "System.Reflection.DispatchProxy",
-        "System.Reflection.Emit",
-        "System.Reflection.Emit.ILGeneration",
-        "System.Reflection.Emit.Lightweight",
-        "System.Reflection.Extensions",
-        "System.Reflection.Metadata",
-        "System.Reflection.Primitives",
-        "System.Reflection.TypeExtensions",
-        "System.Resources.Reader",
-        "System.Resources.ResourceManager",
-        "System.Resources.Writer",
-        "System.Runtime",
-        "System.Runtime.Caching",
-        "System.Runtime.CompilerServices.Unsafe",
-        "System.Runtime.CompilerServices.VisualC",
-        "System.Runtime.Extensions",
-        "System.Runtime.Handles",
-        "System.Runtime.InteropServices",
-        "System.Runtime.InteropServices.JavaScript",
-        "System.Runtime.InteropServices.RuntimeInformation",
-        "System.Runtime.Intrinsics",
-        "System.Runtime.Loader",
-        "System.Runtime.Numerics",
-        "System.Runtime.Serialization",
-        "System.Runtime.Serialization.Formatters",
-        "System.Runtime.Serialization.Json",
-        "System.Runtime.Serialization.Primitives",
-        "System.Runtime.Serialization.Xml",
-        "System.Security",
-        "System.Security.AccessControl",
-        "System.Security.Claims",
-        "System.Security.Cryptography",
-        "System.Security.Cryptography.Algorithms",
-        "System.Security.Cryptography.Cng",
-        "System.Security.Cryptography.Csp",
-        "System.Security.Cryptography.Encoding",
-        "System.Security.Cryptography.OpenSsl",
-        "System.Security.Cryptography.Pkcs",
-        "System.Security.Cryptography.Primitives",
-        "System.Security.Cryptography.ProtectedData",
-        "System.Security.Cryptography.X509Certificates",
-        "System.Security.Cryptography.Xml",
-        "System.Security.Permissions",
-        "System.Security.Principal",
-        "System.Security.Principal.Windows",
-        "System.Security.SecureString",
-        "System.ServiceModel",
-        "System.ServiceModel.Duplex",
-        "System.ServiceModel.Http",
-        "System.ServiceModel.NetTcp",
-        "System.ServiceModel.Primitives",
-        "System.ServiceModel.Security",
-        "System.ServiceModel.Syndication",
-        "System.ServiceModel.Web",
-        "System.ServiceProcess",
-        "System.ServiceProcess.ServiceController",
-        "System.Speech",
-        "System.Text.Encoding",
-        "System.Text.Encoding.CodePages",
-        "System.Text.Encoding.Extensions",
-        "System.Text.Encodings.Web",
-        "System.Text.Json",
-        "System.Text.RegularExpressions",
-        "System.Threading",
-        "System.Threading.AccessControl",
-        "System.Threading.Channels",
-        "System.Threading.Overlapped",
-        "System.Threading.Tasks",
-        "System.Threading.Tasks.Dataflow",
-        "System.Threading.Tasks.Extensions",
-        "System.Threading.Tasks.Parallel",
-        "System.Threading.Thread",
-        "System.Threading.ThreadPool",
-        "System.Threading.Timer",
-        "System.Transactions",
-        "System.Transactions.Local",
-        "System.ValueTuple",
-        "System.Web",
-        "System.Web.HttpUtility",
-        "System.Web.Services.Description",
-        "System.Windows",
-        "System.Windows.Extensions",
-        "System.Xml",
-        "System.Xml.Linq",
-        "System.Xml.ReaderWriter",
-        "System.Xml.Serialization",
-        "System.Xml.XDocument",
-        "System.Xml.XmlDocument",
-        "System.Xml.XmlSerializer",
-        "System.Xml.XPath",
-        "System.Xml.XPath.XDocument",
-        "WindowsBase"
+        "clretwrc.dll",
+        "clrgc.dll",
+        "clrgcexp.dll",
+        "clrjit.dll",
+        "coreclr.dll",
+        "D3DCompiler_47_cor3.dll",
+        "getfilesiginforedist.dll",
+        "hostfxr.dll",
+        "hostpolicy.dll",
+        "microsoft.management.infrastructure.native.unmanaged.dll",
+        "Microsoft.PowerShell.GraphicalHost.dll",
+        "mscordaccore.dll",
+        "mscordbi.dll",
+        "mscorrc.dll",
+        "msquic.dll",
+        "PenImc_cor3.dll",
+        "PowerShell.Core.Instrumentation.dll",
+        "PresentationNative_cor3.dll",
+        "pwrshplugin.dll",
+        "sni.dll",
+        "System.IO.Compression.Native.dll",
+        "vcruntime140_cor3.dll",
+        "wpfgfx_cor3.dll"
     };
+
+    static bool ShouldExcludeFromTpaList(PCSTR fileName)
+    {
+        static const char versionedMscordaccorePrefix[] = "mscordaccore_";
+        if (_strnicmp(fileName, versionedMscordaccorePrefix, sizeof(versionedMscordaccorePrefix) - 1) == 0)
+        {
+            return true;
+        }
+
+        for (const char* &excludedAssembly : excludedTpaFileNames)
+        {
+            if (_stricmp(fileName, excludedAssembly) == 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     // Define the function pointer for the CLR entry point
     typedef HRESULT(STDAPICALLTYPE *GetCLRRuntimeHostFp)(REFIID riid, IUnknown** pUnk);
@@ -983,68 +790,48 @@ namespace NativeMsh
         return EXIT_CODE_SUCCESS;
     }
 
-    bool PwrshCommon::DoesAssemblyExist(
-        std::string& fileToTest)
-    {
-        //FILE *file = sysCalls->fopen(fileToTest.c_str(), "r"); // TODO: Use fopen_s?
-        FILE *file = NULL;
-        errno_t status = sysCalls->fopen_s(&file, fileToTest.c_str(), "r");
-
-        if (file != NULL) {
-            sysCalls->fclose(file);
-            return (status == 0);
-        }
-        return false;
-    }
-
-    // This assumes that directoryPath already includes a trailing "\\"
-    void PwrshCommon::ProbeAssembly(
-        _In_z_ PCSTR directoryPath,
-        _In_z_ PCSTR assemblyName,
-        std::string& result)
-    {
-        PCSTR niExtension = ".ni.dll";
-        PCSTR ilExtension = ".dll";
-
-        // Test NI extension first because it is preferable to IL
-        std::string fileToTest(directoryPath);
-        fileToTest += assemblyName;
-        fileToTest += niExtension;
-        if (DoesAssemblyExist(fileToTest)) {
-            result = fileToTest;
-            return;
-        }
-
-        // Check IL if NI is not present
-        fileToTest = directoryPath;
-        fileToTest += assemblyName;
-        fileToTest += ilExtension;
-        if (DoesAssemblyExist(fileToTest)) {
-            result = fileToTest;
-        }
-    }
-
-    // Returns the semicolon-separated list of paths to runtime dlls that are considered trusted.
-    // Do not put powershell assemblies in the TPA list as it will cause 'Security Transparent V.S. Security Critical' error.
+    // Returns a semicolon-separated list of DLLs in the CoreCLR directory, excluding known native and host binaries.
     void PwrshCommon::GetTrustedAssemblyList(
         PCSTR coreCLRDirectoryPath,
         std::stringstream& assemblyList,
         bool& listEmpty)
     {
-        for (const char* &assembly : trustedAssemblies)
+        std::string directoryPath(coreCLRDirectoryPath);
+        if (!directoryPath.empty() && directoryPath.back() != '\\')
         {
-            std::string assemblyPath;
-            ProbeAssembly(coreCLRDirectoryPath, assembly, assemblyPath);
+            directoryPath += "\\";
+        }
 
-            if (assemblyPath.length() > 0)
+        std::string searchPath(directoryPath);
+        searchPath += "*.dll";
+
+        WIN32_FIND_DATAA findData;
+        HANDLE findHandle = sysCalls->FindFirstFileA(searchPath.c_str(), &findData);
+        if (findHandle == INVALID_HANDLE_VALUE)
+        {
+            return;
+        }
+
+        do
+        {
+            if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0 &&
+                !ShouldExcludeFromTpaList(findData.cFileName))
             {
                 if (listEmpty)
+                {
                     listEmpty = false;
+                }
                 else
+                {
                     assemblyList << ";";
-                assemblyList << assemblyPath;
+                }
+
+                assemblyList << directoryPath << findData.cFileName;
             }
         }
+        while (sysCalls->FindNextFileA(findHandle, &findData));
+
+        sysCalls->FindClose(findHandle);
     }
 
 #pragma prefast(pop)

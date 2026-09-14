@@ -67,4 +67,24 @@ namespace NativeMsh
         return ::fclose(stream);
     }
 
+    HANDLE WINAPI WinSystemCallFacade::FindFirstFileA(
+        _In_ LPCSTR lpFileName,
+        _Out_ LPWIN32_FIND_DATAA lpFindFileData)
+    {
+        return ::FindFirstFileA(lpFileName, lpFindFileData);
+    }
+
+    BOOL WINAPI WinSystemCallFacade::FindNextFileA(
+        _In_ HANDLE hFindFile,
+        _Out_ LPWIN32_FIND_DATAA lpFindFileData)
+    {
+        return ::FindNextFileA(hFindFile, lpFindFileData);
+    }
+
+    BOOL WINAPI WinSystemCallFacade::FindClose(
+        _Inout_ HANDLE hFindFile)
+    {
+        return ::FindClose(hFindFile);
+    }
+
 } // namespace NativeMsh

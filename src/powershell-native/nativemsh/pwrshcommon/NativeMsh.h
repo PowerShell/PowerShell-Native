@@ -172,14 +172,6 @@ namespace NativeMsh
             __out_ecount(1) int * lpMajorVersion,
             __out_ecount(1) int * lpMinorVersion);
 
-        virtual bool DoesAssemblyExist(
-            std::string& fileToTest);
-
-        virtual void ProbeAssembly(
-            _In_z_ PCSTR directoryPath,
-            _In_z_ PCSTR assemblyName,
-            std::string& result);
-
         virtual void GetTrustedAssemblyList(
             PCSTR coreCLRDirectoryPath,
             std::stringstream& assemblyList,

@@ -55,6 +55,17 @@ namespace NativeMsh
 
         virtual int fclose(
             FILE *stream) = 0;
+
+        virtual HANDLE WINAPI FindFirstFileA(
+            _In_ LPCSTR lpFileName,
+            _Out_ LPWIN32_FIND_DATAA lpFindFileData) = 0;
+
+        virtual BOOL WINAPI FindNextFileA(
+            _In_ HANDLE hFindFile,
+            _Out_ LPWIN32_FIND_DATAA lpFindFileData) = 0;
+
+        virtual BOOL WINAPI FindClose(
+            _Inout_ HANDLE hFindFile) = 0;
     };
 
 } // namespace NativeMsh
