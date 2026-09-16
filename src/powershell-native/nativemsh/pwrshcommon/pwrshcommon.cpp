@@ -675,6 +675,7 @@ namespace NativeMsh
         "hostpolicy.dll",
         "microsoft.management.infrastructure.native.unmanaged.dll",
         "Microsoft.PowerShell.GraphicalHost.dll",
+        "pwsh.dll",
         "mscordaccore.dll",
         "mscordbi.dll",
         "mscorrc.dll",
