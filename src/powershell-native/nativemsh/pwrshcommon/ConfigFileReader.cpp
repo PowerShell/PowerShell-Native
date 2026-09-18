@@ -24,7 +24,7 @@ namespace NativeMsh
     {
         std::wstring absolutePathToConfigFile(pathToConfig);
         absolutePathToConfigFile += powerShellConfigFileName;
-        std::wfstream psConfigFile(absolutePathToConfigFile.c_str());
+        std::wifstream psConfigFile(absolutePathToConfigFile.c_str());
 
         if (!psConfigFile.is_open())
         {
