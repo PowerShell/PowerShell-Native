@@ -35,6 +35,7 @@ jobs:
   - pwsh: |
       $platforms = @("drop_LinuxBuild_Build_Linux_arm64",
                      "drop_LinuxMuslBuild_ExtractLibPSL",
+                     "drop_LinuxMuslArm64Build_ExtractLibPSL",
                      "drop_LinuxRockyBuild_ExtractLibPSL",
                      "drop_LinuxBuildARM_Build_Linux_arm",
                      "drop_WinBuildAndSign_Build_Sign_x64",
@@ -50,6 +51,7 @@ jobs:
       $LinuxARMZipPath = "$(ob_outputDirectory)/drop_LinuxBuildARM_Build_Linux_arm.zip"
       $LinuxARM64ZipPath = "$(ob_outputDirectory)/drop_LinuxBuild_Build_Linux_arm64.zip"
       $LinuxAlpineZipPath = "$(ob_outputDirectory)/drop_LinuxMuslBuild_ExtractLibPSL.zip"
+      $LinuxAlpineARM64ZipPath = "$(ob_outputDirectory)/drop_LinuxMuslArm64Build_ExtractLibPSL.zip"
       $LinuxRockyZipPath = "$(ob_outputDirectory)/drop_LinuxRockyBuild_ExtractLibPSL.zip"
       $macOSZipPath = "$(ob_outputDirectory)/drop_osx.zip"
 
@@ -72,7 +74,7 @@ jobs:
 
       Import-Module $(Build.SourcesDirectory)/build.psm1 -Force
       $PackageRoot = New-Item -ItemType Directory -Path  $(ob_outputDirectory)\NugetPackageSrc
-      Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxRockyZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -macOSZipPath $macOSZipPath
+      Start-BuildPowerShellNativePackage -PackageRoot $PackageRoot -Version $(PackageVersion) -WindowsX64ZipPath  $WindowsX64ZipPath -WindowsX86ZipPath $WindowsX86ZipPath -WindowsARM64ZipPath  $WindowsARM64ZipPath -LinuxZipPath $LinuxRockyZipPath -LinuxARMZipPath  $LinuxARMZipPath -LinuxARM64ZipPath $LinuxARM64ZipPath -LinuxAlpineZipPath $LinuxAlpineZipPath -LinuxAlpineARM64ZipPath $LinuxAlpineARM64ZipPath -macOSZipPath $macOSZipPath
 
       Write-Verbose -Verbose "Enumerating $symbolsRoot"
       Get-ChildItem -Path $symbolsRoot -Recurse

@@ -99,6 +99,21 @@ extends:
           BuildPlatform: 'alpine'
           StageName: 'LinuxMuslBuild'
 
+    - stage: LinuxMuslArm64Build
+      displayName: Linux Musl ARM64 Build
+      variables:
+      - name: LinuxContainerImage
+        value: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+
+      jobs:
+      - template: .pipelines/templates/build-docker.yml@self
+        parameters:
+          ARCHITECTURE: 'linux-musl-arm64'
+          Name: 'Linux_musl_arm64'
+          hostArchitecture: 'arm64'
+          BuildPlatform: 'alpine'
+          StageName: 'LinuxMuslArm64Build'
+
 
     - stage: LinuxRockyBuild
       displayName: Linux Rocky Build
@@ -142,7 +157,7 @@ extends:
           Name: 'Build_Linux_arm'
 
     - stage: Build_Nuget
-      dependsOn: [WinBuildAndSign, LinuxBuild, LinuxBuildARM, LinuxMuslBuild, LinuxRockyBuild]
+      dependsOn: [WinBuildAndSign, LinuxBuild, LinuxBuildARM, LinuxMuslBuild, LinuxMuslArm64Build, LinuxRockyBuild]
       displayName: Build NuGet
       jobs:
       - template: .pipelines/templates/build-nuget.yml@self
