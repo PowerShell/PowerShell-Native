@@ -673,6 +673,7 @@ namespace NativeMsh
         "getfilesiginforedist.dll",
         "hostfxr.dll",
         "hostpolicy.dll",
+        "ijwhost.dll",
         "microsoft.management.infrastructure.native.unmanaged.dll",
         "Microsoft.PowerShell.GraphicalHost.dll",
         "pwsh.dll",
