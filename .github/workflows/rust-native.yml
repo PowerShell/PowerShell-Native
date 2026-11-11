@@ -1,0 +1,276 @@
+name: C++ and Rust native
+
+on:
+  push:
+    branches: [master]
+    paths: ["rust/**", "src/**", ".gitmodules", ".github/workflows/rust-native.yml"]
+  pull_request:
+    paths: ["rust/**", "src/**", ".gitmodules", ".github/workflows/rust-native.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x64
+            triple: x86_64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+            triple: aarch64
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: rust
+        shell: bash
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          submodules: true
+      - name: Install build tools
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustup component add clippy rustfmt
+          rustup target add ${{ matrix.triple }}-unknown-linux-gnu ${{ matrix.triple }}-unknown-linux-musl
+          cargo install cargo-zigbuild --version 0.24.1 --locked
+          python3 -m venv "$RUNNER_TEMP/zig"
+          "$RUNNER_TEMP/zig/bin/pip" install ziglang==0.15.2
+          echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/zig/bin/python" -c 'import pathlib, ziglang; print(pathlib.Path(ziglang.__file__).parent)' >> "$GITHUB_PATH"
+      - name: Build existing C++ library
+        run: |
+          cmake -S ../src/libpsl-native -B "$RUNNER_TEMP/cpp" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake --build "$RUNNER_TEMP/cpp" --target psl-native --parallel 2
+          mkdir -p ../artifacts/cpp/linux-${{ matrix.arch }}
+          cp ../src/powershell-unix/libpsl-native.so ../artifacts/cpp/linux-${{ matrix.arch }}/
+      - name: Format, pedantic Clippy, and test
+        run: |
+          cargo fmt --all -- --check
+          for libc in gnu musl; do
+            cargo clippy --locked --workspace --all-targets --target "${{ matrix.triple }}-unknown-linux-$libc" -- -D warnings -D clippy::pedantic
+          done
+          cargo test --locked --workspace
+      - name: Build both host-libc variants
+        run: |
+          python3 build-linux.py --output ../artifacts/rust --target linux-${{ matrix.arch }} --target linux-musl-${{ matrix.arch }}
+      - name: Verify glibc ABI and ELF linkage
+        run: |
+          c++ -std=c++11 -I../src/libpsl-native/src libpsl-native/tests/abi.cpp -ldl -o target/psl-abi
+          target/psl-abi ../artifacts/rust/linux-${{ matrix.arch }}/libpsl-native.so
+          readelf -d ../artifacts/rust/linux-${{ matrix.arch }}/libpsl-native.so | grep -F 'Shared library: [libc.so.6]'
+          readelf -d ../artifacts/rust/linux-musl-${{ matrix.arch }}/libpsl-native.so | grep -F 'Shared library: [libc.so]'
+          for library in ../artifacts/rust/*/*.so; do
+            test "$(nm -D --defined-only "$library" | wc -l)" -eq 30
+            readelf -d "$library" | grep -F 'Library soname: [libpsl-native.so]'
+          done
+      - name: Test in a real musl process
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src/rust alpine:3.22 sh -ec '
+            apk add --no-cache g++ make cmake cargo rust
+            CARGO_TARGET_DIR=target/alpine cargo test --locked -p psl-native
+            cmake -S ../src/libpsl-native -B target/cpp-musl -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            cmake --build target/cpp-musl --target psl-native --parallel 2
+            mkdir -p ../artifacts/cpp/linux-musl-${{ matrix.arch }}
+            cp ../src/powershell-unix/libpsl-native.so ../artifacts/cpp/linux-musl-${{ matrix.arch }}/
+            g++ -std=c++11 -I../src/libpsl-native/src libpsl-native/tests/abi.cpp -ldl -o target/alpine/psl-abi
+            target/alpine/psl-abi ../artifacts/rust/linux-musl-${{ matrix.arch }}/libpsl-native.so
+          '
+      - name: Ensure PowerShell is available
+        run: |
+          if ! command -v pwsh >/dev/null; then
+            mkdir -p "$RUNNER_TEMP/pwsh"
+            curl --fail --location --retry 3 "https://github.com/PowerShell/PowerShell/releases/download/v7.7.0/powershell-7.7.0-linux-${{ matrix.arch }}.tar.gz" -o "$RUNNER_TEMP/pwsh.tar.gz"
+            tar -xzf "$RUNNER_TEMP/pwsh.tar.gz" -C "$RUNNER_TEMP/pwsh"
+            chmod +x "$RUNNER_TEMP/pwsh/pwsh"
+            echo "$RUNNER_TEMP/pwsh" >> "$GITHUB_PATH"
+          fi
+      - name: Run Pester v5 on packaged Rust library
+        shell: pwsh
+        run: |
+          $modules = Join-Path $env:RUNNER_TEMP 'powershell-modules'
+          New-Item -ItemType Directory -Force $modules > $null
+          Save-Module Pester -RequiredVersion 5.9.0 -Path $modules -Repository PSGallery -Force
+          $env:PSModulePath = $modules + [IO.Path]::PathSeparator + $env:PSModulePath
+          ./tests/Invoke-Tests.ps1 -LibraryPath ../artifacts/rust/linux-${{ matrix.arch }}/libpsl-native.so -ResultPath ../artifacts/test-results/linux-${{ matrix.arch }}.xml
+      - name: Run Pester v5 in a real musl process (x64 host only)
+        if: matrix.arch == 'x64'
+        run: |
+          mkdir -p "$RUNNER_TEMP/pwsh-musl"
+          curl --fail --location --retry 3 https://github.com/PowerShell/PowerShell/releases/download/v7.7.0/powershell-7.7.0-linux-musl-x64.tar.gz -o "$RUNNER_TEMP/pwsh-musl.tar.gz"
+          tar -xzf "$RUNNER_TEMP/pwsh-musl.tar.gz" -C "$RUNNER_TEMP/pwsh-musl"
+          chmod +x "$RUNNER_TEMP/pwsh-musl/pwsh"
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" \
+            -v "$RUNNER_TEMP/pwsh-musl:/opt/pwsh:ro" \
+            -v "$RUNNER_TEMP/powershell-modules:/root/.local/share/powershell/Modules:ro" \
+            -w /src/rust alpine:3.22 sh -ec '
+              apk add --no-cache ca-certificates icu-libs krb5-libs libatomic libgcc libintl libssl3 libstdc++ ncurses-terminfo-base tzdata userspace-rcu zlib
+              /opt/pwsh/pwsh -NoLogo -NoProfile -File ./tests/Invoke-Tests.ps1 \
+                -LibraryPath ../artifacts/rust/linux-musl-x64/libpsl-native.so \
+                -ResultPath ../artifacts/test-results/linux-musl-x64.xml
+            '
+      - name: Publish side-by-side Linux binaries and Pester results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: native-linux-${{ matrix.arch }}
+          path: artifacts/
+
+  windows:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, x86]
+        configuration: [coreclr, framework]
+        include:
+          - arch: x64
+            target: x86_64-pc-windows-msvc
+          - arch: x86
+            target: i686-pc-windows-msvc
+          - configuration: coreclr
+            features: ""
+          - configuration: framework
+            features: "--no-default-features"
+    defaults:
+      run:
+        working-directory: rust
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Configure MSVC and Windows SDK
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installation = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installation) { throw 'MSVC installation not found.' }
+          $variables = & cmd.exe /s /c "`"$installation\Common7\Tools\VsDevCmd.bat`" -arch=${{ matrix.arch }} -host_arch=x64 >nul && set"
+          if ($LASTEXITCODE) { throw 'Visual Studio environment initialization failed.' }
+          foreach ($line in $variables) {
+            if ($line -match '^(INCLUDE|LIB|LIBPATH|PATH|WindowsSdkDir|WindowsSDKVersion|VCToolsInstallDir|VCINSTALLDIR|VSINSTALLDIR)=') {
+              $line | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            }
+          }
+      - name: Install Rust
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          rustup update stable --no-self-update
+          rustup default stable
+          rustup component add clippy rustfmt
+          rustup target add ${{ matrix.target }}
+      - name: Build, lint, and test launcher
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          cargo fmt --all -- --check
+          cargo clippy --locked --workspace --all-targets --target ${{ matrix.target }} ${{ matrix.features }} -- -D warnings -D clippy::pedantic
+          if ($LASTEXITCODE) { throw 'Rust lint failed.' }
+          cargo test --locked -p powershell-native-windows --target ${{ matrix.target }} ${{ matrix.features }}
+          if ($LASTEXITCODE) { throw 'Rust tests failed.' }
+          cargo build --locked --release -p powershell-native-windows --target ${{ matrix.target }} ${{ matrix.features }}
+          if ($LASTEXITCODE) { throw 'Rust build failed.' }
+          $destination = "../artifacts/rust/win-${{ matrix.arch }}-${{ matrix.configuration }}"
+          New-Item -ItemType Directory -Force $destination > $null
+          Copy-Item ./target/${{ matrix.target }}/release/powershell.exe $destination
+          $imports = & dumpbin.exe /nologo /dependents "$destination/powershell.exe"
+          if ($LASTEXITCODE) { throw 'Cannot inspect packaged launcher dependencies.' }
+          if ($imports -match '(?i)\b(?:vcruntime\d+\w*|msvcp\d+\w*|msvcr\d+\w*|ucrtbase[d]?)\.dll\b') {
+            throw "Launcher has an unbundled dynamic CRT dependency: $imports"
+          }
+      - name: Build existing C++ CoreCLR binaries
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $plugin = (Resolve-Path ../src/powershell-native/nativemsh/pwrshplugin).Path
+          mc.exe -o -d -c -U "$plugin/pwrshpluginerrorcodes.mc" -h $plugin -r $plugin
+          $platform = if ('${{ matrix.arch }}' -eq 'x86') { 'Win32' } else { 'x64' }
+          cmake -S ../src/powershell-native -B "$env:RUNNER_TEMP/cpp" -G 'Visual Studio 17 2022' -A $platform -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DBUILD_ONECORE=ON -DBUILD_TARGET_ARCH=${{ matrix.arch }}
+          cmake --build "$env:RUNNER_TEMP/cpp" --config Release --parallel 2
+          $destination = "../artifacts/cpp/win-${{ matrix.arch }}-coreclr"
+          New-Item -ItemType Directory -Force $destination > $null
+          Copy-Item ../src/powershell-native/Bin/RELEASE/CoreClr/powershell.exe $destination
+          Copy-Item ../src/powershell-native/Bin/RELEASE/CoreClr/pwrshplugin.dll $destination
+      - name: Run Pester v5 on packaged Rust launcher
+        run: |
+          $modules = Join-Path $env:RUNNER_TEMP 'powershell-modules'
+          New-Item -ItemType Directory -Force $modules > $null
+          Save-Module Pester -RequiredVersion 5.9.0 -Path $modules -Repository PSGallery -Force
+          $env:PSModulePath = $modules + [IO.Path]::PathSeparator + $env:PSModulePath
+          $parameters = @{}
+          if ('${{ matrix.configuration }}' -eq 'coreclr') {
+            $archive = Join-Path $env:RUNNER_TEMP 'powershell-coreclr.zip'
+            $payload = Join-Path $env:RUNNER_TEMP 'powershell-coreclr'
+            # The preserved legacy delegate API requires an unambiguous three-argument Start.
+            Invoke-WebRequest 'https://github.com/PowerShell/PowerShell/releases/download/v6.0.5/PowerShell-6.0.5-win-${{ matrix.arch }}.zip' -OutFile $archive
+            $expectedHash = if ('${{ matrix.arch }}' -eq 'x64') {
+              '7D45EA529CAA256F7759C8AB0AB6007528A1564799637855B2F2A171F37CFAFD'
+            } else {
+              '1C31E177F370E6F96E58760A92F1CADB95837E2184E93E13CE9C8E44C57625E4'
+            }
+            if ((Get-FileHash $archive -Algorithm SHA256).Hash -ne $expectedHash) {
+              throw 'Legacy CoreCLR test payload checksum mismatch.'
+            }
+            Expand-Archive $archive $payload
+            $parameters.CoreClrPayloadPath = $payload
+          }
+          ./tests/Invoke-Tests.ps1 -ExecutablePath ../artifacts/rust/win-${{ matrix.arch }}-${{ matrix.configuration }}/powershell.exe -Configuration ${{ matrix.configuration }} -Architecture ${{ matrix.arch }} -ResultPath ../artifacts/test-results/win-${{ matrix.arch }}-${{ matrix.configuration }}.xml @parameters
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: native-win-${{ matrix.arch }}-${{ matrix.configuration }}
+          path: artifacts/
+
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: rust
+        shell: bash
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          submodules: true
+      - name: Install Rust
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustup component add clippy rustfmt
+      - name: Build existing C++ library
+        run: |
+          cmake -S ../src/libpsl-native -B "$RUNNER_TEMP/cpp" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake --build "$RUNNER_TEMP/cpp" --target psl-native --parallel 2
+          mkdir -p ../artifacts/cpp/osx-${{ matrix.arch }}
+          cp ../src/powershell-unix/libpsl-native.dylib ../artifacts/cpp/osx-${{ matrix.arch }}/
+      - name: Build and verify Rust
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --locked --workspace --all-targets -- -D warnings -D clippy::pedantic
+          cargo test --locked --workspace
+          cargo build --locked --release -p psl-native
+          c++ -std=c++11 -I../src/libpsl-native/src libpsl-native/tests/abi.cpp -o target/psl-abi
+          mkdir -p ../artifacts/rust/osx-${{ matrix.arch }}
+          cp target/release/libpsl_native.dylib ../artifacts/rust/osx-${{ matrix.arch }}/libpsl-native.dylib
+          target/psl-abi ../artifacts/rust/osx-${{ matrix.arch }}/libpsl-native.dylib
+      - name: Run Pester v5 on packaged Rust library
+        shell: pwsh
+        run: |
+          $modules = Join-Path $env:RUNNER_TEMP 'powershell-modules'
+          New-Item -ItemType Directory -Force $modules > $null
+          Save-Module Pester -RequiredVersion 5.9.0 -Path $modules -Repository PSGallery -Force
+          $env:PSModulePath = $modules + [IO.Path]::PathSeparator + $env:PSModulePath
+          ./tests/Invoke-Tests.ps1 -LibraryPath ../artifacts/rust/osx-${{ matrix.arch }}/libpsl-native.dylib -ResultPath ../artifacts/test-results/osx-${{ matrix.arch }}.xml
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: native-osx-${{ matrix.arch }}
+          path: artifacts/

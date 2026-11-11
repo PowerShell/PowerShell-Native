@@ -7,6 +7,11 @@ Interface to C code (and C++ by way of `extern C`).
 
 ## Build
 
+An additive [Rust implementation](rust/README.md) provides the same native ABI,
+with .NET migration notes and separate x64/arm64 glibc and musl Linux artifacts.
+It also includes a Rust Windows launcher; the WSMan plugin remains unchanged.
+The CMake build below continues to build the original C++ implementation.
+
 [CMake][] is used to build the project, which results in a `libpsl-native.so`
 library on Linux, and `libpsl-native.dylib` on OS X.
 
