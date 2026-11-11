@@ -28,7 +28,11 @@ fn framework_activates_a_com_visible_payload_and_preserves_arguments_and_exit_co
     let compilation = Command::new(compiler)
         .args(["/nologo", "/target:library"])
         .arg(format!("/out:{}", assembly.display()))
-        .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/FrameworkEntry.cs"))
+        .arg(
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("tests")
+                .join("FrameworkEntry.cs"),
+        )
         .output()
         .expect(".NET Framework C# compiler is required for the hosting fixture");
     assert!(
