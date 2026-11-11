@@ -1,0 +1,17 @@
+[workspace]
+members = ["libpsl-native", "windows"]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+rust-version = "1.85"
+
+[workspace.lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+
+[profile.release]
+panic = "abort"
+lto = true
+codegen-units = 1
+strip = "debuginfo"
