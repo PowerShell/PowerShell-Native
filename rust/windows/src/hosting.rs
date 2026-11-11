@@ -276,6 +276,15 @@ impl AutomationVariant {
             return Err(INIT_FAILURE);
         }
         let object = ComObject(pointer);
+        if self.kind == 9 {
+            // VT_DISPATCH already contains IDispatch, as used by the C++ host.
+            let add_ref: unsafe extern "system" fn(Ptr) -> u32 =
+                unsafe { mem::transmute(object.slot(1)) };
+            unsafe {
+                add_ref(pointer);
+            }
+            return Ok(object);
+        }
         let result = object.query(&IID_DISPATCH);
         mem::forget(object); // The variant owns its original reference.
         result
@@ -539,6 +548,48 @@ mod tests {
             };
             assert!(matches!(variant.dispatch(), Err(INIT_FAILURE)));
         }
+    }
+
+    #[test]
+    fn automation_dispatch_retains_the_existing_interface() {
+        #[repr(C)]
+        struct Dispatch {
+            vtable: *const Ptr,
+            references: std::cell::Cell<u32>,
+        }
+        unsafe extern "system" fn query(_: Ptr, _: *const GUID, _: *mut Ptr) -> i32 {
+            i32::from_ne_bytes(0x8000_4002_u32.to_ne_bytes())
+        }
+        unsafe extern "system" fn add_ref(object: Ptr) -> u32 {
+            let object = unsafe { &*object.cast::<Dispatch>() };
+            let references = object.references.get() + 1;
+            object.references.set(references);
+            references
+        }
+        unsafe extern "system" fn release(object: Ptr) -> u32 {
+            let object = unsafe { &*object.cast::<Dispatch>() };
+            let references = object.references.get() - 1;
+            object.references.set(references);
+            references
+        }
+        let vtable = [query as Ptr, add_ref as Ptr, release as Ptr];
+        let mut object = Dispatch {
+            vtable: vtable.as_ptr(),
+            references: std::cell::Cell::new(1),
+        };
+        let variant = AutomationVariant {
+            kind: 9,
+            reserved: [0; 3],
+            value: VariantValue {
+                pointer: (&raw mut object).cast(),
+            },
+        };
+        let dispatch = variant.dispatch().unwrap();
+        assert_eq!(object.references.get(), 2);
+        drop(dispatch);
+        assert_eq!(object.references.get(), 1);
+        drop(variant);
+        assert_eq!(object.references.get(), 0);
     }
 
     #[test]
