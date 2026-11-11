@@ -162,18 +162,31 @@ struct ArrayBound {
 }
 
 #[repr(C)]
-pub union VariantValue {
-    pub pointer: Ptr,
-    pub signed: i64,
-    pub int: i32,
-    pub uint: u32,
+union VariantValue {
+    pointer: Ptr,
+    // Preserve native VARIANT alignment on 32-bit Windows.
+    _signed: i64,
+    uint: u32,
     layout: [usize; 2],
 }
+/// An owning Automation value whose tag and payload can only be set by this module.
+///
+/// ```compile_fail,E0616
+/// use powershell_native_host::hosting::AutomationVariant;
+/// let mut value = AutomationVariant::default();
+/// value.kind = 8;
+/// ```
+///
+/// ```compile_fail,E0616
+/// use powershell_native_host::hosting::AutomationVariant;
+/// let value = AutomationVariant::default();
+/// let _ = &value.value;
+/// ```
 #[repr(C)]
 pub struct AutomationVariant {
-    pub kind: u16,
+    kind: u16,
     reserved: [u16; 3],
-    pub value: VariantValue,
+    value: VariantValue,
 }
 impl Default for AutomationVariant {
     fn default() -> Self {
@@ -328,6 +341,19 @@ const CLSID_COR_RUNTIME: GUID = GUID::from_u128(0xcb2f6723_ab3a_11d2_9c40_00c04f
 const IID_COR_RUNTIME: GUID = GUID::from_u128(0xcb2f6722_ab3a_11d2_9c40_00c04fa30a3e);
 const IID_NULL: GUID = GUID::zeroed();
 
+/// An owning COM reference. Public APIs only return dispatch interfaces;
+/// arbitrary interface queries remain internal.
+///
+/// ```compile_fail,E0624
+/// use powershell_native_host::hosting::ComObject;
+/// use windows::core::GUID;
+/// fn cannot_invoke_unknown(object: &ComObject) {
+///     let unknown = object.query(
+///         &GUID::from_u128(0x00000000_0000_0000_c000_000000000046)
+///     ).unwrap();
+///     let _ = unknown.invoke("Start", &mut []);
+/// }
+/// ```
 pub struct ComObject(Ptr);
 impl ComObject {
     unsafe fn slot(&self, index: usize) -> Ptr {
@@ -335,7 +361,7 @@ impl ComObject {
     }
     /// # Errors
     /// Returns the HRESULT if the requested COM interface is unavailable.
-    pub fn query(&self, iid: &GUID) -> Result<Self> {
+    fn query(&self, iid: &GUID) -> Result<Self> {
         let query: unsafe extern "system" fn(Ptr, *const GUID, *mut Ptr) -> i32 =
             unsafe { mem::transmute(self.slot(0)) };
         let mut result = ptr::null_mut();

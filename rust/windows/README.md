@@ -102,7 +102,8 @@ cargo clippy -p powershell-native-windows --all-targets --no-default-features --
 Portable tests cover version formats/overflow, registry-family mappings,
 parameter abbreviations/Unicode dashes, native TPA exclusions, and configuration
 fallback. Windows-only tests cover Automation layout, null dispatch/unknown
-variants, and launcher behavior.
+variants, and launcher behavior. Compile-fail documentation tests enforce private
+variant storage and prevent arbitrary COM interface queries through the safe API.
 The Windows CI jobs build/link both launcher configurations and architectures
 with SDK resources. Pester v5 checks the packaged executable's architecture,
 version resources, native CoreCLR help and missing-runtime errors, successful
@@ -110,6 +111,9 @@ CoreCLR command execution, Unicode/empty/quoted/spaced arguments, positive and
 negative managed exit codes, and native Framework argument rejection.
 Regression coverage also checks BOM-prefixed external-payload configuration
 in both setting orders and byte-oriented redirected help/debug/verbose output.
+CoreCLR startup is also tested with symlinked core-library and console-host
+assemblies; creating Windows symbolic links requires Developer Mode or the
+symbolic-link privilege.
 Framework integration tests compile a COM-visible C# fixture with the installed
 .NET Framework compiler and exercise actual CLR startup, AppDomain activation,
 object unwrapping, argument marshaling, and signed managed exit codes on x86/x64.
@@ -128,7 +132,8 @@ Install-Module Pester -RequiredVersion 5.9.0 -Scope CurrentUser -Repository PSGa
 CI packages these launchers under `artifacts/rust/win-<arch>-<configuration>/`,
 separate from the existing C++ CoreCLR binaries and WSMan plugin under
 `artifacts/cpp/win-<arch>-coreclr/`. Pester NUnit XML is retained on failures.
-The lightweight manual smoke script is also available:
+The lightweight manual smoke script checks CoreCLR help or Framework native
+argument rejection, without requiring an installed managed PowerShell payload:
 
 ```powershell
 ./windows/tests/launcher-smoke.ps1 -ExecutablePath ./target/x86_64-pc-windows-msvc/release/powershell.exe -Configuration coreclr

@@ -35,7 +35,7 @@ try {
     $arguments = if ($Configuration -eq 'coreclr') {
         @('-?')
     } else {
-        @('-NoLogo', '-NoProfile', '-NonInteractive', '-Command', 'exit 37')
+        @('-Version', 'invalid')
     }
     foreach ($argument in $arguments) {
         $process.StartInfo.ArgumentList.Add($argument)
@@ -55,8 +55,8 @@ try {
         if ($process.ExitCode -ne -1 -or $output -notmatch 'USAGE: powershell') {
             throw "CoreCLR native help failed ($($process.ExitCode)): $output $errorText"
         }
-    } elseif ($process.ExitCode -ne 37) {
-        throw "Framework host did not execute managed PowerShell ($($process.ExitCode)): $output $errorText"
+    } elseif ($process.ExitCode -ne -196608 -or $errorText -notmatch 'PowerShell native host error 0xfffd0000') {
+        throw "Framework native argument rejection failed ($($process.ExitCode)): $output $errorText"
     }
 } finally {
     if ($started -and -not $process.HasExited) {
@@ -65,4 +65,4 @@ try {
     }
     $process.Dispose()
 }
-'Launcher resources and startup smoke checks passed.'
+'Launcher resources and native smoke checks passed.'

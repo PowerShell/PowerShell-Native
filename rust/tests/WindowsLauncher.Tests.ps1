@@ -102,6 +102,11 @@ Describe 'Packaged Rust Windows launcher' {
         Join-Path (Split-Path $ExecutablePath) 'pwrshplugin.dll' | Should -Not -Exist
     }
 
+    It 'passes the documented native smoke script without requiring a managed payload' {
+        & "$PSScriptRoot/../windows/tests/launcher-smoke.ps1" -ExecutablePath $ExecutablePath -Configuration $Configuration |
+            Should -Be 'Launcher resources and native smoke checks passed.'
+    }
+
     if ($Configuration -eq 'coreclr') {
         It 'prints native help for <Argument> without requiring CoreCLR' -ForEach @(
             @{ Argument = '-?' }
@@ -159,6 +164,24 @@ Describe 'Packaged Rust Windows launcher' {
             $result.Output | Should -Not -Match '\x00'
         }
 
+        It 'starts CoreCLR when required managed assemblies are symbolic links' {
+            $linkedHome = Join-Path $TestDrive 'symlinked-coreclr'
+            New-Item -ItemType Directory $linkedHome > $null
+            Copy-Item "$coreClrHome/*" $linkedHome -Recurse
+            $targets = Join-Path $TestDrive 'assembly-targets'
+            New-Item -ItemType Directory $targets > $null
+            foreach ($name in @('System.Private.CoreLib.dll', 'Microsoft.PowerShell.ConsoleHost.dll')) {
+                $link = Join-Path $linkedHome $name
+                $target = Join-Path $targets $name
+                Move-Item -LiteralPath $link -Destination $target
+                New-Item -ItemType SymbolicLink -Path $link -Target $target > $null
+            }
+            $result = Invoke-Launcher -Path (Join-Path $linkedHome 'powershell.exe') -Arguments @(
+                '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', 'exit 37'
+            )
+            $result.ExitCode | Should -Be 37 -Because "$($result.Output) $($result.Error)"
+        }
+
         It 'loads an external payload from BOM-prefixed configuration starting with <FirstSetting>' -ForEach @(
             @{ FirstSetting = 'PSHOMEDIR' }
             @{ FirstSetting = 'CORECLRDIR' }
@@ -183,8 +206,8 @@ Describe 'Packaged Rust Windows launcher' {
     } else {
         It 'rejects malformed Framework options without requiring a managed payload' {
             $result = Invoke-Launcher -Path $ExecutablePath -Arguments @('-Version', 'invalid')
-            $result.ExitCode | Should -Not -Be 0
-            $result.Error | Should -Match 'PowerShell native host error'
+            $result.ExitCode | Should -Be -196608
+            $result.Error | Should -Match 'PowerShell native host error 0xfffd0000'
         }
     }
 }

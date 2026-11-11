@@ -247,7 +247,7 @@ impl HostEnvironment {
                     let entry = entry.ok()?;
                     let path = entry.path();
                     let name = entry.file_name().to_string_lossy().into_owned();
-                    if entry.file_type().ok()?.is_file()
+                    if path.is_file()
                         && name.to_ascii_lowercase().ends_with(".dll")
                         && !exclude_tpa(&name)
                     {
