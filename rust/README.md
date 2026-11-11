@@ -156,7 +156,10 @@ layouts, UTF-8/returned-string ownership, native booleans, errno, filesystem
 behavior, identities, safe failure paths, and logging. Windows tests check PE
 architecture/resources, native help, missing-runtime errors, successful CoreCLR
 startup with matching legacy PowerShell 6.0.5 payloads, argument preservation,
-signed managed exit codes, and Framework startup. Windows launchers statically
+signed managed exit codes, and native Framework argument rejection. Framework
+integration tests activate a COM-visible managed fixture and verify argument
+marshaling and signed exit codes; Windows PowerShell 5.1 is not supported by the
+preserved legacy COM hosting contract. Windows launchers statically
 link the CRT, and CI rejects dynamic CRT imports in the packaged executables.
 The runner fails on failed, empty, or skipped test runs.
 

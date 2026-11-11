@@ -132,11 +132,10 @@ Describe 'Packaged Rust Windows launcher' {
             }
         }
     } else {
-        It 'starts installed Windows PowerShell and propagates its managed exit code' {
-            $result = Invoke-Launcher -Path $ExecutablePath -Arguments @(
-                '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', 'exit 37'
-            )
-            $result.ExitCode | Should -Be 37 -Because "$($result.Output) $($result.Error)"
+        It 'rejects malformed Framework options without requiring a managed payload' {
+            $result = Invoke-Launcher -Path $ExecutablePath -Arguments @('-Version', 'invalid')
+            $result.ExitCode | Should -Not -Be 0
+            $result.Error | Should -Match 'PowerShell native host error'
         }
     }
 }

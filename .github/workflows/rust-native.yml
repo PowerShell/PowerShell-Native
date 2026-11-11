@@ -214,22 +214,6 @@ jobs:
             }
             Expand-Archive $archive $payload
             $parameters.CoreClrPayloadPath = $payload
-          } else {
-            & "$env:WINDIR/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -NonInteractive -Command {
-              $type = [Microsoft.PowerShell.UnmanagedPSEntry]
-              $type.AssemblyQualifiedName
-              $type.GetCustomAttributes($false) | Format-List
-              $type.Assembly.GetCustomAttributes($false) | Where-Object { $_ -is [Runtime.InteropServices.ComVisibleAttribute] } | Format-List
-              $instance = [Activator]::CreateInstance($type)
-              try {
-                $dispatch = [Runtime.InteropServices.Marshal]::GetIDispatchForObject($instance)
-                'Managed entry point exposes IDispatch.'
-                [void] [Runtime.InteropServices.Marshal]::Release($dispatch)
-              } catch {
-                Write-Error $_
-                exit 1
-              }
-            }
           }
           ./tests/Invoke-Tests.ps1 -ExecutablePath ../artifacts/rust/win-${{ matrix.arch }}-${{ matrix.configuration }}/powershell.exe -Configuration ${{ matrix.configuration }} -Architecture ${{ matrix.arch }} -ResultPath ../artifacts/test-results/win-${{ matrix.arch }}-${{ matrix.configuration }}.xml @parameters
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

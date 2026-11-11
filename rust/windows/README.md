@@ -56,6 +56,10 @@ be installed. The host retains `CorBindToRuntimeEx`, `ICorRuntimeHost`, default
 AppDomain activation, Automation invocation, legacy argument processing,
 console-file version selection, and Windows PE restrictions. Framework CLR
 destruction does not stop the CLR.
+The managed entry point must be COM-visible and expose `Start` through
+`IDispatch`, matching the original C++ host. Windows PowerShell 5.1 is not
+supported: its console-host assembly disables COM visibility. This port does
+not add reflection-based hosting to accommodate that incompatible payload.
 
 **Shell integration:** shortcut discovery/icons and taskbar administrator/ISE
 tasks are retained. Unavailable Explorer integration is nonfatal, including
@@ -99,8 +103,12 @@ The Windows CI jobs build/link both launcher configurations and architectures
 with SDK resources. Pester v5 checks the packaged executable's architecture,
 version resources, native CoreCLR help and missing-runtime errors, successful
 CoreCLR command execution, Unicode/empty/quoted/spaced arguments, positive and
-negative managed exit codes, and installed Windows PowerShell startup through
-the Framework host. The CoreCLR jobs use checksum-verified PowerShell 6.0.5
+negative managed exit codes, and native Framework argument rejection.
+Framework integration tests compile a COM-visible C# fixture with the installed
+.NET Framework compiler and exercise actual CLR startup, AppDomain activation,
+object unwrapping, argument marshaling, and signed managed exit codes on x86/x64.
+They require .NET Framework 4 and its `csc.exe`, not Windows PowerShell 5.1.
+The CoreCLR jobs use checksum-verified PowerShell 6.0.5
 runtime/managed payloads on x86 and x64 to exercise the original three-argument
 entry point. That end-of-life payload is a compatibility test fixture, not a
 deployment recommendation. Extract the matching architecture's official ZIP
