@@ -14,7 +14,11 @@ param(
 
 BeforeAll {
     function Invoke-Launcher {
-        param([string] $Path, [string[]] $Arguments)
+        param(
+            [string] $Path,
+            [string[]] $Arguments,
+            [System.Text.Encoding] $Encoding = [System.Text.Encoding]::Unicode
+        )
         $process = [System.Diagnostics.Process]::new()
         $started = $false
         try {
@@ -23,8 +27,8 @@ BeforeAll {
             $process.StartInfo.CreateNoWindow = $true
             $process.StartInfo.RedirectStandardOutput = $true
             $process.StartInfo.RedirectStandardError = $true
-            $process.StartInfo.StandardOutputEncoding = [System.Text.Encoding]::Unicode
-            $process.StartInfo.StandardErrorEncoding = [System.Text.Encoding]::Unicode
+            $process.StartInfo.StandardOutputEncoding = $Encoding
+            $process.StartInfo.StandardErrorEncoding = $Encoding
             foreach ($argument in $Arguments) { $process.StartInfo.ArgumentList.Add($argument) }
             $started = $process.Start()
             if (-not $started) { throw 'Launcher did not start.' }
@@ -115,8 +119,8 @@ Describe 'Packaged Rust Windows launcher' {
         ) {
             $resultFile = Join-Path $TestDrive "arguments-$ExitCode.json"
             $expected = @('', 'two words', 'quote"value', 'trailing\', "$([char]0x03bb)$([char]::ConvertFromUtf32(0x1f600))")
-            $result = Invoke-Launcher -Path $coreClrExecutable -Arguments (@(
-                '-NoLogo', '-NoProfile', '-NonInteractive', '-File', $argumentScript, $resultFile, "$ExitCode"
+            $result = Invoke-Launcher -Path $coreClrExecutable -Encoding ([System.Text.Encoding]::UTF8) -Arguments (@(
+                '-NoLogo', '-NoProfile', '-NonInteractive', '-File', $argumentScript, $resultFile, "-ExitCode:$ExitCode"
             ) + $expected)
             $result.ExitCode | Should -Be $ExitCode -Because "$($result.Output) $($result.Error)"
             $resultFile | Should -Exist

@@ -314,6 +314,7 @@ impl Drop for ExceptionInfo {
 
 const IID_DISPATCH: GUID = GUID::from_u128(0x00020400_0000_0000_c000_000000000046);
 const IID_APPDOMAIN: GUID = GUID::from_u128(0x05f696dc_2b29_3663_ad8b_c4389cf2a713);
+const IID_OBJECT_HANDLE: GUID = GUID::from_u128(0xc460e2b4_e199_412a_8456_84dc3e4838c3);
 const CLSID_COR_RUNTIME: GUID = GUID::from_u128(0xcb2f6723_ab3a_11d2_9c40_00c04fa30a3e);
 const IID_COR_RUNTIME: GUID = GUID::from_u128(0xcb2f6722_ab3a_11d2_9c40_00c04fa30a3e);
 const IID_NULL: GUID = GUID::zeroed();
@@ -331,6 +332,10 @@ impl ComObject {
         let mut result = ptr::null_mut();
         let hr = unsafe { query(self.0, iid, &raw mut result) };
         if hr < 0 {
+            output(
+                &wide(&format!("COM interface query failed: {iid:?}\r\n")),
+                false,
+            );
             Err(status_code(hr))
         } else if result.is_null() {
             Err(INIT_FAILURE)
@@ -493,8 +498,15 @@ impl FrameworkClr {
         if handle.is_null() {
             return Err(INIT_FAILURE);
         }
-        let handle = ComObject(handle).query(&IID_DISPATCH)?;
-        let unwrapped = handle.invoke("Unwrap", &mut [])?;
+        let handle = ComObject(handle).query(&IID_OBJECT_HANDLE)?;
+        // IObjectHandle is an IUnknown interface with Unwrap at slot 3.
+        let unwrap: unsafe extern "system" fn(Ptr, *mut AutomationVariant) -> i32 =
+            unsafe { mem::transmute(handle.slot(3)) };
+        let mut unwrapped = AutomationVariant::default();
+        let hr = unsafe { unwrap(handle.0, &raw mut unwrapped) };
+        if hr < 0 {
+            return Err(status_code(hr));
+        }
         unwrapped.dispatch()
     }
 }

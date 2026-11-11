@@ -72,7 +72,7 @@ jobs:
       - name: Test in a real musl process
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src/rust alpine:3.22 sh -ec '
-            apk add --no-cache g++ cmake cargo rust
+            apk add --no-cache g++ make cmake cargo rust
             CARGO_TARGET_DIR=target/alpine cargo test --locked -p psl-native
             cmake -S ../src/libpsl-native -B target/cpp-musl -DCMAKE_POLICY_VERSION_MINIMUM=3.5
             cmake --build target/cpp-musl --target psl-native --parallel 2
