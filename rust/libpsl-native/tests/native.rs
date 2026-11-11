@@ -215,15 +215,16 @@ fn canonicalization_includes_parent_symlinks_and_raw_fallback() {
 
 #[test]
 fn account_lookup_host_and_thread_identity() {
+    let fixture = Fixture::new();
+    let owned_file = fixture.path("owner");
+    fs::write(&owned_file, "").unwrap();
     unsafe {
         let user = take_string(GetPwUid(libc::getuid()));
         assert_ne!(user, "");
         assert_ne!(take_string(GetGrGid(libc::getgid())), "");
         assert_eq!(
-            take_string(GetFileOwner(
-                path(&std::env::current_dir().unwrap()).as_ptr()
-            )),
-            take_string(GetPwUid(fs::metadata(".").unwrap().uid()))
+            take_string(GetFileOwner(path(&owned_file).as_ptr())),
+            take_string(GetPwUid(fs::metadata(&owned_file).unwrap().uid()))
         );
         assert_eq!(
             take_string(GetUserFromPid(libc::getpid())),

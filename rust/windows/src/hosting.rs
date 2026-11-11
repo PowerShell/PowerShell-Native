@@ -271,10 +271,11 @@ impl AutomationVariant {
         if self.kind != 9 && self.kind != 13 {
             return Err(0x8002_0005);
         }
-        let object = ComObject(unsafe { self.value.pointer });
-        if object.0.is_null() {
+        let pointer = unsafe { self.value.pointer };
+        if pointer.is_null() {
             return Err(INIT_FAILURE);
         }
+        let object = ComObject(pointer);
         let result = object.query(&IID_DISPATCH);
         mem::forget(object); // The variant owns its original reference.
         result
@@ -512,6 +513,26 @@ mod tests {
             }
         );
         assert_eq!(mem::offset_of!(AutomationVariant, value), 8);
+    }
+
+    #[test]
+    fn automation_null_objects_are_rejected_without_releasing_null() {
+        for kind in [9, 13] {
+            let variant = AutomationVariant {
+                kind,
+                reserved: [0; 3],
+                value: VariantValue {
+                    pointer: ptr::null_mut(),
+                },
+            };
+            assert!(matches!(variant.dispatch(), Err(INIT_FAILURE)));
+        }
+    }
+
+    #[test]
+    fn automation_non_objects_report_type_mismatch() {
+        let variant = AutomationVariant::default();
+        assert!(matches!(variant.dispatch(), Err(0x8002_0005)));
     }
 
     #[test]

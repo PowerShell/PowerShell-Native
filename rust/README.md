@@ -147,13 +147,18 @@ Windows checks both feature configurations and Linux checks both libc targets.
 Narrow, documented lint exceptions retain deliberate C ABI bit reinterpretations
 and narrowing conversions. Formatting and native Rust tests are also enforced.
 
-CI installs Pester 5.5.0 and exercises the **packaged Rust binaries**, not only
+CI saves Pester 5.9.0 to an isolated module directory rather than replacing or
+downgrading runner-installed modules across signing-certificate changes.
+The same module directory is mounted into the musl container.
+Tests exercise the **packaged Rust binaries**, not only
 intermediate Cargo outputs. Unix tests check all 30 exported names, managed
 layouts, UTF-8/returned-string ownership, native booleans, errno, filesystem
 behavior, identities, safe failure paths, and logging. Windows tests check PE
-architecture/resources, native help, missing-runtime errors, and Framework
-startup/managed exit-code propagation. The runner fails on failed, empty, or
-skipped test runs.
+architecture/resources, native help, missing-runtime errors, successful CoreCLR
+startup with matching legacy PowerShell 6.0.5 payloads, argument preservation,
+signed managed exit codes, and Framework startup. Windows launchers statically
+link the CRT, and CI rejects dynamic CRT imports in the packaged executables.
+The runner fails on failed, empty, or skipped test runs.
 
 Pester runs on both glibc Linux architectures, both macOS architectures, every
 Windows configuration, and x64 Alpine/musl using a musl PowerShell host.
@@ -167,15 +172,18 @@ Run Unix tests in a fresh PowerShell process matching the library's architecture
 and libc:
 
 ```powershell
-Install-Module Pester -RequiredVersion 5.5.0 -Scope CurrentUser -Repository PSGallery
+Install-Module Pester -RequiredVersion 5.9.0 -Scope CurrentUser -Repository PSGallery
 ./tests/Invoke-Tests.ps1 -LibraryPath ./target/release/libpsl_native.dylib -ResultPath ./test-results/native.xml
 ```
 
 For Windows:
 
 ```powershell
-./tests/Invoke-Tests.ps1 -ExecutablePath ./target/x86_64-pc-windows-msvc/release/powershell.exe -Configuration coreclr -Architecture x64 -ResultPath ./test-results/windows.xml
+./tests/Invoke-Tests.ps1 -ExecutablePath ./target/x86_64-pc-windows-msvc/release/powershell.exe -Configuration coreclr -Architecture x64 -CoreClrPayloadPath C:/payloads/powershell-6.0.5-win-x64 -ResultPath ./test-results/windows.xml
 ```
 
-Use `-Configuration framework` for a launcher built with `--no-default-features`
-and `-Architecture x86` for an `i686-pc-windows-msvc` build.
+Use `-Configuration framework` (without `-CoreClrPayloadPath`) for a launcher
+built with `--no-default-features`, and `-Architecture x86` with matching x86
+payloads for an `i686-pc-windows-msvc` build. The legacy CoreCLR payload is an
+end-of-life compatibility fixture, not a deployment recommendation; see
+[`windows/README.md`](windows/README.md) for the entry-point compatibility limit.

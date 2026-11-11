@@ -9,3 +9,9 @@ rustflags = ["-C", "link-arg=-Wl,-z,relro,-z,now", "-C", "link-arg=-Wl,-soname,l
 
 [target.aarch64-unknown-linux-gnu]
 rustflags = ["-C", "link-arg=-Wl,-z,relro,-z,now", "-C", "link-arg=-Wl,-soname,libpsl-native.so"]
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.i686-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

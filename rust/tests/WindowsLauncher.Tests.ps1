@@ -8,7 +8,8 @@ param(
     [string] $Configuration,
     [Parameter(Mandatory)]
     [ValidateSet('x64', 'x86')]
-    [string] $Architecture
+    [string] $Architecture,
+    [string] $CoreClrPayloadPath
 )
 
 BeforeAll {
@@ -44,6 +45,22 @@ BeforeAll {
             }
             $process.Dispose()
         }
+    }
+    if ($Configuration -eq 'coreclr') {
+        $coreClrHome = Join-Path $TestDrive 'coreclr'
+        New-Item -ItemType Directory $coreClrHome > $null
+        Copy-Item "$CoreClrPayloadPath/*" $coreClrHome -Recurse
+        $coreClrExecutable = Join-Path $coreClrHome 'powershell.exe'
+        Copy-Item $ExecutablePath $coreClrExecutable
+        $argumentScript = Join-Path $TestDrive 'arguments.ps1'
+        @'
+param([string] $ResultPath, [int] $ExitCode)
+[pscustomobject] @{
+    Arguments = @($args)
+    Architecture = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString()
+} | ConvertTo-Json | Set-Content -LiteralPath $ResultPath -Encoding utf8
+exit $ExitCode
+'@ | Set-Content -LiteralPath $argumentScript -Encoding utf8
     }
 }
 
@@ -90,6 +107,25 @@ Describe 'Packaged Rust Windows launcher' {
             $result = Invoke-Launcher -Path $isolated -Arguments '-NoProfile'
             $result.ExitCode | Should -Not -Be 0
             $result.Error | Should -Match 'PowerShell native host error'
+        }
+
+        It 'runs managed CoreCLR PowerShell, preserves arguments, and propagates exit <ExitCode>' -ForEach @(
+            @{ ExitCode = 37 }
+            @{ ExitCode = -37 }
+        ) {
+            $resultFile = Join-Path $TestDrive "arguments-$ExitCode.json"
+            $expected = @('', 'two words', 'quote"value', 'trailing\', "$([char]0x03bb)$([char]::ConvertFromUtf32(0x1f600))")
+            $result = Invoke-Launcher -Path $coreClrExecutable -Arguments (@(
+                '-NoLogo', '-NoProfile', '-NonInteractive', '-File', $argumentScript, $resultFile, "$ExitCode"
+            ) + $expected)
+            $result.ExitCode | Should -Be $ExitCode -Because "$($result.Output) $($result.Error)"
+            $resultFile | Should -Exist
+            $actual = Get-Content -LiteralPath $resultFile -Raw | ConvertFrom-Json
+            $actual.Architecture | Should -Be $Architecture
+            $actual.Arguments.Count | Should -Be $expected.Count
+            for ($index = 0; $index -lt $expected.Count; $index++) {
+                $actual.Arguments[$index] | Should -BeExactly $expected[$index]
+            }
         }
     } else {
         It 'starts installed Windows PowerShell and propagates its managed exit code' {

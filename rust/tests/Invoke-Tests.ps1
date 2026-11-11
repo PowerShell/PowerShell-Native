@@ -12,6 +12,8 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Windows')]
     [ValidateSet('x64', 'x86')]
     [string] $Architecture,
+    [Parameter(ParameterSetName = 'Windows')]
+    [string] $CoreClrPayloadPath,
     [Parameter(Mandatory)]
     [string] $ResultPath
 )
@@ -23,9 +25,23 @@ $data = if ($PSCmdlet.ParameterSetName -eq 'Unix') {
     @{ Path = "$PSScriptRoot/NativeLibrary.Tests.ps1"; Data = @{ LibraryPath = (Resolve-Path $LibraryPath).Path } }
 } else {
     if (-not $IsWindows) { throw 'Windows launcher tests require Windows.' }
+    if ($Configuration -eq 'coreclr') {
+        if (-not $CoreClrPayloadPath) { throw 'CoreCLR tests require -CoreClrPayloadPath with matching runtime and managed PowerShell assemblies.' }
+        $CoreClrPayloadPath = (Resolve-Path $CoreClrPayloadPath).Path
+        foreach ($file in 'coreclr.dll', 'Microsoft.PowerShell.ConsoleHost.dll') {
+            if (-not (Test-Path -LiteralPath (Join-Path $CoreClrPayloadPath $file) -PathType Leaf)) {
+                throw "CoreCLR test payload is missing $file."
+            }
+        }
+    }
     @{
         Path = "$PSScriptRoot/WindowsLauncher.Tests.ps1"
-        Data = @{ ExecutablePath = (Resolve-Path $ExecutablePath).Path; Configuration = $Configuration; Architecture = $Architecture }
+        Data = @{
+            ExecutablePath = (Resolve-Path $ExecutablePath).Path
+            Configuration = $Configuration
+            Architecture = $Architecture
+            CoreClrPayloadPath = $CoreClrPayloadPath
+        }
     }
 }
 $settings = New-PesterConfiguration

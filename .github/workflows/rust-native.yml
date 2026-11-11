@@ -93,9 +93,10 @@ jobs:
       - name: Run Pester v5 on packaged Rust library
         shell: pwsh
         run: |
-          if (-not (Get-Module -ListAvailable Pester | Where-Object Version -EQ '5.5.0')) {
-            Install-Module Pester -RequiredVersion 5.5.0 -Scope CurrentUser -Repository PSGallery -Force
-          }
+          $modules = Join-Path $env:RUNNER_TEMP 'powershell-modules'
+          New-Item -ItemType Directory -Force $modules > $null
+          Save-Module Pester -RequiredVersion 5.9.0 -Path $modules -Repository PSGallery -Force
+          $env:PSModulePath = $modules + [IO.Path]::PathSeparator + $env:PSModulePath
           ./tests/Invoke-Tests.ps1 -LibraryPath ../artifacts/rust/linux-${{ matrix.arch }}/libpsl-native.so -ResultPath ../artifacts/test-results/linux-${{ matrix.arch }}.xml
       - name: Run Pester v5 in a real musl process (x64 host only)
         if: matrix.arch == 'x64'
@@ -106,7 +107,7 @@ jobs:
           chmod +x "$RUNNER_TEMP/pwsh-musl/pwsh"
           docker run --rm -v "$GITHUB_WORKSPACE:/src" \
             -v "$RUNNER_TEMP/pwsh-musl:/opt/pwsh:ro" \
-            -v "$HOME/.local/share/powershell/Modules:/root/.local/share/powershell/Modules:ro" \
+            -v "$RUNNER_TEMP/powershell-modules:/root/.local/share/powershell/Modules:ro" \
             -w /src/rust alpine:3.22 sh -ec '
               apk add --no-cache ca-certificates icu-libs krb5-libs libatomic libgcc libintl libssl3 libstdc++ ncurses-terminfo-base tzdata userspace-rcu zlib
               /opt/pwsh/pwsh -NoLogo -NoProfile -File ./tests/Invoke-Tests.ps1 \
@@ -174,6 +175,11 @@ jobs:
           $destination = "../artifacts/rust/win-${{ matrix.arch }}-${{ matrix.configuration }}"
           New-Item -ItemType Directory -Force $destination > $null
           Copy-Item ./target/${{ matrix.target }}/release/powershell.exe $destination
+          $imports = & dumpbin.exe /nologo /dependents "$destination/powershell.exe"
+          if ($LASTEXITCODE) { throw 'Cannot inspect packaged launcher dependencies.' }
+          if ($imports -match '(?i)\b(?:vcruntime\d+\w*|msvcp\d+\w*|msvcr\d+\w*|ucrtbase[d]?)\.dll\b') {
+            throw "Launcher has an unbundled dynamic CRT dependency: $imports"
+          }
       - name: Build existing C++ CoreCLR binaries
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
@@ -188,10 +194,28 @@ jobs:
           Copy-Item ../src/powershell-native/Bin/RELEASE/CoreClr/pwrshplugin.dll $destination
       - name: Run Pester v5 on packaged Rust launcher
         run: |
-          if (-not (Get-Module -ListAvailable Pester | Where-Object Version -EQ '5.5.0')) {
-            Install-Module Pester -RequiredVersion 5.5.0 -Scope CurrentUser -Repository PSGallery -Force
+          $modules = Join-Path $env:RUNNER_TEMP 'powershell-modules'
+          New-Item -ItemType Directory -Force $modules > $null
+          Save-Module Pester -RequiredVersion 5.9.0 -Path $modules -Repository PSGallery -Force
+          $env:PSModulePath = $modules + [IO.Path]::PathSeparator + $env:PSModulePath
+          $parameters = @{}
+          if ('${{ matrix.configuration }}' -eq 'coreclr') {
+            $archive = Join-Path $env:RUNNER_TEMP 'powershell-coreclr.zip'
+            $payload = Join-Path $env:RUNNER_TEMP 'powershell-coreclr'
+            # The preserved legacy delegate API requires an unambiguous three-argument Start.
+            Invoke-WebRequest 'https://github.com/PowerShell/PowerShell/releases/download/v6.0.5/PowerShell-6.0.5-win-${{ matrix.arch }}.zip' -OutFile $archive
+            $expectedHash = if ('${{ matrix.arch }}' -eq 'x64') {
+              '7D45EA529CAA256F7759C8AB0AB6007528A1564799637855B2F2A171F37CFAFD'
+            } else {
+              '1C31E177F370E6F96E58760A92F1CADB95837E2184E93E13CE9C8E44C57625E4'
+            }
+            if ((Get-FileHash $archive -Algorithm SHA256).Hash -ne $expectedHash) {
+              throw 'Legacy CoreCLR test payload checksum mismatch.'
+            }
+            Expand-Archive $archive $payload
+            $parameters.CoreClrPayloadPath = $payload
           }
-          ./tests/Invoke-Tests.ps1 -ExecutablePath ../artifacts/rust/win-${{ matrix.arch }}-${{ matrix.configuration }}/powershell.exe -Configuration ${{ matrix.configuration }} -Architecture ${{ matrix.arch }} -ResultPath ../artifacts/test-results/win-${{ matrix.arch }}-${{ matrix.configuration }}.xml
+          ./tests/Invoke-Tests.ps1 -ExecutablePath ../artifacts/rust/win-${{ matrix.arch }}-${{ matrix.configuration }}/powershell.exe -Configuration ${{ matrix.configuration }} -Architecture ${{ matrix.arch }} -ResultPath ../artifacts/test-results/win-${{ matrix.arch }}-${{ matrix.configuration }}.xml @parameters
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -240,9 +264,10 @@ jobs:
       - name: Run Pester v5 on packaged Rust library
         shell: pwsh
         run: |
-          if (-not (Get-Module -ListAvailable Pester | Where-Object Version -EQ '5.5.0')) {
-            Install-Module Pester -RequiredVersion 5.5.0 -Scope CurrentUser -Repository PSGallery -Force
-          }
+          $modules = Join-Path $env:RUNNER_TEMP 'powershell-modules'
+          New-Item -ItemType Directory -Force $modules > $null
+          Save-Module Pester -RequiredVersion 5.9.0 -Path $modules -Repository PSGallery -Force
+          $env:PSModulePath = $modules + [IO.Path]::PathSeparator + $env:PSModulePath
           ./tests/Invoke-Tests.ps1 -LibraryPath ../artifacts/rust/osx-${{ matrix.arch }}/libpsl-native.dylib -ResultPath ../artifacts/test-results/osx-${{ matrix.arch }}.xml
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
