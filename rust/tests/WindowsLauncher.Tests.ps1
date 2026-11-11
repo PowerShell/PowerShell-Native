@@ -17,7 +17,9 @@ BeforeAll {
         param(
             [string] $Path,
             [string[]] $Arguments,
-            [System.Text.Encoding] $Encoding = [System.Text.Encoding]::Unicode
+            [System.Text.Encoding] $OutputEncoding = [System.Text.Encoding]::UTF8,
+            [System.Text.Encoding] $ErrorEncoding = [System.Text.Encoding]::Unicode,
+            [string] $InputText
         )
         $process = [System.Diagnostics.Process]::new()
         $started = $false
@@ -27,13 +29,18 @@ BeforeAll {
             $process.StartInfo.CreateNoWindow = $true
             $process.StartInfo.RedirectStandardOutput = $true
             $process.StartInfo.RedirectStandardError = $true
-            $process.StartInfo.StandardOutputEncoding = $Encoding
-            $process.StartInfo.StandardErrorEncoding = $Encoding
+            $process.StartInfo.RedirectStandardInput = $PSBoundParameters.ContainsKey('InputText')
+            $process.StartInfo.StandardOutputEncoding = $OutputEncoding
+            $process.StartInfo.StandardErrorEncoding = $ErrorEncoding
             foreach ($argument in $Arguments) { $process.StartInfo.ArgumentList.Add($argument) }
             $started = $process.Start()
             if (-not $started) { throw 'Launcher did not start.' }
             $stdout = $process.StandardOutput.ReadToEndAsync()
             $stderr = $process.StandardError.ReadToEndAsync()
+            if ($process.StartInfo.RedirectStandardInput) {
+                $process.StandardInput.Write($InputText)
+                $process.StandardInput.Close()
+            }
             if (-not $process.WaitForExit(30000)) {
                 throw 'Launcher did not finish within 30 seconds.'
             }
@@ -103,6 +110,15 @@ Describe 'Packaged Rust Windows launcher' {
             $result = Invoke-Launcher -Path $ExecutablePath -Arguments $Argument
             $result.ExitCode | Should -Be -1 -Because "$($result.Output) $($result.Error)"
             $result.Output | Should -Match 'USAGE: powershell'
+            $result.Output | Should -Not -Match '\x00'
+        }
+
+        It 'keeps redirected debug prompts and help byte-oriented' {
+            $result = Invoke-Launcher -Path $ExecutablePath -Arguments @('-Debug', '-?') -InputText "`n"
+            $result.ExitCode | Should -Be -1 -Because "$($result.Output) $($result.Error)"
+            $result.Output | Should -Match 'Attach the debugger'
+            $result.Output | Should -Match 'USAGE: powershell'
+            $result.Output | Should -Not -Match '\x00'
         }
 
         It 'reports a missing runtime instead of succeeding' {
@@ -119,7 +135,7 @@ Describe 'Packaged Rust Windows launcher' {
         ) {
             $resultFile = Join-Path $TestDrive "arguments-$ExitCode.json"
             $expected = @('', 'two words', 'quote"value', 'trailing\', "$([char]0x03bb)$([char]::ConvertFromUtf32(0x1f600))")
-            $result = Invoke-Launcher -Path $coreClrExecutable -Encoding ([System.Text.Encoding]::UTF8) -Arguments (@(
+            $result = Invoke-Launcher -Path $coreClrExecutable -ErrorEncoding ([System.Text.Encoding]::UTF8) -Arguments (@(
                 '-NoLogo', '-NoProfile', '-NonInteractive', '-File', $argumentScript, $resultFile, "-ExitCode:$ExitCode"
             ) + $expected)
             $result.ExitCode | Should -Be $ExitCode -Because "$($result.Output) $($result.Error)"
@@ -130,6 +146,39 @@ Describe 'Packaged Rust Windows launcher' {
             for ($index = 0; $index -lt $expected.Count; $index++) {
                 $actual.Arguments[$index] | Should -BeExactly $expected[$index]
             }
+        }
+
+        It 'keeps redirected verbose diagnostics and managed stdout in the same byte stream' {
+            $marker = "managed-$([char]0x03bb)$([char]::ConvertFromUtf32(0x1f600))"
+            $command = "[Console]::OutputEncoding = [Text.UTF8Encoding]::new(`$false); [Console]::WriteLine('$marker'); exit 37"
+            $result = Invoke-Launcher -Path $coreClrExecutable -ErrorEncoding ([System.Text.Encoding]::UTF8) -Arguments @(
+                '-Verbose', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', $command
+            )
+            $result.ExitCode | Should -Be 37 -Because "$($result.Output) $($result.Error)"
+            $result.Output | Should -BeExactly "$marker`r`nExecution succeeded`r`n"
+            $result.Output | Should -Not -Match '\x00'
+        }
+
+        It 'loads an external payload from BOM-prefixed configuration starting with <FirstSetting>' -ForEach @(
+            @{ FirstSetting = 'PSHOMEDIR' }
+            @{ FirstSetting = 'CORECLRDIR' }
+        ) {
+            $directory = Join-Path $TestDrive "configured-$FirstSetting"
+            New-Item -ItemType Directory $directory > $null
+            $configuredExecutable = Join-Path $directory 'powershell.exe'
+            Copy-Item $ExecutablePath $configuredExecutable
+            $settings = if ($FirstSetting -eq 'PSHOMEDIR') {
+                "PSHOMEDIR=$coreClrHome`r`nCORECLRDIR=$coreClrHome`r`n"
+            } else {
+                "CORECLRDIR=$coreClrHome`r`nPSHOMEDIR=$coreClrHome`r`n"
+            }
+            $config = Join-Path $directory 'RemotePowerShellConfig.txt'
+            [System.IO.File]::WriteAllText($config, $settings, [System.Text.UTF8Encoding]::new($true))
+            [BitConverter]::ToString([System.IO.File]::ReadAllBytes($config), 0, 3) | Should -Be 'EF-BB-BF'
+            $result = Invoke-Launcher -Path $configuredExecutable -Arguments @(
+                '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', 'exit 37'
+            )
+            $result.ExitCode | Should -Be 37 -Because "$($result.Output) $($result.Error)"
         }
     } else {
         It 'rejects malformed Framework options without requiring a managed payload' {

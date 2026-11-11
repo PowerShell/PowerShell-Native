@@ -115,6 +115,7 @@ pub fn exclude_tpa(name: &str) -> bool {
 
 /// Managed callers can use File.ReadLines and Directory.Exists for this legacy configuration.
 pub fn host_config(text: &str, mut exists: impl FnMut(&str) -> bool) -> Option<(String, String)> {
+    let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     let mut assemblies = None;
     let mut runtime = None;
     for line in text.lines().map(str::trim) {
@@ -210,6 +211,25 @@ mod tests {
         assert_eq!(
             host_config(text, |p| p != "missing"),
             Some(("second".into(), "CLR".into()))
+        );
+    }
+
+    #[test]
+    fn config_accepts_a_leading_utf8_bom_in_either_setting_order() {
+        for text in [
+            "\u{feff}PSHOMEDIR=C:\\PowerShell\r\nCORECLRDIR=C:\\CLR\r\n",
+            "\u{feff}CORECLRDIR=C:\\CLR\r\nPSHOMEDIR=C:\\PowerShell\r\n",
+        ] {
+            assert_eq!(
+                host_config(text, |_| true),
+                Some(("C:\\PowerShell".into(), "C:\\CLR".into()))
+            );
+        }
+        assert_eq!(
+            host_config("PSHOMEDIR=C:\\\u{feff}payload\nCORECLRDIR=C:\\CLR", |_| {
+                true
+            }),
+            Some(("C:\\\u{feff}payload".into(), "C:\\CLR".into()))
         );
     }
 

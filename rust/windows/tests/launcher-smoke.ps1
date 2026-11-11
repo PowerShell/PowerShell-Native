@@ -26,7 +26,11 @@ try {
     $process.StartInfo.CreateNoWindow = $true
     $process.StartInfo.RedirectStandardOutput = $true
     $process.StartInfo.RedirectStandardError = $true
-    $process.StartInfo.StandardOutputEncoding = [System.Text.Encoding]::Unicode
+    $process.StartInfo.StandardOutputEncoding = if ($Configuration -eq 'coreclr') {
+        [System.Text.Encoding]::UTF8
+    } else {
+        [System.Text.Encoding]::Unicode
+    }
     $process.StartInfo.StandardErrorEncoding = [System.Text.Encoding]::Unicode
     $arguments = if ($Configuration -eq 'coreclr') {
         @('-?')

@@ -269,8 +269,8 @@ pub fn message(module: Ptr, code: u32, arguments: &[usize]) -> Vec<u16> {
     buffer
 }
 
-/// Managed callers should use Console.Write/Console.Error.Write. This preserves legacy UTF-16
-/// redirected output rather than silently changing the existing native host's encoding.
+/// Managed callers should use Console.Write/Console.Error.Write. Legacy resource diagnostics
+/// remain UTF-16 when redirected; `CoreCLR` stdout uses `core_stdout` instead.
 pub fn output(text: &[u16], stdout: bool) {
     let count = text.iter().position(|c| *c == 0).unwrap_or(text.len());
     unsafe {
@@ -306,6 +306,26 @@ pub fn output(text: &[u16], stdout: bool) {
             offset += written as usize;
         }
     }
+}
+
+/// Managed callers should use Console.Write. Share byte-oriented UTF-8 output with the
+/// managed `CoreCLR` payload when redirected; Rust handles Unicode console output directly.
+///
+/// # Errors
+/// Returns the native I/O error if stdout cannot be written or flushed.
+#[cfg(feature = "coreclr")]
+pub fn core_stdout(text: &str) -> Result<()> {
+    use std::io::Write;
+
+    let mut stdout = std::io::stdout().lock();
+    stdout
+        .write_all(text.as_bytes())
+        .and_then(|()| stdout.flush())
+        .map_err(|error| {
+            error
+                .raw_os_error()
+                .map_or(crate::policy::INIT_FAILURE, status_code)
+        })
 }
 
 // HRESULTs and process statuses are signed/unsigned views of the same 32 bits.

@@ -47,9 +47,13 @@ This legacy API resolves `Start` by name without an overload signature.
 PowerShell payloads with overloaded `UnmanagedPSEntry.Start` methods, including
 PowerShell 7, are not compatible with that preserved contract.
 `RemotePowerShellConfig.txt` can provide `PSHOMEDIR=` and `CORECLRDIR=`.
+UTF-8 configuration files are accepted with or without a leading BOM.
 Both paths must exist before environment expansion, as in the original host.
 Otherwise the executable directory is used. TPA enumeration retains the
 native-DLL exclusion list and system CoreClrPowerShellExt fallback.
+Native CoreCLR stdout (help, debugger prompt, and verbose messages) is
+byte-oriented UTF-8 when redirected, so it can share a stream with managed
+command output. Legacy resource diagnostics on stderr retain UTF-16LE.
 
 **.NET Framework:** the selected CLR and PowerShell registry configuration must
 be installed. The host retains `CorBindToRuntimeEx`, `ICorRuntimeHost`, default
@@ -104,6 +108,8 @@ with SDK resources. Pester v5 checks the packaged executable's architecture,
 version resources, native CoreCLR help and missing-runtime errors, successful
 CoreCLR command execution, Unicode/empty/quoted/spaced arguments, positive and
 negative managed exit codes, and native Framework argument rejection.
+Regression coverage also checks BOM-prefixed external-payload configuration
+in both setting orders and byte-oriented redirected help/debug/verbose output.
 Framework integration tests compile a COM-visible C# fixture with the installed
 .NET Framework compiler and exercise actual CLR startup, AppDomain activation,
 object unwrapping, argument marshaling, and signed managed exit codes on x86/x64.

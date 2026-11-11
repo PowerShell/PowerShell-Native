@@ -1,20 +1,20 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::win::{message, output, wide, GetModuleHandleW, Result, SetThreadUILanguage};
+use crate::win::{message, output, GetModuleHandleW, Result, SetThreadUILanguage};
 #[cfg(feature = "coreclr")]
 use crate::{
     common::HostEnvironment,
     hosting::{CoreClr, CONSOLE_ASSEMBLY},
     policy::INIT_FAILURE,
-    win::{status_code, Wide},
+    win::{core_stdout, status_code, Wide},
 };
 #[cfg(not(feature = "coreclr"))]
 use crate::{
     common::{console_version, Engine, RegistryKey},
     hosting::{AutomationVariant, FrameworkClr},
     policy::{parameter_matches, Version, BAD_COMMAND_LINE},
-    win::ComApartment,
+    win::{wide, ComApartment},
 };
 #[cfg(feature = "coreclr")]
 use std::mem;
@@ -84,17 +84,14 @@ fn core(arguments: &[Vec<u16>]) -> Result<u32> {
         }
     }
     if debug {
-        output(
-            &wide("Attach the debugger to powershell.exe and press Enter to continue\r\n"),
-            true,
-        );
+        core_stdout("Attach the debugger to powershell.exe and press Enter to continue\r\n")?;
         let mut line = String::new();
         std::io::stdin()
             .read_line(&mut line)
             .map_err(|_| INIT_FAILURE)?;
     }
     if help {
-        output(&wide("USAGE: powershell [-Verbose] [-Debug] [-File <filePath> <args>] [-Command] <CommandLine>\r\n\r\nCoreCLR is loaded beside powershell.exe or from RemotePowerShellConfig.txt.\r\n"), true);
+        core_stdout("USAGE: powershell [-Verbose] [-Debug] [-File <filePath> <args>] [-Command] <CommandLine>\r\n\r\nCoreCLR is loaded beside powershell.exe or from RemotePowerShellConfig.txt.\r\n")?;
         return Ok(u32::MAX);
     }
     let environment = HostEnvironment::discover()?;
@@ -114,7 +111,7 @@ fn core(arguments: &[Vec<u16>]) -> Result<u32> {
     let code = status_code(unsafe { start(ptr::null(), managed.as_ptr(), count) });
     host.shutdown()?;
     if verbose {
-        output(&wide("Execution succeeded\r\n"), true);
+        core_stdout("Execution succeeded\r\n")?;
     }
     Ok(code)
 }
