@@ -13,6 +13,10 @@ use std::path::{Path, PathBuf};
 use std::ptr;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+// Concurrent first forks can crash macOS libSystem's child-side initialization.
+#[cfg(target_os = "macos")]
+static FORK_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 struct Fixture(PathBuf);
 
 impl Fixture {
@@ -263,6 +267,8 @@ fn error_category_mapping() {
 }
 
 unsafe fn spawn(args: &[&CStr], cwd: Option<&CStr>, flags: i32) -> (i32, i32, i32, i32) {
+    #[cfg(target_os = "macos")]
+    let _fork_guard = FORK_LOCK.lock().unwrap();
     let mut pointers: Vec<_> = args.iter().map(|arg| arg.as_ptr()).collect();
     pointers.push(ptr::null());
     let env = [c"PSL_RUST_TEST=present".as_ptr(), ptr::null()];
@@ -336,9 +342,17 @@ fn child_only_sigint_suppression() {
         let (pid, input, output, error) =
             spawn(&[c"sh", c"-c", c"kill -INT $$; printf survived"], None, 1);
         libc::close(input);
-        assert_eq!(read_fd(output), "survived");
-        assert_eq!(read_fd(error), "");
-        assert_eq!(WaitPid(pid, false), pid);
+        let text = read_fd(output);
+        let diagnostic = read_fd(error);
+        let mut status = 0;
+        assert_eq!(libc::waitpid(pid, &raw mut status, 0), pid);
+        assert!(
+            libc::WIFEXITED(status),
+            "child terminated abnormally (wait status {status:#x}): {diagnostic}"
+        );
+        assert_eq!(libc::WEXITSTATUS(status), 0, "{diagnostic}");
+        assert_eq!(text, "survived");
+        assert_eq!(diagnostic, "");
         let mut after: libc::sigaction = std::mem::zeroed();
         assert_eq!(
             libc::sigaction(libc::SIGINT, ptr::null(), &raw mut after),
@@ -351,6 +365,8 @@ fn child_only_sigint_suppression() {
 
 #[test]
 fn failed_exec_exits_without_returning_into_the_host() {
+    #[cfg(target_os = "macos")]
+    let _fork_guard = FORK_LOCK.lock().unwrap();
     let fixture = Fixture::new();
     let invalid_program = fixture.path("not-an-executable-image");
     fs::write(&invalid_program, b"not an executable").unwrap();
@@ -384,7 +400,10 @@ fn failed_exec_exits_without_returning_into_the_host() {
         assert_eq!((input, output, error), (-1, -1, -1));
         let mut status = 0;
         assert_eq!(libc::waitpid(pid, &raw mut status, 0), pid);
-        assert!(libc::WIFEXITED(status));
+        assert!(
+            libc::WIFEXITED(status),
+            "child terminated abnormally (wait status {status:#x})"
+        );
         assert_eq!(libc::WEXITSTATUS(status), libc::ENOEXEC);
     }
 }
